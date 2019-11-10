@@ -6,17 +6,22 @@
 #include "Vector2.h"
 #include "Utility.h"
 
-class Renderer {
-public:
-	// global settings
-	static Vector2 OUTPUT_SIZE;
-	static GLubyte *outputImage;
-	static GLuint outputTexID;
+namespace moon {
+	class Renderer {
+	public:
+		// global settings
+		static Vector2 OUTPUT_SIZE;
+		static GLubyte *outputImage;
+		static GLuint outputTexID;
 
-	// local params
-	static clock_t start, end;
-	static float progress;
+		// local params
+		static clock_t start, end;
+		static float progress;
+		static bool isAbort;
 
-	static void* rendering(void* args);
-	static bool PrepareVFB();
-};
+		// functions
+		static void* rendering(void* args);
+		static bool PrepareVFB();
+		static bool PrepareRendering();
+	};
+}

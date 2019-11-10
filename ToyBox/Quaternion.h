@@ -1,0 +1,59 @@
+#pragma once
+#include "Vector3.h"
+#include "MathUtils.h"
+
+#include <cmath>
+
+namespace moon {
+	class Quaternion {
+	public:
+		float x;
+		float y;
+		float z;
+		float w;
+		Vector3 eulerAngles;
+
+		Quaternion(): x(0), y(0), z(0), w(1) {}
+		Quaternion(float _x, float _y, float _z, float _w) {
+			float mag = _x * _x + _y * _y + _z * _z + _w * _w;
+			x = _x / mag; y = _y / mag; z = _z / mag; w = _w / mag;
+		}
+		Quaternion(float yaw, float pitch, float roll) {
+			this->SetEulerAngle(yaw, pitch, roll);
+		}
+		Quaternion(const Quaternion& q): x(q.x), y(q.y), z(q.z), w(q.w) {}
+		~Quaternion() {}
+
+		static Quaternion Pow(const Quaternion& q, const float& t);
+		static Quaternion identity() { return Quaternion(0, 0, 0, 1); }
+		static float Dot(const Quaternion &lhs, const Quaternion &rhs);
+		static Quaternion Lerp(const Quaternion &a, const Quaternion &b, float t);
+		static Quaternion Slerp(const Quaternion &a, const Quaternion &b, float t);
+		static float Angle(const Quaternion &lhs, const Quaternion &rhs);
+
+		void SetEulerAngle(float yaw, float pitch, float roll);
+		void Set(float _x, float _y, float _z, float _w);
+
+		Quaternion Conjugate() const;
+		Quaternion Inverse() const;
+		Vector3 EulerAngle() const;
+
+		Quaternion& operator^=(const float &pow);
+		Quaternion& operator+=(const Quaternion &q);
+		Quaternion& operator-=(const Quaternion &q);
+		Quaternion& operator*=(float s);
+		Quaternion& operator/=(float s);
+
+		friend Quaternion operator+(const Quaternion& lhs, const Quaternion& rhs);
+		friend Quaternion operator-(const Quaternion& lhs, const Quaternion& rhs);
+		friend Quaternion operator*(const Quaternion& lhs, const Quaternion& rhs);
+
+		friend Vector3 operator*(const Quaternion& q, const Vector3& point);
+
+		friend Quaternion operator^(const Quaternion& q, const float& pow);
+		friend Quaternion operator*(const Quaternion& q, const float& s);
+		friend Quaternion operator/(const Quaternion& q, const float& s);
+		friend Quaternion operator*(const float& s, const Quaternion& q);
+		friend Quaternion operator/(const float& s, const Quaternion& q);
+	};
+}
