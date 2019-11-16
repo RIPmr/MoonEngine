@@ -8,13 +8,35 @@
 #include "Renderer.h"
 
 namespace moon {
-	inline bool LoadTextureFromFile(const std::string &path, GLuint &textureID, int &width, int &height, bool gamma = false) {
+	inline void string_replace(std::string &strBig, const std::string &strsrc, const std::string &strdst) {
+		std::string::size_type pos = 0;
+		std::string::size_type srclen = strsrc.size();
+		std::string::size_type dstlen = strdst.size();
+
+		while ((pos = strBig.find(strsrc, pos)) != std::string::npos) {
+			strBig.replace(pos, srclen, strdst);
+			pos += dstlen;
+		}
+	}
+
+	inline std::string GetPathOrURLShortName(std::string strFullName) {
+		if (strFullName.empty()) return "";
+
+		string_replace(strFullName, "/", "\\");
+		std::string::size_type iPos = strFullName.find_last_of('\\') + 1;
+		return strFullName.substr(iPos, strFullName.length() - iPos);
+	}
+
+	inline bool LoadTextureFromFile(const std::string &path, std::string &name, GLuint &textureID, int &width, int &height, bool gamma = false) {
+		name = GetPathOrURLShortName(path);
+
 		glGenTextures(1, &textureID);
 
 		int nrComponents;
 		unsigned char *data = stbi_load(path.c_str(), &width, &height, &nrComponents, 0);
+		std::cout << std::endl;
 		std::cout << "Load texture from: " << path << std::endl;
-		std::cout << "ID: " << textureID << ", width: " << width << ", height: " << height << ", format: " << nrComponents << ", gamma: " << gamma << std::endl;
+		std::cout << "- ID: " << textureID << ", width: " << width << ", height: " << height << ", format: " << nrComponents << ", gamma: " << gamma << std::endl;
 		if (data) {
 			GLenum format;
 			if (nrComponents == 1)

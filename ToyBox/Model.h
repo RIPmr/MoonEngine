@@ -5,34 +5,63 @@
 #include "Hitable.h"
 #include "ObjectBase.h"
 #include "OBJLoader.h"
+#include "Utility.h"
 
 #include <vector>
 #include <string>
 
 namespace moon {
-	class Model : public Hitable, public MObject {
+	class Model : public MObject, public Hitable {
 	public:
-		std::vector<Mesh> meshList;
-		std::string directory;
+		std::vector<Mesh*> meshList;
+		std::string path;
 		bool gammaCorrection;
 
-		Model(const std::string &name, const std::string &path, const int id = MOON_AUTOID, const bool gamma = false) :
-			gammaCorrection(gamma), MObject(id, name){
-			LoadModel(path);
-		}
-		Model(const std::string &path, const int id = MOON_AUTOID, const bool gamma = false) :
-			gammaCorrection(gamma), MObject(id, "Model") {
-			LoadModel(path);
-		}
-		~Model() {}
+		// for procedural mesh
+		Model(const std::string &name, const int id = MOON_AUTOID) : gammaCorrection(false), MObject(name, id) {}
 
-		void Draw(Shader shader) {
-			for (int i = 0; i < meshList.size(); i++)
-				meshList[i].Draw(dynamic_cast<MoonMtl*>(meshList[i].material)->shader);
+		// for mesh in OBJ file
+		Model(const std::string &path, const std::string &name = "FILENAME", const int id = MOON_AUTOID, const bool gamma = false) :
+			path(path), gammaCorrection(gamma), MObject(id) {
+			LoadModel(path, gamma);
+
+			if (!name._Equal("FILENAME")) this->name = name;
+			else this->name = GetPathOrURLShortName(path);
+		}
+		~Model() {
+			for (auto &iter : meshList) delete iter;
+			meshList.clear();
 		}
 
-		void LoadModel(std::string const &path) {
-			
+		void Draw() {
+			for (int i = 0; i < meshList.size(); i++) {
+				meshList[i]->Draw(meshList[i]->material->shader);
+			}
+		}
+
+		void LoadModel(const std::string &path, const bool &gammaCorrection) {
+			Loader loader;
+			loader.LoadFile(path, gammaCorrection);
+
+			std::cout << "copying mesh list" << std::endl;
+			// transfer data in loader to model
+			meshList = loader.LoadedMeshes;
+		}
+
+		bool Hit(const Ray &r, float tmin, float tmax, HitRecord &rec) const {
+			HitRecord tempRec;
+			bool hitAnything = false;
+			double closestSoFar = tmax;
+
+			for (auto &iter : meshList) {
+				if (iter->Hit(r, tmin, closestSoFar, tempRec)) {
+					hitAnything = true;
+					closestSoFar = tempRec.t;
+					rec = tempRec;
+				}
+			}
+
+			return hitAnything;
 		}
 
 	};

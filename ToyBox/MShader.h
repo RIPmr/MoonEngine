@@ -16,7 +16,7 @@ namespace moon {
 	class Shader : public ObjectBase {
 	public:
 		// constructor generates the shader on the fly
-		void Compile_Link(const char* vertexPath, const char* fragmentPath) {
+		void Compile_And_Link(const char* vertexPath, const char* fragmentPath) {
 			// 1. retrieve the vertex/fragment source code from filePath
 			std::string vertexCode;
 			std::string fragmentCode;
@@ -72,11 +72,8 @@ namespace moon {
 			glDeleteShader(fragment);
 		}
 
-		Shader(const char* vertexPath, const char* fragmentPath) {
-			Compile_Link(vertexPath, fragmentPath);
-		}
 		Shader(const std::string &name, const char* vertexPath, const char* fragmentPath) : ObjectBase(name, MOON_UNSPECIFIEDID) {
-			Compile_Link(vertexPath, fragmentPath);
+			Compile_And_Link(vertexPath, fragmentPath);
 		}
 		~Shader() {}
 

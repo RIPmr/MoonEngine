@@ -14,7 +14,7 @@ namespace moon {
 			dir = direction;
 		}
 
-		inline Vector3 PointAtParameter(float dist) {
+		inline Vector3 PointAtParameter(float dist) const {
 			return pos + dist * dir;
 		}
 	};

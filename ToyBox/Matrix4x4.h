@@ -3,7 +3,12 @@
 #include <iostream>
 #include <iomanip>
 
+#include <glad/glad.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 #include "Vector3.h"
+#include "Vector4.h"
 #include "Quaternion.h"
 
 namespace moon {
@@ -28,6 +33,11 @@ namespace moon {
 			x[2][0] = i; x[2][1] = j; x[2][2] = k; x[2][3] = l;
 			x[3][0] = m; x[3][1] = n; x[3][2] = o; x[3][3] = p;
 		}
+		Matrix4x4(const Matrix4x4 &m) {
+			for (int i = 0; i < 4; i++)
+				for (int j = 0; j < 4; j++)
+					x[i][j] = m[i][j];
+		}
 
 		const float* operator[](uint8_t i) const { return x[i]; }
 		float* operator[](uint8_t i) { return x[i]; }
@@ -38,6 +48,17 @@ namespace moon {
 			multiply(*this, v, tmp);
 
 			return tmp;
+		}
+
+		Vector4 operator*(const Vector4 &v) const {
+			Vector4 result;
+
+			result[0] = v[0] * x[0][0] + v[1] * x[1][0] + v[2] * x[2][0] + v[3] * x[3][0];
+			result[1] = v[0] * x[0][1] + v[1] * x[1][1] + v[2] * x[2][1] + v[3] * x[3][1];
+			result[2] = v[0] * x[0][2] + v[1] * x[1][2] + v[2] * x[2][2] + v[3] * x[3][2];
+			result[3] = v[0] * x[0][3] + v[1] * x[1][3] + v[2] * x[2][3] + v[3] * x[3][3];
+
+			return result;
 		}
 
 		// To make it easier to understand how a matrix multiplication works, 
@@ -57,8 +78,8 @@ namespace moon {
 #if 0 
 			for (uint8_t i = 0; i < 4; ++i) {
 				for (uint8_t j = 0; j < 4; ++j) {
-					c[i][j] = a[i][0] * b[0][j] + a[i][1] * b[1][j] +
-						a[i][2] * b[2][j] + a[i][3] * b[3][j];
+					c[j][i] = a[0][i] * b[j][0] + a[1][i] * b[j][1] +
+						a[2][i] * b[j][2] + a[3][i] * b[j][3];
 				}
 			}
 #else 
@@ -73,44 +94,44 @@ namespace moon {
 			float a0, a1, a2, a3;
 
 			a0 = ap[0];
-			a1 = ap[1];
-			a2 = ap[2];
-			a3 = ap[3];
+			a1 = ap[4];
+			a2 = ap[8];
+			a3 = ap[12];
 
-			cp[0] = a0 * bp[0] + a1 * bp[4] + a2 * bp[8] + a3 * bp[12];
-			cp[1] = a0 * bp[1] + a1 * bp[5] + a2 * bp[9] + a3 * bp[13];
-			cp[2] = a0 * bp[2] + a1 * bp[6] + a2 * bp[10] + a3 * bp[14];
-			cp[3] = a0 * bp[3] + a1 * bp[7] + a2 * bp[11] + a3 * bp[15];
+			cp[0] = a0 * bp[0] + a1 * bp[1] + a2 * bp[2] + a3 * bp[3];
+			cp[4] = a0 * bp[4] + a1 * bp[5] + a2 * bp[6] + a3 * bp[7];
+			cp[8] = a0 * bp[8] + a1 * bp[9] + a2 * bp[10] + a3 * bp[11];
+			cp[12] = a0 * bp[12] + a1 * bp[13] + a2 * bp[14] + a3 * bp[15];
 
-			a0 = ap[4];
+			a0 = ap[1];
 			a1 = ap[5];
-			a2 = ap[6];
-			a3 = ap[7];
+			a2 = ap[9];
+			a3 = ap[13];
 
-			cp[4] = a0 * bp[0] + a1 * bp[4] + a2 * bp[8] + a3 * bp[12];
-			cp[5] = a0 * bp[1] + a1 * bp[5] + a2 * bp[9] + a3 * bp[13];
-			cp[6] = a0 * bp[2] + a1 * bp[6] + a2 * bp[10] + a3 * bp[14];
-			cp[7] = a0 * bp[3] + a1 * bp[7] + a2 * bp[11] + a3 * bp[15];
+			cp[1] = a0 * bp[0] + a1 * bp[1] + a2 * bp[2] + a3 * bp[3];
+			cp[5] = a0 * bp[4] + a1 * bp[5] + a2 * bp[6] + a3 * bp[7];
+			cp[9] = a0 * bp[8] + a1 * bp[9] + a2 * bp[10] + a3 * bp[11];
+			cp[13] = a0 * bp[12] + a1 * bp[13] + a2 * bp[14] + a3 * bp[15];
 
-			a0 = ap[8];
-			a1 = ap[9];
+			a0 = ap[2];
+			a1 = ap[6];
 			a2 = ap[10];
-			a3 = ap[11];
+			a3 = ap[14];
 
-			cp[8] = a0 * bp[0] + a1 * bp[4] + a2 * bp[8] + a3 * bp[12];
-			cp[9] = a0 * bp[1] + a1 * bp[5] + a2 * bp[9] + a3 * bp[13];
-			cp[10] = a0 * bp[2] + a1 * bp[6] + a2 * bp[10] + a3 * bp[14];
-			cp[11] = a0 * bp[3] + a1 * bp[7] + a2 * bp[11] + a3 * bp[15];
+			cp[2] = a0 * bp[0] + a1 * bp[1] + a2 * bp[2] + a3 * bp[3];
+			cp[6] = a0 * bp[4] + a1 * bp[5] + a2 * bp[6] + a3 * bp[7];
+			cp[10] = a0 * bp[8] + a1 * bp[9] + a2 * bp[10] + a3 * bp[11];
+			cp[14] = a0 * bp[12] + a1 * bp[13] + a2 * bp[14] + a3 * bp[15];
 
-			a0 = ap[12];
-			a1 = ap[13];
-			a2 = ap[14];
+			a0 = ap[3];
+			a1 = ap[7];
+			a2 = ap[11];
 			a3 = ap[15];
 
-			cp[12] = a0 * bp[0] + a1 * bp[4] + a2 * bp[8] + a3 * bp[12];
-			cp[13] = a0 * bp[1] + a1 * bp[5] + a2 * bp[9] + a3 * bp[13];
-			cp[14] = a0 * bp[2] + a1 * bp[6] + a2 * bp[10] + a3 * bp[14];
-			cp[15] = a0 * bp[3] + a1 * bp[7] + a2 * bp[11] + a3 * bp[15];
+			cp[3] = a0 * bp[0] + a1 * bp[1] + a2 * bp[2] + a3 * bp[3];
+			cp[7] = a0 * bp[4] + a1 * bp[5] + a2 * bp[6] + a3 * bp[7];
+			cp[11] = a0 * bp[8] + a1 * bp[9] + a2 * bp[10] + a3 * bp[11];
+			cp[15] = a0 * bp[12] + a1 * bp[13] + a2 * bp[14] + a3 * bp[15];
 #endif 
 		}
 
@@ -141,31 +162,6 @@ namespace moon {
 			*this = tmp;
 
 			return *this;
-		}
-
-		void multVecMatrix(const Vector3 &src, Vector3 &dst) const {
-			float a, b, c, w;
-
-			a = src[0] * x[0][0] + src[1] * x[1][0] + src[2] * x[2][0] + x[3][0];
-			b = src[0] * x[0][1] + src[1] * x[1][1] + src[2] * x[2][1] + x[3][1];
-			c = src[0] * x[0][2] + src[1] * x[1][2] + src[2] * x[2][2] + x[3][2];
-			w = src[0] * x[0][3] + src[1] * x[1][3] + src[2] * x[2][3] + x[3][3];
-
-			dst.x = a / w;
-			dst.y = b / w;
-			dst.z = c / w;
-		}
-
-		void multDirMatrix(const Vector3 &src, Vector3 &dst) const {
-			float a, b, c;
-
-			a = src[0] * x[0][0] + src[1] * x[1][0] + src[2] * x[2][0];
-			b = src[0] * x[0][1] + src[1] * x[1][1] + src[2] * x[2][1];
-			c = src[0] * x[0][2] + src[1] * x[1][2] + src[2] * x[2][2];
-
-			dst.x = a;
-			dst.y = b;
-			dst.z = c;
 		}
 
 		Matrix4x4 inverse() const {
@@ -263,23 +259,23 @@ namespace moon {
 			s.setf(std::ios_base::fixed);
 
 			s << "|" << std::setw(width) << m[0][0] <<
-				" " << std::setw(width) << m[0][1] <<
-				" " << std::setw(width) << m[0][2] <<
-				" " << std::setw(width) << m[0][3] << "|\n" <<
+				" " << std::setw(width) << m[1][0] <<
+				" " << std::setw(width) << m[2][0] <<
+				" " << std::setw(width) << m[3][0] << "|\n" <<
 
-				"|" << std::setw(width) << m[1][0] <<
+				"|" << std::setw(width) << m[0][1] <<
 				" " << std::setw(width) << m[1][1] <<
-				" " << std::setw(width) << m[1][2] <<
-				" " << std::setw(width) << m[1][3] << "|\n" <<
-
-				"|" << std::setw(width) << m[2][0] <<
 				" " << std::setw(width) << m[2][1] <<
-				" " << std::setw(width) << m[2][2] <<
-				" " << std::setw(width) << m[2][3] << "|\n" <<
+				" " << std::setw(width) << m[3][1] << "|\n" <<
 
-				"|" << std::setw(width) << m[3][0] <<
-				" " << std::setw(width) << m[3][1] <<
-				" " << std::setw(width) << m[3][2] <<
+				"|" << std::setw(width) << m[0][2] <<
+				" " << std::setw(width) << m[1][2] <<
+				" " << std::setw(width) << m[2][2] <<
+				" " << std::setw(width) << m[3][2] << "|\n" <<
+
+				"|" << std::setw(width) << m[0][3] <<
+				" " << std::setw(width) << m[1][3] <<
+				" " << std::setw(width) << m[2][3] <<
 				" " << std::setw(width) << m[3][3] << "|";
 
 			s.flags(oldFlags);
@@ -322,12 +318,82 @@ namespace moon {
 			return Result;
 		}
 
-		static Matrix4x4 Translate(const Matrix4x4 &model, const Vector3 moveVec);
+		static Vector3 UnProject(const Vector3 &win, const Matrix4x4 &model, const Matrix4x4 &proj, Vector4 const &viewport) {
+			Matrix4x4 Inverse = (proj * model).inverse();
 
-		static Matrix4x4 Rotate(const Matrix4x4 &model, const Vector3 rotVec);
-		static Matrix4x4 Rotate(const Matrix4x4 &model, const Quaternion q);
+			Vector4 tmp(win);
+			tmp.x = (tmp.x - viewport[0]) / viewport[2];
+			tmp.y = (tmp.y - viewport[1]) / viewport[3];
 
-		static Matrix4x4 Scale(const Matrix4x4 &model, const float &factor);
+			tmp *= 2.0f;
+			tmp.setValue(tmp.x - 1.0f, tmp.y - 1.0f, tmp.z - 1.0f, tmp.w - 1.0f);
+
+			Vector4 obj = Inverse * tmp;			
+			obj /= obj.w;
+
+			return Vector3(obj.x, obj.y, obj.z);
+		}
+
+		static Matrix4x4 TranslateMat(const Vector3 &moveVec) {
+			Matrix4x4 result(1,			0,		   0,		  0,
+							 0,			1,		   0,		  0,
+							 0,			0,		   1,		  0,
+							 moveVec.x, moveVec.y, moveVec.z, 1);
+			return result;
+		}
+		static Matrix4x4 Translate(const Matrix4x4 &model, const Vector3 &moveVec) {
+			return model * TranslateMat(moveVec);
+		}
+
+		static Matrix4x4 RotateMat(const float _angle, const Vector3 &_axis) {
+			Matrix4x4 result;
+
+			float c = cos(_angle);
+			float s = sin(_angle);
+
+			Vector3 axis(Vector3::Normalize(_axis));
+			Vector3 temp((1.0f - c) * axis);
+
+			Matrix4x4 Rotate;
+			Rotate[0][0] = c + temp[0] * axis[0];
+			Rotate[0][1] = temp[0] * axis[1] + s * axis[2];
+			Rotate[0][2] = temp[0] * axis[2] - s * axis[1];
+
+			Rotate[1][0] = temp[1] * axis[0] - s * axis[2];
+			Rotate[1][1] = c + temp[1] * axis[1];
+			Rotate[1][2] = temp[1] * axis[2] + s * axis[0];
+
+			Rotate[2][0] = temp[2] * axis[0] + s * axis[1];
+			Rotate[2][1] = temp[2] * axis[1] - s * axis[0];
+			Rotate[2][2] = c + temp[2] * axis[2];
+
+			return Rotate;
+		}
+		static Matrix4x4 Rotate(const Matrix4x4 &model, const float angle, const Vector3 &v) {
+			return model * RotateMat(angle, v);
+		}
+		static Matrix4x4 Rotate(const Matrix4x4 &model, const Quaternion &q);
+
+		static Matrix4x4 ScaleMat(const Vector3 &factor) {
+			Matrix4x4 result(factor.x, 0, 0, 0,
+							 0, factor.y, 0, 0,
+							 0, 0, factor.z, 0,
+							 0, 0, 0,		 1);
+			return result;
+		}
+		static Matrix4x4 ScaleMat(const float &factor) {
+			Matrix4x4 result(factor, 0, 0, 0,
+							 0, factor, 0, 0,
+							 0, 0, factor, 0,
+							 0, 0, 0,	   1);
+			return result;
+		}
+		static Matrix4x4 Scale(const Matrix4x4 &model, const float &factor) {
+			return model * ScaleMat(factor);
+		}
+		static Matrix4x4 Scale(const Matrix4x4 &model, const Vector3 &factor) {
+			return model * ScaleMat(factor);
+		}
 
 	};
 }
