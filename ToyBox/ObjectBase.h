@@ -5,7 +5,7 @@
 #include "Transform.h"
 
 #define MOON_AUTOID -1
-#define MOON_UNSPECIFIEDID 0
+#define MOON_UNSPECIFIEDID -2
 #define MOON_FIRSTMATCH -1
 
 namespace moon {
@@ -15,7 +15,7 @@ namespace moon {
 		unsigned int ID; // ID is unique in every type of objects
 		std::string name;
 
-		ObjectBase() : name("Object"), ID(MOON_UNSPECIFIEDID) {}
+		ObjectBase() : ID(MOON_UNSPECIFIEDID), name("") {}
 		ObjectBase(const int &_id);
 		ObjectBase(const std::string &_name, const int &_id);
 		virtual ~ObjectBase() {}
@@ -57,11 +57,9 @@ namespace moon {
 			void ClearStack();
 		};
 
-		MObject() : ObjectBase(MOON_AUTOID) { name = "MObject_" + ID; }
-		MObject(const int &_id) : ObjectBase(_id) { name = "MObject_" + _id; }
-		MObject(const std::string &_name) : ObjectBase(_name, MOON_AUTOID) {}
-		MObject(const std::string &_name, const int &_id) : ObjectBase(_name, _id){}
-		MObject(const std::string &_name, const Transform &transform, const int &_id) :
+		MObject() : ObjectBase("EmptyObject", MOON_UNSPECIFIEDID) {}
+		MObject(const int &_id, const std::string &_name) : ObjectBase(_name, _id){}
+		MObject(const int &_id, const std::string &_name, const Transform &transform) :
 			ObjectBase(_name, _id), transform(transform) {}
 		~MObject() {}
 	};

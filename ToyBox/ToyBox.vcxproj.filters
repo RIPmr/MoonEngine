@@ -99,12 +99,6 @@
     <ClCompile Include="ObjectBase.cpp">
       <Filter>SourceFiles\Implementation</Filter>
     </ClCompile>
-    <ClCompile Include="Vector4.cpp">
-      <Filter>SourceFiles\Implementation</Filter>
-    </ClCompile>
-    <ClCompile Include="OBJLoader.cpp">
-      <Filter>SourceFiles\Implementation</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Vector3.h">
@@ -179,10 +173,10 @@
     <ClInclude Include="Utility.h">
       <Filter>HeadFiles\Other</Filter>
     </ClInclude>
-    <ClInclude Include="Color.h">
+    <ClInclude Include="Vectror4.h">
       <Filter>HeadFiles\Math</Filter>
     </ClInclude>
-    <ClInclude Include="Vector4.h">
+    <ClInclude Include="Color.h">
       <Filter>HeadFiles\Math</Filter>
     </ClInclude>
   </ItemGroup>
@@ -191,17 +185,11 @@
     <None Include="Resources\msyh.ttc">
       <Filter>Resources\Fonts</Filter>
     </None>
-    <None Include="ConstColor.vs">
-      <Filter>Shaders\VS</Filter>
-    </None>
-    <None Include="SimplePhong.vs">
-      <Filter>Shaders\VS</Filter>
-    </None>
-    <None Include="ConstColor.fs">
+    <None Include="point.fs">
       <Filter>Shaders\FS</Filter>
     </None>
-    <None Include="SimplePhong.fs">
-      <Filter>Shaders\FS</Filter>
+    <None Include="point.vs">
+      <Filter>Shaders\VS</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

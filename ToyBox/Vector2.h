@@ -41,7 +41,7 @@ namespace moon {
 
 		inline float dot(const Vector2 &v) const { return x * v.x + y * v.y; }
 		inline float magnitude() const { return sqrtf(dot(*this)); }
-		inline float MagSquared() const { return dot(*this); }
+		inline float squaredMagnitude() const { return dot(*this); }
 
 
 		// 另两个输入向量z轴为0，返回三维交叉积向量的z值（结果向量沿Z轴向上）
@@ -59,8 +59,6 @@ namespace moon {
 			dist = sqrt((this->x - v.x) * (this->x - v.x) + (this->y - v.y) * (this->y - v.y));
 			return dist;
 		}
-
-		inline void setValue(float _x, float _y) { x = _x; y = _y; }
 
 		static Vector2 Normalize(const Vector2 &v);
 		static float Cross(const Vector2 &v1, const Vector2 &v2);

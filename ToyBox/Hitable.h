@@ -19,6 +19,6 @@ namespace moon {
 
 	class Hitable {
 	public:
-		virtual bool Hit(const Ray &t, float tmin, float tmax, HitRecord &rec) const = 0;
+		virtual bool Hit(Ray &t, float t_min, float t_max, HitRecord &rec) const = 0;
 	};
 }

@@ -133,13 +133,11 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="ObjectBase.cpp" />
-    <ClCompile Include="OBJLoader.cpp" />
     <ClCompile Include="opengl\src\glad.c" />
     <ClCompile Include="Quaternion.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Vector2.cpp" />
     <ClCompile Include="Vector3.cpp" />
-    <ClCompile Include="Vector4.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
@@ -167,15 +165,13 @@
     <ClInclude Include="Vector2.h" />
     <ClInclude Include="Vector3.h" />
     <ClInclude Include="ObjectBase.h" />
-    <ClInclude Include="Vector4.h" />
+    <ClInclude Include="Vectror4.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="ConstColor.fs" />
-    <None Include="ConstColor.vs" />
     <None Include="packages.config" />
+    <None Include="point.fs" />
+    <None Include="point.vs" />
     <None Include="Resources\msyh.ttc" />
-    <None Include="SimplePhong.fs" />
-    <None Include="SimplePhong.vs" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Resources\Icon - fullSize.jpg" />

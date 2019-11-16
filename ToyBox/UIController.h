@@ -1,20 +1,16 @@
 #pragma once
+
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 #include <shellapi.h>
-#include <cstdlib>
-
-#include "Texture.h"
 
 namespace moon {
 	class MainUI {
 	public:
 		// image resources
-		static Texture *icon, *logo;
-
-		// ImGui IO
-		static ImGuiIO* io;
+		static GLuint iconID, logoID;
+		static int iconWidth, iconHeight, logoWidth, logoHeight;
 
 		// bool for window
 		static bool show_control_window;
@@ -30,16 +26,18 @@ namespace moon {
 		static bool show_console_window;
 
 		static bool show_create_window;
-		static bool show_timeline;
-		static bool show_material_editor;
-		static bool show_enviroment_editor;
 
+		// load resources
+		static bool LoadImages() {
+			bool flag = true;
+			flag &= LoadTextureFromFile("./Resources/Icon.jpg", iconID, iconWidth, iconHeight);
+			flag &= LoadTextureFromFile("./Resources/logo.png", logoID, logoWidth, logoHeight);
+			return flag;
+		}
 
 		// window definition
 		static void MainMenu() {
-			if (icon == NULL) icon = MOON_TextureManager::GetItem("moon_icon");
-
-			ImGui::Image((void*)(intptr_t)icon->ID, ImVec2(20, 20));
+			ImGui::Image((void*)(intptr_t)iconID, ImVec2(20, 20));
 
 			if (ImGui::BeginMenu("File")) {
 				ShowExampleMenuFile();
@@ -97,14 +95,14 @@ namespace moon {
 			ImGui::EndMainMenuBar();
 		}
 
-		static void ControlPanel(const ImGuiIO *io, const ImVec4 &clear_color) {
+		static void ControlPanel(const ImGuiIO &io, const ImVec4 &clear_color) {
 			static int width = MOON_OutputSize.x, height = MOON_OutputSize.y;
 
 			ImGui::Begin("ControlPanel");
 
 			ImGui::Text("[Statistics]");
 			ImGui::Text("FPS: %.1f (%.2f ms/frame)", ImGui::GetIO().Framerate, 1000.0f / ImGui::GetIO().Framerate);
-			ImGui::Text("Hover UI: %d", io->WantCaptureMouse);
+			ImGui::Text("Hover UI: %d", io.WantCaptureMouse);
 
 			ImGui::Separator();
 
@@ -142,7 +140,7 @@ namespace moon {
 			ImGui::End();
 		}
 
-		static void ShowVFB() {
+		static void ShowVFB(const ImGuiIO &io) {
 			ImGui::SetNextWindowSize(ImVec2(MOON_OutputSize.x < 100 ? 100 : MOON_OutputSize.x + 18,
 				MOON_OutputSize.y < 100 ? 100 : MOON_OutputSize.y + 80));
 
@@ -156,8 +154,8 @@ namespace moon {
 			if (ImGui::IsItemHovered() && ImGui::IsMouseDown(2)) {
 				ImGui::BeginTooltip();
 				float region_sz = 32.0f;
-				float region_x = MOON_MousePos.x - pos.x - region_sz * 0.5f;
-				float region_y = MOON_MousePos.y - pos.y - region_sz * 0.5f;
+				float region_x = io.MousePos.x - pos.x - region_sz * 0.5f;
+				float region_y = io.MousePos.y - pos.y - region_sz * 0.5f;
 
 				if (region_x < 0.0f) region_x = 0.0f;
 				else if (region_x > MOON_OutputSize.x - region_sz) region_x = MOON_OutputSize.x - region_sz;
@@ -185,10 +183,8 @@ namespace moon {
 		}
 
 		static void AboutWnd() {
-			if (logo == NULL) logo = MOON_TextureManager::GetItem("moon_logo");
-
 			ImGui::Begin("ABOUT ME", &MainUI::show_about_window, ImGuiWindowFlags_NoResize);
-			ImGui::Image((void*)(intptr_t)logo->ID, ImVec2(logo->width / 3, logo->height / 3));
+			ImGui::Image((void*)(intptr_t)logoID, ImVec2(logoWidth / 3, logoHeight / 3));
 
 			ImGui::Text(u8"【HU ANIME】");
 			ImGui::Text(u8">独立动画/游戏创作者");
@@ -217,55 +213,6 @@ namespace moon {
 
 		static void ExplorerWnd() {
 			ImGui::Begin("Explorer", &MainUI::show_explorer_window);
-
-			static bool showAll = true;
-			static bool showModel = true;
-			static bool showMat = true;
-			static bool showTex = true;
-			static bool showLight = true;
-			static bool showCam = true;
-			static bool showShader = true;
-
-			static bool allFlag = true;
-
-			ImGui::Checkbox("All", &showAll);
-			ImGui::Checkbox("Model", &showModel); ImGui::SameLine(80);
-			ImGui::Checkbox("Mat", &showMat); ImGui::SameLine(160);
-			ImGui::Checkbox("Tex", &showTex);
-			ImGui::Checkbox("Light", &showLight); ImGui::SameLine(80);
-			ImGui::Checkbox("Camera", &showCam); ImGui::SameLine(160);
-			ImGui::Checkbox("Shader", &showShader);
-
-			if (allFlag != showAll) {
-				allFlag = showAll;
-				showModel = showAll; showMat = showAll; showTex = showAll;
-				showLight = showAll; showCam = showAll; showShader = showAll;
-			}
-
-			ImGui::Columns(2, "mycolumns");
-			ImGui::Separator();
-			ImGui::Text("Name"); ImGui::NextColumn();
-			ImGui::Text("ID"); ImGui::NextColumn();
-			ImGui::Separator();
-
-			int loopID = 0;
-			MOON_InputManager::UpdateSelectionState();
-			if (showModel) MOON_ModelManager::ListItems(loopID);
-			if (showMat) MOON_MaterialManager::ListItems(loopID);
-			if (showTex) MOON_TextureManager::ListItems(loopID);
-			if (showLight) MOON_LightManager::ListItems(loopID);
-			if (showCam) MOON_CameraManager::ListItems(loopID);
-			if (showShader) MOON_ShaderManager::ListItems(loopID);
-			ImGui::NextColumn();
-			if (showModel) MOON_ModelManager::ListID();
-			if (showMat) MOON_MaterialManager::ListID();
-			if (showTex) MOON_TextureManager::ListID();
-			if (showLight) MOON_LightManager::ListID();
-			if (showCam) MOON_CameraManager::ListID();
-			if (showShader) MOON_ShaderManager::ListID();
-
-			ImGui::Columns(1);
-			ImGui::Spacing();
 			
 			ImGui::End();
 		}
@@ -290,24 +237,6 @@ namespace moon {
 
 		static void InspectorWnd() {
 			ImGui::Begin("Inspector", &MainUI::show_inspector_window);
-
-			ImGui::End();
-		}
-
-		static void ShowTimeline() {
-			ImGui::Begin("TimeLine", &MainUI::show_timeline);
-
-			ImGui::End();
-		}
-
-		static void MaterialEditor() {
-			ImGui::Begin("MaterialEditor", &MainUI::show_material_editor);
-
-			ImGui::End();
-		}
-
-		static void EnviromentWnd() {
-			ImGui::Begin("Enviroment", &MainUI::show_enviroment_editor);
 
 			ImGui::End();
 		}

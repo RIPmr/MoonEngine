@@ -3,7 +3,7 @@
 
 namespace moon {
 	Vector3::Vector3(const Vector2 &v) {
-		x = v.x; y = v.y; z = 1;
+		x = v.x; y = v.y; z = 0;
 	}
 
 	bool operator!=(const Vector3 &v1, const Vector3 &v2) {

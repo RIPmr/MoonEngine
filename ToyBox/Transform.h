@@ -7,15 +7,6 @@
 #include <vector>
 
 namespace moon {
-	enum Direction {
-		FORWARD,
-		BACKWARD,
-		LEFT,
-		RIGHT,
-		UP,
-		DOWN
-	};
-
 	extern class Model;
 	class Transform {
 	public:
@@ -40,10 +31,5 @@ namespace moon {
 			localScale = Vector3::ONE();
 		}
 		~Transform() {}
-
-		Matrix4x4 GetMatrix() const;
-		Vector3 forward() const;
-		Vector3 right() const;
-		Vector3 up() const;
 	};
 }

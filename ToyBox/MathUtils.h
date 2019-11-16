@@ -11,7 +11,6 @@ namespace moon {
 	#define MOON_m 0x100000000LL
 	#define MOON_c 0xB16
 	#define MOON_a 0x5DEECE66DLL
-	#define MOON_IDBOUNDARY std::numeric_limits<unsigned int>::max()
 	#define PI acos(-1.0)
 	#define Rad2Deg 180/PI
 	#define Deg2Rad PI/180
@@ -22,12 +21,6 @@ namespace moon {
 	private:
 		static unsigned long long seed;
 	public:
-		inline static void GammaCorrection(Vector3 &GammaSpaceCol) {
-			GammaSpaceCol.x = sqrt(GammaSpaceCol.x);
-			GammaSpaceCol.y = sqrt(GammaSpaceCol.y);
-			GammaSpaceCol.z = sqrt(GammaSpaceCol.z);
-		}
-
 		inline static double drand48() {
 			seed = (MOON_a * seed + MOON_c) & 0xFFFFFFFFFFFFLL;
 			unsigned int x = seed >> 16;
@@ -46,7 +39,7 @@ namespace moon {
 			Vector3 p;
 			do {
 				p = 2.0 * Vector3(drand48(), drand48(), drand48()) - Vector3::ONE();
-			} while (p.MagSquared() >= 1.0);
+			} while (p.squaredMagnitude() >= 1.0);
 			return p;
 		}
 
