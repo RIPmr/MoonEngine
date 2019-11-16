@@ -1,6 +1,26 @@
 #include "Material.h"
+#include "SceneMgr.h"
 
 namespace moon {
+	MoonMtl::MoonMtl() : Ns(0.0f), Ni(0.0f), d(0.0f), illum(0) {
+		Kd.setValue(0.8, 0.8, 0.8);
+		shader = SceneManager::ShaderManager::CreateShader("SimplePhong", "SimplePhong.vs", "SimplePhong.fs");
+	}
+
+	MoonMtl::MoonMtl(const std::string &name) : Ns(0.0f), Ni(0.0f), d(0.0f), illum(0), Material(name) {
+		Kd.setValue(0.8, 0.8, 0.8);
+		shader = SceneManager::ShaderManager::CreateShader("SimplePhong", "SimplePhong.vs", "SimplePhong.fs");
+	}
+
+	// TODO
+	bool MoonMtl::scatter(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered) const {
+		Vector3 target = rec.p + rec.normal + MoonMath::RandomInUnitSphere();
+		scattered = Ray(rec.p, target - rec.p);
+		attenuation = Kd;
+
+		return true;
+	}
+
 	bool Lambertian::scatter(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered) const {
 		Vector3 target = rec.p + rec.normal + MoonMath::RandomInUnitSphere();
 		scattered = Ray(rec.p, target - rec.p);

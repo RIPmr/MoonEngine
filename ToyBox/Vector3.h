@@ -42,7 +42,7 @@ namespace moon {
 
 		inline float dot(const Vector3 &v) const { return x * v.x + y * v.y + z * v.z; }
 		inline float magnitude() const { return sqrtf(dot(*this)); }
-		inline float squaredMagnitude() const { return dot(*this); }
+		inline float MagSquared() const { return dot(*this); }
 
 		/*
 		Cross Product
@@ -69,6 +69,8 @@ namespace moon {
 			dist = sqrt((this->x - v.x) * (this->x - v.x) + (this->y - v.y) * (this->y - v.y) + (this->z - v.z) * (this->z - v.z));
 			return dist;
 		}
+
+		inline void setValue(float _x, float _y, float _z) { x = _x; y = _y; z = _z; }
 
 		static Vector3 Normalize(const Vector3 &v);
 		static Vector3 Cross(const Vector3 &v1, const Vector3 &v2);

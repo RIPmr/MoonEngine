@@ -6,6 +6,8 @@
 #include "Texture.h"
 #include "ObjectBase.h"
 
+#include <string>
+
 namespace moon {
 	enum MatType {
 		moonMtl,
@@ -19,8 +21,10 @@ namespace moon {
 	public:
 		Shader* shader;
 
-		//Material()
-		~Material() { delete shader; }
+		Material() : ObjectBase(MOON_AUTOID) {}
+		Material(const std::string &name) : ObjectBase(name, MOON_AUTOID) {}
+		//~Material() { delete shader; }
+		~Material() {}
 
 		virtual bool scatter(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered) const = 0;
 	};
@@ -44,10 +48,12 @@ namespace moon {
 		Texture* map_Kd;		// Diffuse Texture Map
 		Texture* map_Ks;		// Specular Texture Map
 		Texture* map_Ns;		// Specular Hightlight Map
-		Texture* map_d;		// Alpha Texture Map
-		Texture* map_bump;	// Bump Map
+		Texture* map_d;			// Alpha Texture Map
+		Texture* map_bump;		// Bump Map
 
-		MoonMtl(): Ns(0.0f), Ni(0.0f), d(0.0f), illum(0) {}
+		MoonMtl();
+		MoonMtl(const std::string &name);
+
 		virtual bool scatter(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered) const;
 	};
 
@@ -56,6 +62,8 @@ namespace moon {
 		Vector3 albedo;
 
 		Lambertian(const Vector3 &albedo) : albedo(albedo) {}
+		Lambertian(const std::string &name, const Vector3 &albedo) : albedo(albedo), Material(name) {}
+
 		virtual bool scatter(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered) const;
 	};
 
@@ -68,6 +76,11 @@ namespace moon {
 			if (fuzz < 1) this->fuzz = fuzz;
 			else this->fuzz = 1;
 		}
+		Metal(const std::string &name, const Vector3 &albedo, float fuzz) : albedo(albedo), Material(name) {
+			if (fuzz < 1) this->fuzz = fuzz;
+			else this->fuzz = 1;
+		}
+
 		virtual bool scatter(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered) const;
 	};
 
@@ -76,6 +89,8 @@ namespace moon {
 		float ref_idx;
 
 		Dielectric(float ri) : ref_idx(ri) {}
+		Dielectric(const std::string &name, float ri) : ref_idx(ri), Material(name) {}
+
 		virtual bool scatter(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered) const;
 	};
 }
