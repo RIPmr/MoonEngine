@@ -7,6 +7,7 @@
 #define MOON_MousePos SceneManager::InputManager::mousePos
 #define MOON_Clock SceneManager::Clock
 
+#define MOON_ObjectList SceneManager::objectList
 #define MOON_LightManager SceneManager::LightManager
 #define MOON_MaterialManager SceneManager::MaterialManager
 #define MOON_ShaderManager SceneManager::ShaderManager
@@ -41,8 +42,9 @@
 #include "Renderer.h"
 #include "UIController.h"
 #include "ObjectBase.h"
-#include "Camera.h"
 #include "MShader.h"
+#include "Camera.h"
+#include "MatSphere.h"
 #include "Model.h"
 #include "Light.h"
 #include "OBJLoader.h"
@@ -56,9 +58,9 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void DrawGround(const float &space, const int &gridCnt, const Shader* groundShader);
+Vector3 unProjectMouse();
 void MOON_InputProcessor(GLFWwindow *window);
 void MOON_UpdateClock();
-void unProjectMouse();
 void MOON_CleanUp();
 
 // init main ui
@@ -85,7 +87,10 @@ unsigned long long MoonMath::seed = 1;
 
 // init scene manager
 Camera* MOON_SceneCamera = NULL;
+int SceneManager::delID = -1;
 unsigned int SceneManager::objectCounter = 1;
+std::vector<ObjectBase*> SceneManager::objectList;
+std::vector<ObjectBase*> SceneManager::matchedList;
 float SceneManager::Clock::deltaTime = 0;
 float SceneManager::Clock::lastFrame = 0;
 
@@ -104,6 +109,7 @@ bool MOON_ModelManager::sizeFlag = true;
 bool MOON_CameraManager::sizeFlag = true;
 bool* MOON_InputManager::selection = NULL;
 Material* MOON_MaterialManager::defaultMat = NULL;
+Sphere* MOON_MaterialManager::matBall = NULL;
 
 Vector2 MOON_MousePos(-2.0f, -2.0f);
 Vector2 MOON_InputManager::mouseOffset = Vector2::ZERO();
@@ -115,3 +121,4 @@ bool MOON_InputManager::mouse_left_hold = false;
 bool MOON_InputManager::mouse_middle_hold = false;
 bool MOON_InputManager::mouse_right_hold = false;
 bool MOON_InputManager::isHoverUI = false;
+std::vector<unsigned int> MOON_InputManager::selected;

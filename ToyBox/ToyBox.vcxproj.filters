@@ -22,9 +22,6 @@
     <Filter Include="HeadFiles\Math">
       <UniqueIdentifier>{7f3a15f1-fa12-45e1-87ae-351b9661526a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="HeadFiles\Other">
-      <UniqueIdentifier>{e588a6e5-ba90-4f36-bca6-2c4afabfd23a}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Resources\Images">
       <UniqueIdentifier>{715bc946-0040-4205-b62e-04bd0d828afc}</UniqueIdentifier>
     </Filter>
@@ -54,6 +51,9 @@
     </Filter>
     <Filter Include="SourceFiles\Other">
       <UniqueIdentifier>{38d5d812-7578-40c1-9708-15b8d2882259}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeadFiles\Miscellaneous">
+      <UniqueIdentifier>{e588a6e5-ba90-4f36-bca6-2c4afabfd23a}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -123,7 +123,7 @@
       <Filter>HeadFiles\Component</Filter>
     </ClInclude>
     <ClInclude Include="PreInclude.h">
-      <Filter>HeadFiles\Other</Filter>
+      <Filter>HeadFiles\Miscellaneous</Filter>
     </ClInclude>
     <ClInclude Include="SceneMgr.h">
       <Filter>HeadFiles\Component</Filter>
@@ -174,16 +174,22 @@
       <Filter>HeadFiles\Component</Filter>
     </ClInclude>
     <ClInclude Include="PMapGen.h">
-      <Filter>HeadFiles\Other</Filter>
+      <Filter>HeadFiles\Miscellaneous</Filter>
     </ClInclude>
     <ClInclude Include="Utility.h">
-      <Filter>HeadFiles\Other</Filter>
+      <Filter>HeadFiles\Miscellaneous</Filter>
     </ClInclude>
     <ClInclude Include="Color.h">
       <Filter>HeadFiles\Math</Filter>
     </ClInclude>
     <ClInclude Include="Vector4.h">
       <Filter>HeadFiles\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="FuzzyMatch.h">
+      <Filter>HeadFiles\Miscellaneous</Filter>
+    </ClInclude>
+    <ClInclude Include="MatSphere.h">
+      <Filter>HeadFiles\Miscellaneous</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -5,6 +5,7 @@
 #include "Light.h"
 #include "Texture.h"
 #include "MShader.h"
+#include "MatSphere.h"
 
 #include <map>
 #include <vector>
@@ -21,22 +22,23 @@ namespace moon {
 		}
 
 		static void PrintID(T* item) {
-			if (typeid(item) == typeid(Shader*)) std::cout << " local(shader)";
-			else if (typeid(item) == typeid(Texture*)) std::cout << " local(texture)";
-			else {
-				std::cout << " id: " << item->ID << "" << std::endl;
-				return;
-			}
-			std::cout << " id: [" << item->ID << "]" << std::endl;
+			std::cout << " id: " << item->ID << std::endl;
+
+			if (typeid(item) == typeid(Shader*)) std::cout << " local(shader) id: [" << dynamic_cast<Shader*>(item)->localID << "]" << std::endl;
+			else if (typeid(item) == typeid(Texture*)) std::cout << " local(texture) id: [" << dynamic_cast<Texture*>(item)->localID << "]" << std::endl;
 		}
 
-		static void ListItems(int &loopID) {
+		static void ListItems() {
+			std::vector<unsigned int> &sel = MOON_InputManager::selected;
 			auto iter = itemMap.begin();
-			for (int i = 0; i < itemMap.size(); i++, iter++, loopID++) {
-				if (ImGui::Selectable(iter->second->name.c_str(), MOON_InputManager::selection[loopID], ImGuiSelectableFlags_SpanAllColumns)) {
-					if (!MainUI::io->KeyCtrl) memset(MOON_InputManager::selection, 0, SceneManager::TotalObjectNum() * sizeof(bool));
-					MOON_InputManager::selection[loopID] ^= 1;
+			for (int i = 0; i < itemMap.size(); i++, iter++) {
+				if (ImGui::Selectable(iter->second->name.c_str(), MOON_InputManager::selection[iter->second->ID], ImGuiSelectableFlags_SpanAllColumns)) {
+					if (!MainUI::io->KeyCtrl)
+						memset(MOON_InputManager::selection, 0, SceneManager::GetObjectNum() * sizeof(bool));
+					MOON_InputManager::selection[iter->second->ID] ^= 1;
 				}
+				if (MOON_InputManager::selection[iter->second->ID])
+					sel.push_back(iter->second->ID);
 			}
 		}
 
@@ -44,9 +46,9 @@ namespace moon {
 			for (auto &iter : itemMap) {
 				char label[32];
 				if (typeid(itemMap.begin()->second) == typeid(Texture*))
-					sprintf_s(label, "tex-%d", iter.second->ID);
+					sprintf_s(label, "%d-[T%d]", iter.second->ID, dynamic_cast<Texture*>(iter.second)->localID);
 				else if (typeid(itemMap.begin()->second) == typeid(Shader*))
-					sprintf_s(label, "sha-%d", iter.second->ID);
+					sprintf_s(label, "%d-[S%d]", iter.second->ID, dynamic_cast<Shader*>(iter.second)->localID);
 				else
 					sprintf_s(label, "%d", iter.second->ID);
 				ImGui::Text(label);
@@ -59,13 +61,12 @@ namespace moon {
 				return;
 			}
 
-			auto type = typeid(itemMap.begin()->second);
-			if (type == typeid(Shader*)) std::cout << " Shaders in scene: " << std::endl;
-			else if (type == typeid(Texture*)) std::cout << " Textures in scene: " << std::endl;
-			else if (type == typeid(Material*)) std::cout << " Materials in scene: " << std::endl;
-			else if (type == typeid(Light*)) std::cout << " Lights in scene: " << std::endl;
-			else if (type == typeid(Model*)) std::cout << " Models in scene: " << std::endl;
-			else if (type == typeid(Camera*)) std::cout << " Cameras in scene: " << std::endl;
+			if (typeid(itemMap.begin()->second) == typeid(Shader*)) std::cout << " Shaders in scene: " << std::endl;
+			else if (typeid(itemMap.begin()->second) == typeid(Texture*)) std::cout << " Textures in scene: " << std::endl;
+			else if (typeid(itemMap.begin()->second) == typeid(Material*)) std::cout << " Materials in scene: " << std::endl;
+			else if (typeid(itemMap.begin()->second) == typeid(Light*)) std::cout << " Lights in scene: " << std::endl;
+			else if (typeid(itemMap.begin()->second) == typeid(Model*)) std::cout << " Models in scene: " << std::endl;
+			else if (typeid(itemMap.begin()->second) == typeid(Camera*)) std::cout << " Cameras in scene: " << std::endl;
 
 			auto end = itemMap.end();
 			std::cout << "items(" << itemMap.count() << "):" << std << std::endl;
@@ -90,10 +91,13 @@ namespace moon {
 				std::cout << "------------------------------------------------- new Camera added -----------------------------------------------" << std::endl;
 			else 
 				std::cout << "------------------------------------------ new object added [unknown type] ---------------------------------------" << std::endl;
+			
 			//itemMap.insert(std::make_pair(static_cast<ObjectBase*>(item)->name, item));
 			itemMap.insert(std::pair<std::string, T*>(item->name, item));
 			auto iter = itemMap.end(); iter--;
 			std::cout << "- name: \'" << iter->first << "\' added."; PrintID(iter->second);
+
+			SceneManager::AddObject(item);
 
 			sizeFlag = true;
 			return true;
@@ -135,6 +139,7 @@ namespace moon {
 			auto end = itemMap.end();
 			for (auto it = itemMap.begin(); it != end; it++) {
 				if (it->second->ID == ID) {
+					SceneManager::DelObject(ID);
 					delete it->second;
 					itemMap.erase(it);
 
@@ -149,6 +154,7 @@ namespace moon {
 			typename std::multimap<std::string, T*>::iterator beg, end;
 			if (GetItems(name, beg, end)) {
 				if (ID == MOON_FIRSTMATCH) {
+					SceneManager::DelObject(beg->second->ID);
 					delete beg->second;
 					itemMap.erase(beg);
 
@@ -156,6 +162,7 @@ namespace moon {
 					return true;
 				} else for (; beg != end; beg++)
 					if (beg->second->ID == ID) {
+						SceneManager::DelObject(beg->second->ID);
 						delete beg->second;
 						itemMap.erase(beg);
 
@@ -176,6 +183,8 @@ namespace moon {
 				for (auto itr = beg; itr != end; ) {
 					if (itr->first == name) {
 						std::cout << "item: " << itr->first << "\t" << itr->second->name << " deleted." << std::endl;
+
+						SceneManager::DelObject(itr->second->ID);
 						delete itr->second;
 						itr = itemMap.erase(itr);
 
@@ -247,10 +256,11 @@ namespace moon {
 			return true;
 		}
 
-		static bool RenameItem(T* item, const std::string newName) {
+		static bool RenameItem(ObjectBase* item, const std::string newName) {
+			std::cout << item->name << std::endl;
 			RemoveItem(item->name, item->ID);
 			item->name = newName;
-			AddItem(item);
+			AddItem(dynamic_cast<T*>(item));
 			return true;
 		}
 
@@ -269,18 +279,41 @@ namespace moon {
 
 	class SceneManager {
 	private:
+		static int delID;
 		static unsigned int objectCounter;
 	public:
 		// global parameters
 		static Vector2 SCR_SIZE;
 
-		static unsigned int GenUniqueID() {
-			return objectCounter++;
+		// all objects
+		static std::vector<ObjectBase*> objectList;
+		static std::vector<ObjectBase*> matchedList;
+
+		static void AddObject(ObjectBase* item) {
+			while (objectList.size() <= item->ID) objectList.push_back(item);
+			objectList[item->ID] = item;
 		}
-		static unsigned int GetObjectCount() {
+		static void DelObject(unsigned int ID) {
+			std::cout << "object deleted: " << objectList[ID]->name << std::endl;
+			objectList[ID] = NULL;
+			if (ID < delID) delID = ID;
+		}
+		static unsigned int GenUniqueID() {
+			if (delID < 0) {
+				return objectCounter++;
+			} else {
+				while (objectList[delID] != NULL) {
+					if (++delID >= objectCounter)
+						return objectCounter++;
+				}
+				return delID++;
+			}
+		}
+
+		static unsigned int GetObjectNum() {
 			return objectCounter;
 		}
-		static int TotalObjectNum() {
+		static int CountObject() {
 			int count = ModelManager::CountItem();
 			count += TextureManager::CountItem();
 			count += LightManager::CountItem();
@@ -289,6 +322,10 @@ namespace moon {
 			count += MaterialManager::CountItem();
 
 			return count;
+		}
+
+		static void Clear() {
+			objectList.clear();
 		}
 
 		// scene components
@@ -308,15 +345,20 @@ namespace moon {
 			static bool mouse_left_hold;
 			static bool mouse_middle_hold;
 			static bool mouse_right_hold;
+
+			// selection
 			static bool* selection;
+			static std::vector<unsigned int> selected;
 
 			static void UpdateSelectionState() {
+				selected.clear();
+
 				if (ModelManager::sizeFlag || TextureManager::sizeFlag || LightManager::sizeFlag ||
 					MaterialManager::sizeFlag || CameraManager::sizeFlag || ShaderManager::sizeFlag) {
 
 					if(selection != NULL) free(selection);
-					selection = (bool*)malloc(TotalObjectNum() * sizeof(bool));
-					memset(selection, 0, TotalObjectNum() * sizeof(bool));
+					selection = (bool*)malloc(GetObjectNum() * sizeof(bool));
+					memset(selection, 0, GetObjectNum() * sizeof(bool));
 
 					ModelManager::sizeFlag = false;
 					TextureManager::sizeFlag = false;
@@ -338,6 +380,11 @@ namespace moon {
 
 		struct MaterialManager : ObjectManager<Material> {
 			static Material* defaultMat;
+			static Sphere* matBall;
+
+			static void PrepareMatBall() {
+				matBall = new Sphere(Vector3::ZERO(), 1.0f);
+			}
 
 			static void CreateDefaultMats() {
 				defaultMat = SceneManager::MaterialManager::CreateMaterial("MoonMtl", "default");
@@ -456,6 +503,7 @@ namespace moon {
 
 			static bool LoadSceneCamera() {
 				sceneCamera = new Camera("SceneCamera", Vector3(0.0f, 5.0f, 20.0f), 0.0f, MOON_UNSPECIFIEDID);
+				objectList.push_back(sceneCamera);
 				Renderer::targetCamera = sceneCamera;
 				return true;
 			}

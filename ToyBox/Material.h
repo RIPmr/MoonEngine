@@ -24,7 +24,7 @@ namespace moon {
 		Material() : ObjectBase(MOON_AUTOID) {}
 		Material(const std::string &name) : ObjectBase(name, MOON_AUTOID) {}
 		//~Material() { delete shader; }
-		~Material() {}
+		~Material() override {}
 
 		virtual bool scatter(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered) const = 0;
 	};

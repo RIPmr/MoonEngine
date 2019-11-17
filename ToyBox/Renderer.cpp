@@ -22,14 +22,14 @@ clock_t Renderer::end = -1;
 bool Renderer::isAbort = false;
 
 bool Renderer::PrepareVFB() {
-	// delete old array
+	// delete old texture
 	if (outputTexID != -1) free(outputImage);
 	// malloc space for new output image
 	outputImage = (GLubyte *)malloc(OUTPUT_SIZE.x * OUTPUT_SIZE.y * 3 * sizeof(GLubyte));
 	// initiallize new output image
 
 	// load init blank image
-	bool ret = LoadTextureFromMemory(OUTPUT_SIZE, outputImage, &outputTexID);
+	bool ret = LoadTextureFromMemory(OUTPUT_SIZE, outputImage, outputTexID);
 	//IM_ASSERT(ret);
 
 	return ret;
@@ -91,6 +91,9 @@ void* Renderer::rendering(void* args) {
 	std::cout << std::endl;
 	std::cout << "===================== [start rendering] =====================" << std::endl;
 	std::cout << "- output size: " << OUTPUT_SIZE.x << " * " << OUTPUT_SIZE.y << std::endl;
+	std::cout << "- output Texture ID: " << outputTexID << std::endl;
+	std::cout << "- sampling rate: " << samplingRate << std::endl;
+	std::cout << "- max reflection depth: " << maxReflectionDepth << std::endl;
 
 #pragma omp parallel for num_threads(MAX_THREADSNUM)
 	for (int i = height - 1; i >= 0; i--) {

@@ -28,7 +28,7 @@ namespace moon {
 			if (!name._Equal("FILENAME")) this->name = name;
 			else this->name = GetPathOrURLShortName(path);
 		}
-		~Model() {
+		~Model() override {
 			for (auto &iter : meshList) delete iter;
 			meshList.clear();
 		}

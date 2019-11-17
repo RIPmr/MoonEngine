@@ -46,7 +46,7 @@ namespace moon {
 			setupMesh();
 		}
 		//~Mesh() { delete material; }
-		~Mesh() {}
+		~Mesh() override {}
 
 		void Draw(Shader* shader) {
 			// bind appropriate textures
@@ -73,9 +73,9 @@ namespace moon {
 			//		number = std::to_string(heightNr++);
 
 			//	// now set the sampler to the correct texture unit
-			//	glUniform1i(glGetUniformLocation(shader->ID, (name + number).c_str()), i);
+			//	glUniform1i(glGetUniformLocation(shader->localID, (name + number).c_str()), i);
 			//	// and finally bind the texture
-			//	glBindTexture(GL_TEXTURE_2D, textures[i].ID);
+			//	glBindTexture(GL_TEXTURE_2D, textures[i].localID);
 			//}
 
 			// draw mesh

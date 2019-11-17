@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <imgui.h>
 
 #include "Transform.h"
 
@@ -14,8 +15,9 @@ namespace moon {
 	public:
 		unsigned int ID; // ID is unique in every type of objects
 		std::string name;
+		bool visible;
 
-		ObjectBase() : name("Object"), ID(MOON_UNSPECIFIEDID) {}
+		ObjectBase() : name("Object"), ID(MOON_UNSPECIFIEDID), visible(true) {}
 		ObjectBase(const int &_id);
 		ObjectBase(const std::string &_name, const int &_id);
 		virtual ~ObjectBase() {}
@@ -40,6 +42,10 @@ namespace moon {
 			if (typeid(o1) == typeid(o2) && o1->ID == o2->ID) return true;
 			else return false;
 		}
+
+		void Rename(const std::string &newName);
+
+		virtual void ListProperties();
 	};
 
 	extern class Operator;
@@ -63,6 +69,8 @@ namespace moon {
 		MObject(const std::string &_name, const int &_id) : ObjectBase(_name, _id){}
 		MObject(const std::string &_name, const Transform &transform, const int &_id) :
 			ObjectBase(_name, _id), transform(transform) {}
-		~MObject() {}
+		~MObject() override {}
+
+		virtual void ListProperties() override;
 	};
 }

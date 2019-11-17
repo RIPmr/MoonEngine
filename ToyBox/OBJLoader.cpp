@@ -250,6 +250,7 @@ namespace moon {
 		for (int i = 0; i < MeshMatNames.size(); i++) {
 			std::string matname = MeshMatNames[i];
 
+			std::cout << "searching material: " << matname << std::endl;
 			// Find corresponding material name in loaded materials
 			// when found copy material variables into mesh material
 			Material* searchMat = SceneManager::MaterialManager::GetItem(matname);
@@ -510,9 +511,7 @@ namespace moon {
 			// new material and material name
 			if (firstToken(curline) == "newmtl") {
 				if (curline.size() > 7) 
-					if (tempMaterial == NULL) tempMaterial = SceneManager::MaterialManager::CreateMaterial("MoonMtl", tail(curline));
-					else SceneManager::MaterialManager::RenameItem(tempMaterial, tail(curline));
-				std::cout << "new material created: " << tempMaterial->name << std::endl;
+					tempMaterial = SceneManager::MaterialManager::CreateMaterial("MoonMtl", tail(curline));
 			}
 			// Ambient Color
 			if (firstToken(curline) == "Ka") {

@@ -39,7 +39,7 @@ namespace moon {
 		static void MainMenu() {
 			if (icon == NULL) icon = MOON_TextureManager::GetItem("moon_icon");
 
-			ImGui::Image((void*)(intptr_t)icon->ID, ImVec2(20, 20));
+			ImGui::Image((void*)(intptr_t)icon->localID, ImVec2(20, 20));
 
 			if (ImGui::BeginMenu("File")) {
 				ShowExampleMenuFile();
@@ -188,7 +188,7 @@ namespace moon {
 			if (logo == NULL) logo = MOON_TextureManager::GetItem("moon_logo");
 
 			ImGui::Begin("ABOUT ME", &MainUI::show_about_window, ImGuiWindowFlags_NoResize);
-			ImGui::Image((void*)(intptr_t)logo->ID, ImVec2(logo->width / 3, logo->height / 3));
+			ImGui::Image((void*)(intptr_t)logo->localID, ImVec2(logo->width / 3, logo->height / 3));
 
 			ImGui::Text(u8"【HU ANIME】");
 			ImGui::Text(u8">独立动画/游戏创作者");
@@ -227,8 +227,21 @@ namespace moon {
 			static bool showShader = true;
 
 			static bool allFlag = true;
+			static char pattern[128] = "";
+			bool notEmpty = strcmp(pattern, "");
 
-			ImGui::Checkbox("All", &showAll);
+			ImGui::Checkbox("All", &showAll); ImGui::SameLine(80);
+			ImGui::SetNextItemWidth(ImGui::GetWindowWidth() / 1.65 - (notEmpty ? 20 : 0));
+			ImGui::InputTextWithHint("search", "type to search", pattern, IM_ARRAYSIZE(pattern));
+			if (ImGui::IsItemDeactivated() && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Enter))) {
+
+			}
+			if (notEmpty) {
+				ImGui::SameLine();
+				if (ImGui::Button(u8"×", ImVec2(20, 20))) {
+					sprintf_s(pattern, "");
+				}
+			}
 			ImGui::Checkbox("Model", &showModel); ImGui::SameLine(80);
 			ImGui::Checkbox("Mat", &showMat); ImGui::SameLine(160);
 			ImGui::Checkbox("Tex", &showTex);
@@ -248,14 +261,13 @@ namespace moon {
 			ImGui::Text("ID"); ImGui::NextColumn();
 			ImGui::Separator();
 
-			int loopID = 0;
 			MOON_InputManager::UpdateSelectionState();
-			if (showModel) MOON_ModelManager::ListItems(loopID);
-			if (showMat) MOON_MaterialManager::ListItems(loopID);
-			if (showTex) MOON_TextureManager::ListItems(loopID);
-			if (showLight) MOON_LightManager::ListItems(loopID);
-			if (showCam) MOON_CameraManager::ListItems(loopID);
-			if (showShader) MOON_ShaderManager::ListItems(loopID);
+			if (showModel) MOON_ModelManager::ListItems();
+			if (showMat) MOON_MaterialManager::ListItems();
+			if (showTex) MOON_TextureManager::ListItems();
+			if (showLight) MOON_LightManager::ListItems();
+			if (showCam) MOON_CameraManager::ListItems();
+			if (showShader) MOON_ShaderManager::ListItems();
 			ImGui::NextColumn();
 			if (showModel) MOON_ModelManager::ListID();
 			if (showMat) MOON_MaterialManager::ListID();
@@ -290,6 +302,12 @@ namespace moon {
 
 		static void InspectorWnd() {
 			ImGui::Begin("Inspector", &MainUI::show_inspector_window);
+
+			// loop all selected objects and list their properties
+			for (auto &iter : MOON_InputManager::selected) {
+				MOON_ObjectList[iter]->ListProperties();
+				ImGui::Separator();
+			}
 
 			ImGui::End();
 		}

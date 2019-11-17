@@ -30,9 +30,15 @@ int main() {
 
 	// engine resources initialization
 	if (!MOON_TextureManager::LoadImagesForUI()) return -1;
+	std::cout << "- Images For UI Loaded." << std::endl;
 	MOON_ShaderManager::LoadDefaultShaders();
+	std::cout << "- Default Shaders Loaded." << std::endl;
+	MOON_MaterialManager::PrepareMatBall();
+	std::cout << "- Material Ball Created." << std::endl;
 	MOON_MaterialManager::CreateDefaultMats();
+	std::cout << "- Default Materials Created." << std::endl;
 	MOON_CameraManager::LoadSceneCamera();
+	std::cout << "- Scene Camera Created." << std::endl;
 	std::cout << "Finished." << std::endl;
 
 	// scene objects
@@ -214,11 +220,13 @@ void MOON_CleanUp() {
 	MOON_ModelManager::Clear();
 	MOON_CameraManager::Clear();
 	MOON_InputManager::Clear();
+	SceneManager::Clear();
 
+	delete MOON_MaterialManager::matBall;
 	delete MOON_SceneCamera;
 }
 
-void unProjectMouse() {
+Vector3 unProjectMouse() {
 	if (NULL == MOON_SceneCamera) {
 		std::cout << "camera failed! failed to un-project mouse" << std::endl;
 	} else {
@@ -231,10 +239,10 @@ void unProjectMouse() {
 		screenPos.z = winZ;
 
 		Vector4 viewport = Vector4(0.0f, 0.0f, MOON_WndSize.x, MOON_WndSize.y);
-
 		Vector3 worldPos = Matrix4x4::UnProject(screenPos, view, projection, viewport);
+		//movePos.setValue(worldPos.x, worldPos.y, worldPos.z);
 
-		movePos.setValue(worldPos.x, worldPos.y, worldPos.z);
+		return worldPos;
 	}
 }
 

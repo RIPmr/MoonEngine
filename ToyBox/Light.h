@@ -15,7 +15,7 @@ namespace moon {
 		Light() : position(Vector3::ZERO()){}
 		Light(const Vector3 &pos) : position(pos) {}
 		Light(const std::string &name, const Vector3 &pos) : position(pos), MObject(name) {}
-		virtual ~Light() {}
+		virtual ~Light() override {}
 	};
 
 	class DirLight : public Light {
@@ -32,7 +32,7 @@ namespace moon {
 		
 		DirLight(const std::string &name, const Vector3 &pos, const Vector3 &dir, const Vector3 &ambi, const Vector3 &diff, const Vector3 &spec) :
 			Light(name, pos), direction(dir), ambient(ambi), diffuse(diff), specular(spec) {}
-		~DirLight() {}
+		~DirLight() override {}
 	};
 
 	class PointLight : public Light {
@@ -51,7 +51,7 @@ namespace moon {
 		
 		PointLight(const std::string &name, const Vector3 &pos, const Vector3 &ambi, const Vector3 &diff, const Vector3 &spec, const float &constant, const float &linear, const float &quadratic) :
 			Light(name, pos), ambient(ambi), diffuse(diff), specular(spec), constant(constant), linear(linear), quadratic(quadratic) {}
-		~PointLight() {}
+		~PointLight() override {}
 	};
 
 	class SpotLight : public Light {
@@ -78,7 +78,7 @@ namespace moon {
 			const float &constant, const float &linear, const float &quadratic, const float &cutOff, const float &outerCutOff) :
 			Light(name, pos), direction(dir), ambient(ambi), diffuse(diff), specular(spec), constant(constant), linear(linear), 
 			quadratic(quadratic), cutOff(cutOff), outerCutOff(outerCutOff) {}
-		~SpotLight() {}
+		~SpotLight() override {}
 	};
 
 	class MoonLight : public Light {
