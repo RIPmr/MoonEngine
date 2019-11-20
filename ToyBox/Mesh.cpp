@@ -1,5 +1,8 @@
 #include "Mesh.h"
 #include "SceneMgr.h"
+#include "Model.h"
+
+#define modelToWorld parent->transform.modelMat.multVec
 
 namespace moon {
 	void Mesh::Draw(Shader* shader, const Matrix4x4 & model) {
@@ -51,5 +54,91 @@ namespace moon {
 
 		// always good practice to set everything back to defaults once configured.
 		glActiveTexture(GL_TEXTURE0);
+	}
+
+	void Mesh::setupMesh() {
+		glGenVertexArrays(1, &VAO);
+		glGenBuffers(1, &VBO);
+		glGenBuffers(1, &EBO);
+
+		glBindVertexArray(VAO);
+		// load data into vertex buffers
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		// A great thing about structs is that their memory layout is sequential for all its items.
+		// The effect is that we can simply pass a pointer to the struct and it translates perfectly to a Vector3/2 array which
+		// again translates to 3/2 floats which translates to a byte array.
+		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
+
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
+
+		// set the vertex attribute pointers
+		// vertex Positions
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+		// vertex normals
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Normal));
+		// vertex texture coords
+		glEnableVertexAttribArray(2);
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexCoords));
+		// vertex tangent
+		glEnableVertexAttribArray(3);
+		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Tangent));
+		// vertex bitangent
+		glEnableVertexAttribArray(4);
+		glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Bitangent));
+
+		glBindVertexArray(0);
+	}
+
+	void Mesh::GetSurfaceProperties(const uint32_t &triIndex, const Vector2 &uv, Vector3 &hitNormal, Vector2 &hitTextureCoordinates) const {
+		// face normal
+		/*Vector3 &v0 = P[trisIndex[triIndex * 3]];
+		Vector3 &v1 = P[trisIndex[triIndex * 3 + 1]];
+		Vector3 &v2 = P[trisIndex[triIndex * 3 + 2]];
+		hitNormal = (v1 - v0).cross(v2 - v0);
+		hitNormal.normalize();*/
+
+		// texture coordinates
+		/*const Vector2 &st0 = texCoordinates[triIndex * 3];
+		const Vector2 &st1 = texCoordinates[triIndex * 3 + 1];
+		const Vector2 &st2 = texCoordinates[triIndex * 3 + 2];
+		hitTextureCoordinates = (1 - uv.x - uv.y) * st0 + uv.x * st1 + uv.y * st2;*/
+
+		// vertex normal
+		Vector3 const &n0 = vertices[indices[triIndex * 3]].Normal;
+		Vector3 const &n1 = vertices[indices[triIndex * 3 + 1]].Normal;
+		Vector3 const &n2 = vertices[indices[triIndex * 3 + 2]].Normal;
+
+		hitNormal = (1 - uv.x - uv.y) * n0 + uv.x * n1 + uv.y * n2;
+		hitNormal = parent->transform.modelMat.multDir(hitNormal);
+		hitNormal.normalize();
+		//std::cout << hitNormal << std::endl;
+	}
+
+	// Test if the ray interesests this triangle mesh
+	bool Mesh::Intersect(const Ray &ray, float &tNear, uint32_t &triIndex, Vector2 &uv) const {
+		uint32_t j = 0;
+		bool isect = false;
+		for (uint32_t i = 0; i < indices.size() / 3; ++i) {
+			Vector3 const &v0 = modelToWorld(vertices[indices[j]].Position);
+			Vector3 const &v1 = modelToWorld(vertices[indices[j + 1]].Position);
+			Vector3 const &v2 = modelToWorld(vertices[indices[j + 2]].Position);
+
+			float t = tNear, u, v;
+			if (MoonMath::RayTriangleIntersect(ray, v0, v1, v2, t, u, v) && t < tNear) {
+				if (t > EPSILON && t < INFINITY) {
+					tNear = t;
+					uv.x = u;
+					uv.y = v;
+					triIndex = i;
+					isect = true;
+				}
+			}
+			j += 3;
+		}
+
+		return isect;
 	}
 }

@@ -58,7 +58,7 @@ namespace moon {
 			~OPStack() { ClearStack(); }
 
 			void ExecuteAll() const;
-			void ListStack() const;
+			void ListStacks() const;
 
 			void AddStack(Operator* op);
 			void RemoveStack(Operator* op);

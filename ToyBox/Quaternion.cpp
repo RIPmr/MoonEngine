@@ -100,8 +100,13 @@ namespace moon {
 	}
 
 
-	void Quaternion::Set(float _x, float _y, float _z, float _w) {
+	void Quaternion::SetValue(float _x, float _y, float _z, float _w) {
 		x = _x; y = _y; z = _z; w = _w;
+		UpdateEulerAngle();
+	}
+
+	void Quaternion::SetValue(const Quaternion &q) {
+		x = q.x; y = q.y; z = q.z; w = q.w;
 		UpdateEulerAngle();
 	}
 
@@ -167,6 +172,10 @@ namespace moon {
 		float multi = sin(newAlpha) / sin(alpha);
 
 		return Quaternion(q.x * multi, q.y * multi, q.z * multi, ww);
+	}
+
+	Quaternion Quaternion::Normalize(Quaternion &q) {
+		return Quaternion(q.x, q.y, q.z, q.w);
 	}
 
 	Quaternion& Quaternion::operator+=(const Quaternion &q) {

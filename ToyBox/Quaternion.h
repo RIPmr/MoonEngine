@@ -35,9 +35,11 @@ namespace moon {
 		static Quaternion Lerp(const Quaternion &a, const Quaternion &b, float t);
 		static Quaternion Slerp(const Quaternion &a, const Quaternion &b, float t);
 		static float Angle(const Quaternion &lhs, const Quaternion &rhs);
+		static Quaternion Normalize(Quaternion &q);
 
 		void SetEulerAngle(float yaw, float pitch, float roll);
-		void Set(float _x, float _y, float _z, float _w);
+		void SetValue(float _x, float _y, float _z, float _w);
+		void SetValue(const Quaternion &q);
 
 
 		float MagSquared() const;

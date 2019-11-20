@@ -1,4 +1,7 @@
 #pragma once
+#include <vector>
+#include <string>
+
 #include "Transform.h"
 #include "Mesh.h"
 #include "Material.h"
@@ -7,13 +10,6 @@
 #include "OBJLoader.h"
 #include "Utility.h"
 
-#include <vector>
-#include <string>
-
-//#include <glm/glm.hpp>
-//#include <glm/gtc/matrix_transform.hpp>
-//#include <glm/gtc/type_ptr.hpp>
-//#include <glm/gtc/quaternion.hpp>
 
 namespace moon {
 	class Model : public MObject, public Hitable {
@@ -39,13 +35,8 @@ namespace moon {
 		}
 
 		void Draw() {
-			// model = T * R * S * E
-			Matrix4x4 model = Matrix4x4::Scale(Matrix4x4::identity(), transform.scale);
-			model = Matrix4x4::Rotate(model, transform.rotation);
-			model = Matrix4x4::Translate(model, transform.position);
-
 			for (int i = 0; i < meshList.size(); i++) {
-				meshList[i]->Draw(meshList[i]->material->shader, model);
+				meshList[i]->Draw(meshList[i]->material->shader, transform.modelMat);
 			}
 		}
 
@@ -53,9 +44,12 @@ namespace moon {
 			Loader loader;
 			loader.LoadFile(path, gammaCorrection);
 
-			std::cout << "copying mesh list" << std::endl;
+			std::cout << "- OBJ file loaded, copying mesh list... ..." << std::endl;
+
 			// transfer data in loader to model
 			meshList = loader.LoadedMeshes;
+
+			for (auto &iter : meshList) iter->parent = this;
 		}
 
 		bool Hit(const Ray &r, float tmin, float tmax, HitRecord &rec) const {

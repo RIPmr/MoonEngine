@@ -3,9 +3,9 @@
 #include <iostream>
 #include <iomanip>
 
-#include <glad/glad.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+//#include <glad/glad.h>
+//#include <glm/glm.hpp>
+//#include <glm/gtc/matrix_transform.hpp>
 
 #include "Vector3.h"
 #include "Vector4.h"
@@ -405,5 +405,63 @@ namespace moon {
 			return ScaleMat(factor) * model;
 		}
 
+		// especially when the matrix is projective matrix
+		// the coordinate w is more often than not equals to 1
+		// so we need to divided x, y, z by w to convert the 
+		// coordinates from homogeneous back to Cartesian coordinates
+		void multVec(const Vector3 &src, Vector3 &dst) const {
+			float a, b, c, w;
+
+			a = src[0] * x[0][0] + src[1] * x[1][0] + src[2] * x[2][0] + x[3][0];
+			b = src[0] * x[0][1] + src[1] * x[1][1] + src[2] * x[2][1] + x[3][1];
+			c = src[0] * x[0][2] + src[1] * x[1][2] + src[2] * x[2][2] + x[3][2];
+			w = src[0] * x[0][3] + src[1] * x[1][3] + src[2] * x[2][3] + x[3][3];
+
+			dst.x = a / w;
+			dst.y = b / w;
+			dst.z = c / w;
+		}
+
+		Vector3 multVec(const Vector3 &src) const {
+			float a, b, c, w;
+
+			a = src[0] * x[0][0] + src[1] * x[1][0] + src[2] * x[2][0] + x[3][0];
+			b = src[0] * x[0][1] + src[1] * x[1][1] + src[2] * x[2][1] + x[3][1];
+			c = src[0] * x[0][2] + src[1] * x[1][2] + src[2] * x[2][2] + x[3][2];
+			w = src[0] * x[0][3] + src[1] * x[1][3] + src[2] * x[2][3] + x[3][3];
+
+			return Vector3(a / w, b / w, c / w);
+		}
+
+		void multDir(const Vector3 &src, Vector3 &dst) const {
+			float a, b, c;
+
+			a = src[0] * x[0][0] + src[1] * x[1][0] + src[2] * x[2][0];
+			b = src[0] * x[0][1] + src[1] * x[1][1] + src[2] * x[2][1];
+			c = src[0] * x[0][2] + src[1] * x[1][2] + src[2] * x[2][2];
+
+			dst.x = a;
+			dst.y = b;
+			dst.z = c;
+		}
+
+		Vector3 multDir(const Vector3 &src) const {
+			float a, b, c;
+
+			a = src[0] * x[0][0] + src[1] * x[1][0] + src[2] * x[2][0];
+			b = src[0] * x[0][1] + src[1] * x[1][1] + src[2] * x[2][1];
+			c = src[0] * x[0][2] + src[1] * x[1][2] + src[2] * x[2][2];
+
+			return Vector3(a, b, c);
+		}
+
 	};
 }
+
+// NOTE:
+// 齐次坐标(Homogeneous coordinates)
+// 向量的w分量也叫齐次坐标。想要从齐次坐标得到3D坐标，我们可以把x、y和z坐标除以w坐标。
+// 我们通常不会注意这个问题，因为w分量通常是1.0。使用齐次坐标有几点好处：
+// 它允许我们在3D向量上进行平移(如果没有w分量我们是不能平移向量的)
+// 如果一个向量的齐次坐标是0，这个坐标就是方向向量(Direction Vector)，
+// 因为w坐标是0，这个向量就不能平移(译注:这也就是我们说的不能平移一个方向)。

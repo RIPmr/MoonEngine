@@ -9,6 +9,7 @@
 #include "Material.h"
 #include "ObjectBase.h"
 #include "MathUtils.h"
+#include "Matrix4x4.h"
 
 namespace moon {
 	struct Vertex {
@@ -19,10 +20,12 @@ namespace moon {
 		Vector3 Bitangent;
 	};
 
+	extern class Model;
 	class Mesh : public ObjectBase, public Hitable {
 	public:
 		std::vector<Vertex> vertices;
 		std::vector<unsigned int> indices;
+		Model* parent;
 		Material* material;
 		unsigned int VAO;
 
@@ -75,97 +78,9 @@ namespace moon {
 		unsigned int VBO, EBO;
 
 		// initializes all the buffer objects/arrays
-		void setupMesh() {
-			glGenVertexArrays(1, &VAO);
-			glGenBuffers(1, &VBO);
-			glGenBuffers(1, &EBO);
-
-			glBindVertexArray(VAO);
-			// load data into vertex buffers
-			glBindBuffer(GL_ARRAY_BUFFER, VBO);
-			// A great thing about structs is that their memory layout is sequential for all its items.
-			// The effect is that we can simply pass a pointer to the struct and it translates perfectly to a Vector3/2 array which
-			// again translates to 3/2 floats which translates to a byte array.
-			glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
-
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
-
-			// set the vertex attribute pointers
-			// vertex Positions
-			glEnableVertexAttribArray(0);
-			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-			// vertex normals
-			glEnableVertexAttribArray(1);
-			glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Normal));
-			// vertex texture coords
-			glEnableVertexAttribArray(2);
-			glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexCoords));
-			// vertex tangent
-			glEnableVertexAttribArray(3);
-			glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Tangent));
-			// vertex bitangent
-			glEnableVertexAttribArray(4);
-			glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Bitangent));
-
-			glBindVertexArray(0);
-		}
-
-		void GetSurfaceProperties(const uint32_t &triIndex, const Vector2 &uv, Vector3 &hitNormal, Vector2 &hitTextureCoordinates) const {
-			// face normal
-			/*Vector3 &v0 = P[trisIndex[triIndex * 3]];
-			Vector3 &v1 = P[trisIndex[triIndex * 3 + 1]];
-			Vector3 &v2 = P[trisIndex[triIndex * 3 + 2]];
-			hitNormal = (v1 - v0).cross(v2 - v0);
-			hitNormal.normalize();*/
-
-			// texture coordinates
-			/*const Vector2 &st0 = texCoordinates[triIndex * 3];
-			const Vector2 &st1 = texCoordinates[triIndex * 3 + 1];
-			const Vector2 &st2 = texCoordinates[triIndex * 3 + 2];
-			hitTextureCoordinates = (1 - uv.x - uv.y) * st0 + uv.x * st1 + uv.y * st2;*/
-
-			// vertex normal
-			Vector3 const &n0 = vertices[indices[triIndex * 3]].Normal;
-			Vector3 const &n1 = vertices[indices[triIndex * 3 + 1]].Normal;
-			Vector3 const &n2 = vertices[indices[triIndex * 3 + 2]].Normal;
-			/*Vector3 &n0 = N[triIndex * 3];
-			Vector3 &n1 = N[triIndex * 3 + 1];
-			Vector3 &n2 = N[triIndex * 3 + 2];*/
-
-			/*std::cout << "---------------------------------------" << std::endl;
-			std::cout << n0.x << ", " << n0.y << ", " << n0.z << std::endl;
-			std::cout << n1.x << ", " << n1.y << ", " << n1.z << std::endl;
-			std::cout << n2.x << ", " << n2.y << ", " << n2.z << std::endl;*/
-
-			hitNormal = (1 - uv.x - uv.y) * n0 + uv.x * n1 + uv.y * n2;
-			hitNormal.normalize();
-			//std::cout << hitNormal.x << ", " << hitNormal.y << ", " << hitNormal.z  << std::endl;
-		}
-
+		void setupMesh();
+		void GetSurfaceProperties(const uint32_t &triIndex, const Vector2 &uv, Vector3 &hitNormal, Vector2 &hitTextureCoordinates) const;
 		// Test if the ray interesests this triangle mesh
-		bool Intersect(const Ray &ray, float &tNear, uint32_t &triIndex, Vector2 &uv) const {
-			uint32_t j = 0;
-			bool isect = false;
-			for (uint32_t i = 0; i < indices.size() / 3; ++i) {
-				Vector3 const &v0 = vertices[indices[j]].Position;
-				Vector3 const &v1 = vertices[indices[j + 1]].Position;
-				Vector3 const &v2 = vertices[indices[j + 2]].Position;
-
-				float t = tNear, u, v;
-				if (MoonMath::RayTriangleIntersect(ray, v0, v1, v2, t, u, v) && t < tNear) {
-					if (t < INFINITY && t > EPSILON) {
-						tNear = t;
-						uv.x = u;
-						uv.y = v;
-						triIndex = i;
-						isect = true;
-					}
-				}
-				j += 3;
-			}
-
-			return isect;
-		}
+		bool Intersect(const Ray &ray, float &tNear, uint32_t &triIndex, Vector2 &uv) const;
 	};
 }

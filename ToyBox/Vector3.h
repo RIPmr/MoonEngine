@@ -72,6 +72,7 @@ namespace moon {
 		}
 
 		inline void setValue(float _x, float _y, float _z) { x = _x; y = _y; z = _z; }
+		inline void setValue(const Vector3 &v) { x = v.x; y = v.y; z = v.z; }
 
 		static Vector3 Normalize(const Vector3 &v);
 		static Vector3 Cross(const Vector3 &v1, const Vector3 &v2);

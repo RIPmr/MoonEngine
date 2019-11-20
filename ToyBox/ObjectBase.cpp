@@ -42,7 +42,7 @@ namespace moon {
 			iter->Execute();
 		}
 	}
-	void MObject::OPStack::ListStack() const {
+	void MObject::OPStack::ListStacks() const {
 		for (auto &iter : opList) {
 			iter->ListProperties();
 		}
@@ -69,7 +69,7 @@ namespace moon {
 	}
 
 	void MObject::ListProperties() {
-		// list name
+		// list name ----------------------------------------------------------------------
 		char* buf = (char*)name.c_str();
 		ImGui::Text("Name:"); ImGui::SameLine();
 		ImGui::InputText("NameInput_" + ID, buf, 64); ImGui::SameLine();
@@ -81,11 +81,11 @@ namespace moon {
 
 		ImGui::Separator();
 
-		// list transform
+		// list transform -----------------------------------------------------------------
 		Vector3 &euler = transform.rotation.eulerAngles;
 		float pos[3] = { transform.position.x, transform.position.y, transform.position.z };
-		float rotEuler[3] = { euler.x, euler.y, euler.z };
 		float scale[3] = { transform.scale.x, transform.scale.y, transform.scale.z };
+		float rotEuler[3] = { euler.x, euler.y, euler.z };
 
 		ImGui::Text("Transform:");
 		ImGui::DragFloat3("Position", pos, 0.1f, -INFINITY, INFINITY);
@@ -95,14 +95,12 @@ namespace moon {
 		Quaternion deltaQ = Quaternion(rotEuler[0] - euler.x,
 									   rotEuler[1] - euler.y,
 									   rotEuler[2] - euler.z);
-		// world
-		transform.rotation = deltaQ * transform.rotation;
-		// local
-		//transform.rotation *= deltaQ;
+		transform.Rotate(deltaQ);
+
 		transform.set(&Vector3(pos), NULL, &Vector3(scale));
 
-		// list operators
-		
+		// list operators -----------------------------------------------------------------
+		opstack.ListStacks();
 
 	}
 }
