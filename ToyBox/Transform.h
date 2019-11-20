@@ -41,6 +41,17 @@ namespace moon {
 		}
 		~Transform() {}
 
+		void set(const Vector3* position, const Quaternion* rotation = NULL, const Vector3* scale = NULL) {
+			this->position = *position;
+			if (rotation != NULL) this->rotation = *rotation;
+			if (scale != NULL) this->scale = *scale;
+		}
+
+		void Rotate(Quaternion q) {
+			//rotation = Quaternion(Matrix4x4::Rotate(Matrix4x4(rotation), q));
+			rotation = q * rotation;
+		}
+
 		Matrix4x4 GetMatrix() const;
 		Vector3 forward() const;
 		Vector3 right() const;

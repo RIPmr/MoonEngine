@@ -4,6 +4,7 @@
 #define MOON_OutputTexID Renderer::outputTexID
 #define MOON_CountObject SceneManager::TotalObjectNum()
 #define MOON_SceneCamera SceneManager::CameraManager::sceneCamera
+#define MOON_CurrentCamera SceneManager::CameraManager::currentCamera
 #define MOON_MousePos SceneManager::InputManager::mousePos
 #define MOON_Clock SceneManager::Clock
 
@@ -41,6 +42,7 @@
 #include "Utility.h"
 #include "Renderer.h"
 #include "UIController.h"
+#include "OperatorBase.h"
 #include "ObjectBase.h"
 #include "MShader.h"
 #include "Camera.h"
@@ -87,6 +89,8 @@ unsigned long long MoonMath::seed = 1;
 
 // init scene manager
 Camera* MOON_SceneCamera = NULL;
+Camera* MOON_CurrentCamera = NULL;
+float Camera::MouseSensitivity = 0.025f;
 int SceneManager::delID = -1;
 unsigned int SceneManager::objectCounter = 1;
 std::vector<ObjectBase*> SceneManager::objectList;

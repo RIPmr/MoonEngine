@@ -14,7 +14,7 @@ namespace moon {
 	public:
 		// global settings
 		static Vector2 OUTPUT_SIZE;
-		//static float aspect;
+		static float aspect;
 		static GLubyte *outputImage;
 		static GLuint outputTexID;
 
@@ -33,6 +33,7 @@ namespace moon {
 		static void* rendering(void* args);
 		static bool PrepareVFB();
 		static bool PrepareRendering();
+		static void SetOutputSize(unsigned int width, unsigned int height);
 
 	private:
 		static Vector3 SamplingColor(const Ray &r, int depth);

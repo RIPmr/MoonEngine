@@ -10,6 +10,11 @@
 #include <vector>
 #include <string>
 
+//#include <glm/glm.hpp>
+//#include <glm/gtc/matrix_transform.hpp>
+//#include <glm/gtc/type_ptr.hpp>
+//#include <glm/gtc/quaternion.hpp>
+
 namespace moon {
 	class Model : public MObject, public Hitable {
 	public:
@@ -34,8 +39,13 @@ namespace moon {
 		}
 
 		void Draw() {
+			// model = T * R * S * E
+			Matrix4x4 model = Matrix4x4::Scale(Matrix4x4::identity(), transform.scale);
+			model = Matrix4x4::Rotate(model, transform.rotation);
+			model = Matrix4x4::Translate(model, transform.position);
+
 			for (int i = 0; i < meshList.size(); i++) {
-				meshList[i]->Draw(meshList[i]->material->shader);
+				meshList[i]->Draw(meshList[i]->material->shader, model);
 			}
 		}
 

@@ -4,14 +4,15 @@
 
 // global settings
 const char *title = "MoonEngine - v0.01 WIP";
-Vector2 MOON_WndSize = Vector2(1600, 900);
-Vector2 MOON_OutputSize = Vector2(200, 100);
-ImVec4 clearColor = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
-// global parameters
-Matrix4x4 view;
-Matrix4x4 projection;
+Vector2 MOON_WndSize = Vector2(1600, 900);
+float SceneManager::aspect = MOON_WndSize.x / MOON_WndSize.y;
+Vector2 MOON_OutputSize = Vector2(200, 100);
+float Renderer::aspect = MOON_OutputSize.x / MOON_OutputSize.y;
+
+ImVec4 clearColor = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 ImVec4 grdLineColor = ImVec4(0.8f, 0.8f, 0.8f, 1.0f);
+
 unsigned int Renderer::samplingRate = 5;
 unsigned int Renderer::maxReflectionDepth = 5;
 
@@ -83,26 +84,13 @@ int main() {
 			if (MainUI::show_create_window) MainUI::CreateWnd();
 		}
 
+		// TODO: auto update via callback
 		// calculate matrix
-		view = MOON_SceneCamera->GetViewMatrix();
-		projection = Matrix4x4::Perspective(MOON_SceneCamera->fov, MOON_WndSize.x / MOON_WndSize.y, 0.1f, 100.0f);
+		//MOON_CurrentCamera->UpdateMatrix();
 
 		// Rendering objects
 		DrawGround(1.0, 5, SceneManager::ShaderManager::GetItem("ConstColor"));
 
-		Shader* ts = SceneManager::ShaderManager::GetItem("SimplePhong");
-		ts->use();
-		Matrix4x4 move = Matrix4x4::TranslateMat(movePos);
-		Matrix4x4 model = Matrix4x4::Scale(move, 1.0);
-
-		ts->setMat4("model", model);
-		ts->setMat4("view", view);
-		ts->setMat4("projection", projection);
-
-		ts->setVec3("lightColor", Vector3(1.0, 1.0, 1.0));
-		ts->setVec3("objectColor", Vector3(0.8f, 0.6f, 0.2f));
-		ts->setVec3("lightPos", MOON_SceneCamera->transform.position);
-		ts->setVec3("viewPos", MOON_SceneCamera->transform.position);
 
 		teapot->Draw();
 
@@ -239,7 +227,7 @@ Vector3 unProjectMouse() {
 		screenPos.z = winZ;
 
 		Vector4 viewport = Vector4(0.0f, 0.0f, MOON_WndSize.x, MOON_WndSize.y);
-		Vector3 worldPos = Matrix4x4::UnProject(screenPos, view, projection, viewport);
+		Vector3 worldPos = Matrix4x4::UnProject(screenPos, MOON_CurrentCamera->view, MOON_CurrentCamera->projection, viewport);
 		//movePos.setValue(worldPos.x, worldPos.y, worldPos.z);
 
 		return worldPos;
@@ -259,8 +247,8 @@ void DrawGround(const float &space, const int &gridCnt, const Shader* groundShad
 	groundShader->use();
 	groundShader->setVec4("lineColor", grdLineColor);
 	groundShader->setMat4("model", Matrix4x4());
-	groundShader->setMat4("view", view);
-	groundShader->setMat4("projection", projection);
+	groundShader->setMat4("view", MOON_CurrentCamera->view);
+	groundShader->setMat4("projection", MOON_CurrentCamera->projection);
 
 	// generate grid points
 	for (int i = -gridCnt; i <= gridCnt; i++) {

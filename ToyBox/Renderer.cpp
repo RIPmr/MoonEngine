@@ -21,6 +21,11 @@ clock_t Renderer::start = -1;
 clock_t Renderer::end = -1;
 bool Renderer::isAbort = false;
 
+void Renderer::SetOutputSize(unsigned int width, unsigned int height) {
+	OUTPUT_SIZE.setValue(width, height);
+	aspect = (float)width / height;
+}
+
 bool Renderer::PrepareVFB() {
 	// delete old texture
 	if (outputTexID != -1) free(outputImage);
@@ -39,6 +44,7 @@ bool Renderer::PrepareRendering() {
 	start = end = -1;
 	isAbort = false;
 	if (outputTexID != -1) glDeleteTextures(1, &outputTexID);
+	targetCamera->InitRenderCamera();
 	PrepareVFB();
 	return true;
 }

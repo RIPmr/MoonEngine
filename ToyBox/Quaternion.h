@@ -5,6 +5,7 @@
 #include <cmath>
 
 namespace moon {
+	extern class Matrix4x4;
 	class Quaternion {
 	public:
 		float x;
@@ -13,15 +14,19 @@ namespace moon {
 		float w;
 		Vector3 eulerAngles;
 
-		Quaternion(): x(0), y(0), z(0), w(1) {}
-		Quaternion(float _x, float _y, float _z, float _w) {
-			float mag = _x * _x + _y * _y + _z * _z + _w * _w;
-			x = _x / mag; y = _y / mag; z = _z / mag; w = _w / mag;
+		Quaternion() : x(0), y(0), z(0), w(1) {}
+		Quaternion(float _x, float _y, float _z, float _w) : x(_x), y(_y), z(_z), w(_w) {
+			normalize();
+			UpdateEulerAngle();
 		}
 		Quaternion(float yaw, float pitch, float roll) {
 			this->SetEulerAngle(yaw, pitch, roll);
 		}
-		Quaternion(const Quaternion& q): x(q.x), y(q.y), z(q.z), w(q.w) {}
+		Quaternion(Vector3 eulerAngles) {
+			this->SetEulerAngle(eulerAngles.x, eulerAngles.y, eulerAngles.z);
+		}
+		Quaternion(const Matrix4x4 &mat);
+		Quaternion(const Quaternion& q) : x(q.x), y(q.y), z(q.z), w(q.w), eulerAngles(q.eulerAngles) {}
 		~Quaternion() {}
 
 		static Quaternion Pow(const Quaternion& q, const float& t);
@@ -34,6 +39,9 @@ namespace moon {
 		void SetEulerAngle(float yaw, float pitch, float roll);
 		void Set(float _x, float _y, float _z, float _w);
 
+
+		float MagSquared() const;
+		float magnitude() const;
 		Quaternion Conjugate() const;
 		Quaternion Inverse() const;
 		Vector3 EulerAngle() const;
@@ -41,6 +49,7 @@ namespace moon {
 		Quaternion& operator^=(const float &pow);
 		Quaternion& operator+=(const Quaternion &q);
 		Quaternion& operator-=(const Quaternion &q);
+		Quaternion& operator*=(const Quaternion &q);
 		Quaternion& operator*=(float s);
 		Quaternion& operator/=(float s);
 
@@ -55,5 +64,8 @@ namespace moon {
 		friend Quaternion operator/(const Quaternion& q, const float& s);
 		friend Quaternion operator*(const float& s, const Quaternion& q);
 		friend Quaternion operator/(const float& s, const Quaternion& q);
+
+		void normalize();
+		void UpdateEulerAngle();
 	};
 }

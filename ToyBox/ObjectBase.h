@@ -51,17 +51,22 @@ namespace moon {
 	extern class Operator;
 	class MObject : public ObjectBase {
 	public:
-		Transform transform;
-
 		struct OPStack {
 			std::vector<Operator*> opList;
 
-			void ExecuteAll();
-			void AddStack(const Operator &op);
-			void RemoveStack(const Operator &op);
-			void RemoveStack(const int &opID);
+			OPStack() = default;
+			~OPStack() { ClearStack(); }
+
+			void ExecuteAll() const;
+			void ListStack() const;
+
+			void AddStack(Operator* op);
+			void RemoveStack(Operator* op);
 			void ClearStack();
 		};
+
+		Transform transform;
+		OPStack opstack;
 
 		MObject() : ObjectBase(MOON_AUTOID) { name = "MObject_" + ID; }
 		MObject(const int &_id) : ObjectBase(_id) { name = "MObject_" + _id; }

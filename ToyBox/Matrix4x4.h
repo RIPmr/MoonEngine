@@ -38,6 +38,14 @@ namespace moon {
 				for (int j = 0; j < 4; j++)
 					x[i][j] = m[i][j];
 		}
+		Matrix4x4(const Quaternion &q) {
+			x[0][0] = 1-2*(q.y*q.y+q.z*q.z); x[1][0] = 2*(q.x*q.y-q.w*q.z); x[2][0] = 2*(q.x*q.z+q.w*q.y); x[3][0] = 0;
+			x[0][1] = 2*(q.x*q.y+q.w*q.z); x[1][1] = 1-2*(q.x*q.x+q.z*q.z); x[2][1] = 2*(q.y*q.z-q.w*q.x); x[3][1] = 0;
+			x[0][2] = 2*(q.x*q.z-q.w*q.y); x[1][2] = 2*(q.y*q.z+q.w*q.x); x[2][2] = 1-2*(q.x*q.x+q.y*q.y); x[3][2] = 0;
+			x[0][3] = 0; x[1][3] = 0; x[2][3] = 0; x[3][3] = 1;
+		}
+
+		static Matrix4x4 identity() { return Matrix4x4(); }
 
 		const float* operator[](uint8_t i) const { return x[i]; }
 		float* operator[](uint8_t i) { return x[i]; }
@@ -342,7 +350,7 @@ namespace moon {
 			return result;
 		}
 		static Matrix4x4 Translate(const Matrix4x4 &model, const Vector3 &moveVec) {
-			return model * TranslateMat(moveVec);
+			return TranslateMat(moveVec) * model;
 		}
 
 		static Matrix4x4 RotateMat(const float _angle, const Vector3 &_axis) {
@@ -370,9 +378,11 @@ namespace moon {
 			return Rotate;
 		}
 		static Matrix4x4 Rotate(const Matrix4x4 &model, const float angle, const Vector3 &v) {
-			return model * RotateMat(angle, v);
+			return RotateMat(angle, v) * model;
 		}
-		static Matrix4x4 Rotate(const Matrix4x4 &model, const Quaternion &q);
+		static Matrix4x4 Rotate(const Matrix4x4 &model, const Quaternion &q) {
+			return Matrix4x4(q) * model;
+		}
 
 		static Matrix4x4 ScaleMat(const Vector3 &factor) {
 			Matrix4x4 result(factor.x, 0, 0, 0,
@@ -389,10 +399,10 @@ namespace moon {
 			return result;
 		}
 		static Matrix4x4 Scale(const Matrix4x4 &model, const float &factor) {
-			return model * ScaleMat(factor);
+			return ScaleMat(factor) * model;
 		}
 		static Matrix4x4 Scale(const Matrix4x4 &model, const Vector3 &factor) {
-			return model * ScaleMat(factor);
+			return ScaleMat(factor) * model;
 		}
 
 	};

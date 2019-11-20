@@ -33,12 +33,21 @@ namespace moon {
 			auto iter = itemMap.begin();
 			for (int i = 0; i < itemMap.size(); i++, iter++) {
 				if (ImGui::Selectable(iter->second->name.c_str(), MOON_InputManager::selection[iter->second->ID], ImGuiSelectableFlags_SpanAllColumns)) {
-					if (!MainUI::io->KeyCtrl)
+					if (!MainUI::io->KeyCtrl) {
+						sel.clear();
 						memset(MOON_InputManager::selection, 0, SceneManager::GetObjectNum() * sizeof(bool));
-					MOON_InputManager::selection[iter->second->ID] ^= 1;
+					}
+					if (MOON_InputManager::selection[iter->second->ID] ^= 1)
+						sel.push_back(iter->second->ID);
+					else {
+						auto end = sel.end();
+						for (auto it = sel.begin(); it != end; it++)
+							if (*it == iter->second->ID) {
+								it = sel.erase(it);
+								return;
+							}
+					}
 				}
-				if (MOON_InputManager::selection[iter->second->ID])
-					sel.push_back(iter->second->ID);
 			}
 		}
 
@@ -194,7 +203,7 @@ namespace moon {
 			} else return false;
 		}
 
-		static T* RemoveItem(const int &ID) {
+		static T* RemoveItem(const int &ID, const bool &autoSetSizeFlag = true) {
 			T* res = NULL;
 			auto end = itemMap.end();
 			for (auto it = itemMap.begin(); it != end; it++) {
@@ -202,14 +211,14 @@ namespace moon {
 					res = it->second;
 					itemMap.erase(it);
 
-					sizeFlag = true;
+					if (autoSetSizeFlag) sizeFlag = true;
 					return res;
 				}
 			}
 			return res;
 		}
 
-		static T* RemoveItem(const std::string &name, const int &ID = MOON_FIRSTMATCH) {
+		static T* RemoveItem(const std::string &name, const int &ID = MOON_FIRSTMATCH, const bool &autoSetSizeFlag = true) {
 			T* res = NULL;
 			typename std::multimap<std::string, T*>::iterator beg, end;
 			if (GetItems(name, beg, end)) {
@@ -217,22 +226,22 @@ namespace moon {
 					res = beg->second;
 					itemMap.erase(beg);
 
-					sizeFlag = true;
+					if (autoSetSizeFlag) sizeFlag = true;
 					return res;
 				} else for (; beg != end; beg++)
 					if (beg->second->ID == ID) {
 						res = beg->second;
 						itemMap.erase(beg);
 
-						sizeFlag = true;
+						if (autoSetSizeFlag) sizeFlag = true;
 						return res;
 					}
 			}
 			return res;
 		}
 
-		static T* RemoveItem(const T* item) {
-			return RemoveItem(item->name, item->ID);
+		static T* RemoveItem(const T* item, const bool &autoSetSizeFlag = true) {
+			return RemoveItem(item->name, item->ID, autoSetSizeFlag);
 		}
 
 		static bool RemoveItems(const std::string &name,
@@ -250,15 +259,15 @@ namespace moon {
 		}
 
 		static bool RenameItem(const int &ID, const std::string newName) {
-			T* item = RemoveItem(ID);
+			T* item = RemoveItem(ID, false);
 			item->name = newName;
 			AddItem(item);
 			return true;
 		}
 
 		static bool RenameItem(ObjectBase* item, const std::string newName) {
-			std::cout << item->name << std::endl;
-			RemoveItem(item->name, item->ID);
+			std::cout << "new name: " << newName << std::endl;
+			RemoveItem(item->name, item->ID, false);
 			item->name = newName;
 			AddItem(dynamic_cast<T*>(item));
 			return true;
@@ -284,10 +293,16 @@ namespace moon {
 	public:
 		// global parameters
 		static Vector2 SCR_SIZE;
+		static float aspect;
 
 		// all objects
 		static std::vector<ObjectBase*> objectList;
 		static std::vector<ObjectBase*> matchedList;
+
+		static void SetWndSize(unsigned int width, unsigned int height) {
+			SCR_SIZE.setValue(width, height);
+			aspect = (float)width / height;
+		}
 
 		static void AddObject(ObjectBase* item) {
 			while (objectList.size() <= item->ID) objectList.push_back(item);
@@ -351,8 +366,6 @@ namespace moon {
 			static std::vector<unsigned int> selected;
 
 			static void UpdateSelectionState() {
-				selected.clear();
-
 				if (ModelManager::sizeFlag || TextureManager::sizeFlag || LightManager::sizeFlag ||
 					MaterialManager::sizeFlag || CameraManager::sizeFlag || ShaderManager::sizeFlag) {
 
@@ -487,6 +500,7 @@ namespace moon {
 
 		struct CameraManager : ObjectManager<Camera> {
 			static Camera* sceneCamera;
+			static Camera* currentCamera;
 
 			static Camera* CreateCamera() {
 				Camera* newCam = new Camera();
@@ -503,6 +517,7 @@ namespace moon {
 
 			static bool LoadSceneCamera() {
 				sceneCamera = new Camera("SceneCamera", Vector3(0.0f, 5.0f, 20.0f), 0.0f, MOON_UNSPECIFIEDID);
+				currentCamera = sceneCamera;
 				objectList.push_back(sceneCamera);
 				Renderer::targetCamera = sceneCamera;
 				return true;

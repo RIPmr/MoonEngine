@@ -118,8 +118,11 @@ namespace moon {
 			ImGui::Text(u8"¡Á"); ImGui::SameLine();
 			ImGui::SetNextItemWidth(ImGui::GetWindowWidth() / 2.7);
 			ImGui::InputInt("output_height", &height, 100, 1000, 0, true);
-			if (width < 1) width = 1; if (height < 1) height = 1;
-			MOON_OutputSize.x = width; MOON_OutputSize.y = height;
+			if (MOON_OutputSize.x != width || MOON_OutputSize.y != height) {
+				if (width < 1) width = 1;
+				if (height < 1) height = 1;
+				Renderer::SetOutputSize(width, height);
+			}
 
 			ImGui::Spacing();
 			if (ImGui::Button("Rendering")) {
@@ -302,11 +305,25 @@ namespace moon {
 
 		static void InspectorWnd() {
 			ImGui::Begin("Inspector", &MainUI::show_inspector_window);
-
 			// loop all selected objects and list their properties
 			for (auto &iter : MOON_InputManager::selected) {
-				MOON_ObjectList[iter]->ListProperties();
-				ImGui::Separator();
+				bool checker = MOON_InputManager::selection[MOON_ObjectList[iter]->ID];
+
+				if (ImGui::CollapsingHeader(MOON_ObjectList[iter]->name.c_str(), 
+											&MOON_InputManager::selection[MOON_ObjectList[iter]->ID], 
+											ImGuiTreeNodeFlags_DefaultOpen)) {
+					MOON_ObjectList[iter]->ListProperties();
+				}
+
+				// remove ID in selection slot while click close button in the collapsing header
+				if (checker && !MOON_InputManager::selection[MOON_ObjectList[iter]->ID]) {
+					auto end = MOON_InputManager::selected.end();
+					for (auto it = MOON_InputManager::selected.begin(); it != end; it++)
+						if (*it == MOON_ObjectList[iter]->ID) {
+							it = MOON_InputManager::selected.erase(it);
+							break;
+						}
+				}
 			}
 
 			ImGui::End();

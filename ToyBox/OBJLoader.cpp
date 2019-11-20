@@ -510,8 +510,9 @@ namespace moon {
 		while (std::getline(file, curline)) {
 			// new material and material name
 			if (firstToken(curline) == "newmtl") {
-				if (curline.size() > 7) 
-					tempMaterial = SceneManager::MaterialManager::CreateMaterial("MoonMtl", tail(curline));
+				std::string matName = "none";
+				if (curline.size() > 7) matName = tail(curline);
+				tempMaterial = SceneManager::MaterialManager::CreateMaterial("MoonMtl", matName);
 			}
 			// Ambient Color
 			if (firstToken(curline) == "Ka") {

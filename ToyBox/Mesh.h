@@ -48,44 +48,7 @@ namespace moon {
 		//~Mesh() { delete material; }
 		~Mesh() override {}
 
-		void Draw(Shader* shader) {
-			// bind appropriate textures
-			unsigned int diffuseNr = 1;
-			unsigned int specularNr = 1;
-			unsigned int normalNr = 1;
-			unsigned int heightNr = 1;
-			unsigned int i;
-
-			// binding textures
-			// TODO
-			//for (i = 0; i < textures.size(); i++) {
-			//	// active proper texture unit before binding
-			//	glActiveTexture(GL_TEXTURE0 + i);
-			//	// retrieve texture number (the N in diffuse_textureN)
-			//	std::string number;
-			//	if (textures[i].type == TexType::diffuse)
-			//		number = std::to_string(diffuseNr++);
-			//	else if (textures[i].type == TexType::specular)
-			//		number = std::to_string(specularNr++);
-			//	else if (textures[i].type == TexType::normal)
-			//		number = std::to_string(normalNr++);
-			//	else if (textures[i].type == TexType::height)
-			//		number = std::to_string(heightNr++);
-
-			//	// now set the sampler to the correct texture unit
-			//	glUniform1i(glGetUniformLocation(shader->localID, (name + number).c_str()), i);
-			//	// and finally bind the texture
-			//	glBindTexture(GL_TEXTURE_2D, textures[i].localID);
-			//}
-
-			// draw mesh
-			glBindVertexArray(VAO);
-			glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
-			glBindVertexArray(0);
-
-			// always good practice to set everything back to defaults once configured.
-			glActiveTexture(GL_TEXTURE0);
-		}
+		void Draw(Shader* shader, const Matrix4x4 & model);
 
 		bool Hit(const Ray &r, float tmin, float tmax, HitRecord &rec) const {
 			uint32_t triIndex;

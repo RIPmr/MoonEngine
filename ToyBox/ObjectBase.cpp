@@ -1,5 +1,6 @@
 #include "ObjectBase.h"
 #include "SceneMgr.h"
+#include "OperatorBase.h"
 
 #include <iostream>
 
@@ -36,26 +37,72 @@ namespace moon {
 		if (strcmp(buf, name.c_str())) Rename(buf);
 	}
 
+	void MObject::OPStack::ExecuteAll() const {
+		for (auto &iter : opList) {
+			iter->Execute();
+		}
+	}
+	void MObject::OPStack::ListStack() const {
+		for (auto &iter : opList) {
+			iter->ListProperties();
+		}
+	}
+
+	void MObject::OPStack::AddStack(Operator* op) {
+		opList.push_back(op);
+	}
+	void MObject::OPStack::RemoveStack(Operator* op) {
+		auto end = opList.end();
+		for (auto iter = opList.begin(); iter != end; iter++) {
+			if ((*iter)->name._Equal(op->name)) {
+				iter = opList.erase(iter);
+				break;
+			}
+		}
+	}
+	void MObject::OPStack::ClearStack() {
+		auto end = opList.end();
+		for (auto iter = opList.begin(); iter != end;) {
+			delete *iter;
+			iter = opList.erase(iter);
+		}
+	}
+
 	void MObject::ListProperties() {
 		// list name
 		char* buf = (char*)name.c_str();
 		ImGui::Text("Name:"); ImGui::SameLine();
 		ImGui::InputText("NameInput_" + ID, buf, 64); ImGui::SameLine();
 		ImGui::Checkbox("isVisible_" + ID, &visible);
-		if (strcmp(buf, name.c_str())) Rename(buf);
+		if (strcmp(buf, name.c_str())) {
+			//std::cout << "new name " << buf << std::endl;
+			Rename(buf);
+		}
+
+		ImGui::Separator();
 
 		// list transform
-		static float pos[3] = { transform.position.x, transform.position.y, transform.position.z };
-		static float rotEuler[3] = { transform.rotation.eulerAngles.x, transform.rotation.eulerAngles.y, transform.rotation.eulerAngles.z };
-		static float scale[3] = { transform.scale.x, transform.scale.y, transform.scale.z };
+		Vector3 &euler = transform.rotation.eulerAngles;
+		float pos[3] = { transform.position.x, transform.position.y, transform.position.z };
+		float rotEuler[3] = { euler.x, euler.y, euler.z };
+		float scale[3] = { transform.scale.x, transform.scale.y, transform.scale.z };
 
 		ImGui::Text("Transform:");
-		ImGui::DragFloat3("Position", pos, 0.0f, 0.0f, 1.0f);
-		ImGui::DragFloat3("Rotation", rotEuler, 0.0f, 0.0f, 1.0f);
-		ImGui::DragFloat3("Scale", scale, 0.0f, 0.0f, 1.0f);
+		ImGui::DragFloat3("Position", pos, 0.1f, -INFINITY, INFINITY);
+		ImGui::DragFloat3("Rotation", rotEuler, 0.1f, -INFINITY, INFINITY);
+		ImGui::DragFloat3("Scale", scale, 0.1f, -INFINITY, INFINITY);
+
+		Quaternion deltaQ = Quaternion(rotEuler[0] - euler.x,
+									   rotEuler[1] - euler.y,
+									   rotEuler[2] - euler.z);
+		// world
+		transform.rotation = deltaQ * transform.rotation;
+		// local
+		//transform.rotation *= deltaQ;
+		transform.set(&Vector3(pos), NULL, &Vector3(scale));
 
 		// list operators
-
+		
 
 	}
 }
