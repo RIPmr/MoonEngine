@@ -111,6 +111,9 @@
     <ClCompile Include="Mesh.cpp">
       <Filter>SourceFiles\Implementation</Filter>
     </ClCompile>
+    <ClCompile Include="OBJExporter.cpp">
+      <Filter>SourceFiles\Implementation</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Vector3.h">
@@ -176,9 +179,6 @@
     <ClInclude Include="Model.h">
       <Filter>HeadFiles\Class</Filter>
     </ClInclude>
-    <ClInclude Include="OBJLoader.h">
-      <Filter>HeadFiles\Component</Filter>
-    </ClInclude>
     <ClInclude Include="PMapGen.h">
       <Filter>HeadFiles\Miscellaneous</Filter>
     </ClInclude>
@@ -196,6 +196,21 @@
     </ClInclude>
     <ClInclude Include="MatSphere.h">
       <Filter>HeadFiles\Miscellaneous</Filter>
+    </ClInclude>
+    <ClInclude Include="BoundingBox.h">
+      <Filter>HeadFiles\Class</Filter>
+    </ClInclude>
+    <ClInclude Include="ShapeBase.h">
+      <Filter>HeadFiles\Class</Filter>
+    </ClInclude>
+    <ClInclude Include="Helper.h">
+      <Filter>HeadFiles\Class</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureMgr.h">
+      <Filter>HeadFiles\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="OBJMgr.h">
+      <Filter>HeadFiles\Component</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

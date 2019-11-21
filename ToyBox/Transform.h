@@ -35,16 +35,18 @@ namespace moon {
 		Matrix4x4 modelMat;
 		Matrix4x4 localModelMat;
 
-		Transform* parent;
+		Model* parent;
 		std::vector<Model*> childs;
+
+		bool changeFlag;
 
 		Transform() : position(Vector3::ZERO()), localPosition(Vector3::ZERO()),
 			rotation(Quaternion::identity()), localRotation(Quaternion::identity()),
-			scale(Vector3::ONE()), localScale(Vector3::ONE()), 
+			scale(Vector3::ONE()), localScale(Vector3::ONE()), changeFlag(true),
 			parent(NULL), modelMat(Matrix4x4::identity()) {}
 
 		Transform(const Vector3 &position, const Quaternion &rotation, const Vector3 &scale) :
-			position(position), rotation(rotation), scale(scale), 
+			position(position), rotation(rotation), scale(scale), changeFlag(true),
 			parent(NULL), modelMat(Matrix4x4::identity()) {
 			localPosition = Vector3::ZERO();
 			localRotation = Quaternion::identity();
@@ -53,7 +55,7 @@ namespace moon {
 
 		~Transform() {}
 
-		void set(const Vector3* position, const Quaternion* rotation = NULL, const Vector3* scale = NULL) {
+		inline void set(const Vector3* position, const Quaternion* rotation = NULL, const Vector3* scale = NULL) {
 			if (position != NULL) this->position.setValue(*position);
 			if (rotation != NULL) this->rotation.SetValue(*rotation);
 			if (scale != NULL) this->scale.setValue(*scale);
@@ -62,7 +64,7 @@ namespace moon {
 			UpdateMatrix();
 		}
 
-		void Rotate(const Quaternion &deltaQ, const CoordSys coordinate = CoordSys::WORLD) {
+		inline void Rotate(const Quaternion &deltaQ, const CoordSys coordinate = CoordSys::WORLD) {
 			if (coordinate == CoordSys::WORLD)
 				rotation = deltaQ * rotation;
 			else
@@ -72,17 +74,18 @@ namespace moon {
 			UpdateMatrix();
 		}
 
-		void Translate(const Vector3 &deltaV, const CoordSys coordinate = CoordSys::WORLD) {
+		inline void Translate(const Vector3 &deltaV, const CoordSys coordinate = CoordSys::WORLD) {
 			if (coordinate == CoordSys::WORLD)
 				position += deltaV;
 			else
-				position += forward() * deltaV.z + right() * deltaV.x + up() * deltaV.y;
+				// TODO
+				//position += forward() * deltaV.z + right() * deltaV.x + up() * deltaV.y;
 
 			UpdateLocalTransform();
 			UpdateMatrix();
 		}
 
-		void Scale(const Vector3 &scaleVec, const CoordSys coordinate = CoordSys::LOCAL) {
+		inline void Scale(const Vector3 &scaleVec, const CoordSys coordinate = CoordSys::LOCAL) {
 			if (coordinate == CoordSys::WORLD)
 				;// TODO
 			else
@@ -92,7 +95,7 @@ namespace moon {
 			UpdateMatrix();
 		}
 
-		Matrix4x4 UpdateMatrix() {
+		inline Matrix4x4 UpdateMatrix() {
 			// model = T * R * S * E
 			//Matrix4x4 model = Matrix4x4::Scale(Matrix4x4::identity(), scale);
 			modelMat = Matrix4x4::ScaleMat(scale);
@@ -102,7 +105,7 @@ namespace moon {
 			return modelMat;
 		}
 
-		Matrix4x4 GetLocalMatrix() {
+		inline Matrix4x4 GetLocalMatrix() {
 			localModelMat = Matrix4x4::ScaleMat(localScale);
 			localModelMat = Matrix4x4::Rotate(localModelMat, localRotation);
 			localModelMat = Matrix4x4::Translate(localModelMat, localPosition);
@@ -110,7 +113,9 @@ namespace moon {
 			return localModelMat;
 		}
 
-		void UpdateLocalTransform() {
+		inline void UpdateLocalTransform() {
+			changeFlag = true;
+
 			if (parent != NULL) {
 				// TODO
 			} else {
@@ -120,8 +125,8 @@ namespace moon {
 			}
 		}
 
-		Vector3 forward() const;
-		Vector3 right() const;
-		Vector3 up() const;
+		inline Vector3 forward() const;
+		inline Vector3 right() const;
+		inline Vector3 up() const;
 	};
 }

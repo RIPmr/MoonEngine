@@ -3,7 +3,7 @@
 //#define MOON_DEBUG_MODE
 
 // global settings
-const char *title = "MoonEngine - v0.01 WIP";
+const char *title = "MoonEngine - v0.015 WIP";
 
 Vector2 MOON_WndSize = Vector2(1600, 900);
 float SceneManager::aspect = MOON_WndSize.x / MOON_WndSize.y;
@@ -15,8 +15,6 @@ ImVec4 grdLineColor = ImVec4(0.8f, 0.8f, 0.8f, 1.0f);
 
 unsigned int Renderer::samplingRate = 5;
 unsigned int Renderer::maxReflectionDepth = 5;
-
-Vector3 movePos = Vector3::ZERO();
 
 
 int main() {
@@ -30,20 +28,15 @@ int main() {
 	glEnable(GL_DEPTH_TEST);
 
 	// engine resources initialization
-	if (!MOON_TextureManager::LoadImagesForUI()) return -1;
-	std::cout << "- Images For UI Loaded." << std::endl;
-	MOON_ShaderManager::LoadDefaultShaders();
-	std::cout << "- Default Shaders Loaded." << std::endl;
-	MOON_MaterialManager::PrepareMatBall();
-	std::cout << "- Material Ball Created." << std::endl;
-	MOON_MaterialManager::CreateDefaultMats();
-	std::cout << "- Default Materials Created." << std::endl;
-	MOON_CameraManager::LoadSceneCamera();
-	std::cout << "- Scene Camera Created." << std::endl;
-	std::cout << "Finished." << std::endl;
+	MOON_InitEngine();
 
-	// scene objects
-	Model* teapot = MOON_ModelManager::LoadModel("Resources/box_stack.obj");
+	// test objects
+	Model* teapot = MOON_ModelManager::LoadModel("Resources/teapot.obj");
+	Model* boxes = MOON_ModelManager::LoadModel("Resources/box_stack.obj");
+	teapot->transform.Scale(Vector3(0.1f, 0.1f, 0.1f));
+	boxes->transform.Translate(Vector3(5.0f, 1.0f, 0.0f));
+
+	std::cout << "done." << std::endl;
 
 	// render loop
 	while (!glfwWindowShouldClose(window)) {
@@ -59,40 +52,13 @@ int main() {
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
+		
+		// UI controller
+		MOON_DrawMainUI();
 
-		// update output image realtime while rendering
-		if (Renderer::progress != 0) {
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, MOON_OutputSize.x, MOON_OutputSize.y, 0, GL_RGB, GL_UNSIGNED_BYTE, Renderer::outputImage);
-			if (Renderer::progress < 0) {
-				Renderer::progress = 0;
-				glBindTexture(GL_TEXTURE_2D, 0);
-			}
-		}
-
-		{ // UI window
-			if (ImGui::BeginMainMenuBar()) MainUI::MainMenu();
-			if (MainUI::show_control_window) MainUI::ControlPanel(MainUI::io, clearColor);
-			if (MainUI::show_preference_window) MainUI::PreferencesWnd();
-			if (MainUI::show_VFB_window) MainUI::ShowVFB();
-			if (MainUI::show_demo_window) ImGui::ShowDemoWindow(&MainUI::show_demo_window);
-			if (MainUI::show_about_window) MainUI::AboutWnd();
-			if (MainUI::show_scene_window) MainUI::SceneWnd();
-			if (MainUI::show_inspector_window) MainUI::InspectorWnd();
-			if (MainUI::show_explorer_window) MainUI::ExplorerWnd();
-			if (MainUI::show_console_window) MainUI::ConsoleWnd();
-			if (MainUI::show_project_window) MainUI::ProjectWnd();
-			if (MainUI::show_create_window) MainUI::CreateWnd();
-		}
-
-		// TODO: auto update via callback
-		// calculate matrix
-		//MOON_CurrentCamera->UpdateMatrix();
-
-		// Rendering objects
+		// rendering objects
 		DrawGround(1.0, 5, SceneManager::ShaderManager::GetItem("ConstColor"));
-
-
-		teapot->Draw();
+		MOON_ModelManager::DrawModels();
 
 		// process user input
 		MOON_InputManager::isHoverUI = MainUI::io->WantCaptureMouse;
@@ -199,7 +165,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
 	MOON_InputManager::mouseScrollOffset.setValue(xoffset, yoffset);
 }
 
-// moon: clean up, input processor and draw commands
+// moon: clean up, input processor and other draw commands
 void MOON_CleanUp() {
 	MOON_LightManager::Clear();
 	MOON_MaterialManager::Clear();
@@ -228,7 +194,6 @@ Vector3 unProjectMouse() {
 
 		Vector4 viewport = Vector4(0.0f, 0.0f, MOON_WndSize.x, MOON_WndSize.y);
 		Vector3 worldPos = Matrix4x4::UnProject(screenPos, MOON_CurrentCamera->view, MOON_CurrentCamera->projection, viewport);
-		//movePos.setValue(worldPos.x, worldPos.y, worldPos.z);
 
 		return worldPos;
 	}
@@ -381,4 +346,41 @@ void MOON_InputProcessor(GLFWwindow *window) {
 		// reset offset
 		MOON_InputManager::mouseOffset.setValue(0.0f, 0.0f);
 		MOON_InputManager::mouseScrollOffset.setValue(0.0f, 0.0f);
+}
+
+void MOON_DrawMainUI() {
+	// update output image realtime while rendering
+	if (Renderer::progress != 0) {
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, MOON_OutputSize.x, MOON_OutputSize.y, 0, GL_RGB, GL_UNSIGNED_BYTE, Renderer::outputImage);
+		if (Renderer::progress < 0) {
+			Renderer::progress = 0;
+			glBindTexture(GL_TEXTURE_2D, 0);
+		}
+	}
+
+	if (ImGui::BeginMainMenuBar()) MainUI::MainMenu();
+	if (MainUI::show_control_window) MainUI::ControlPanel(MainUI::io, clearColor);
+	if (MainUI::show_preference_window) MainUI::PreferencesWnd();
+	if (MainUI::show_VFB_window) MainUI::ShowVFB();
+	if (MainUI::show_demo_window) ImGui::ShowDemoWindow(&MainUI::show_demo_window);
+	if (MainUI::show_about_window) MainUI::AboutWnd();
+	if (MainUI::show_scene_window) MainUI::SceneWnd();
+	if (MainUI::show_inspector_window) MainUI::InspectorWnd();
+	if (MainUI::show_explorer_window) MainUI::ExplorerWnd();
+	if (MainUI::show_console_window) MainUI::ConsoleWnd();
+	if (MainUI::show_project_window) MainUI::ProjectWnd();
+	if (MainUI::show_create_window) MainUI::CreateWnd();
+}
+
+void MOON_InitEngine() {
+	MOON_TextureManager::LoadImagesForUI();
+	std::cout << "- Images For UI Loaded." << std::endl;
+	MOON_ShaderManager::LoadDefaultShaders();
+	std::cout << "- Default Shaders Loaded." << std::endl;
+	MOON_MaterialManager::PrepareMatBall();
+	std::cout << "- Material Ball Created." << std::endl;
+	MOON_MaterialManager::CreateDefaultMats();
+	std::cout << "- Default Materials Created." << std::endl;
+	MOON_CameraManager::LoadSceneCamera();
+	std::cout << "- Scene Camera Created." << std::endl;
 }

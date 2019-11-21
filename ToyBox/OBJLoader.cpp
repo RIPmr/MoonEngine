@@ -1,4 +1,4 @@
-#include "OBJLoader.h"
+#include "OBJMgr.h"
 #include "SceneMgr.h"
 #include "Texture.h"
 #include "Utility.h"
@@ -62,7 +62,7 @@ namespace moon {
 		return "";
 	}
 
-	bool Loader::LoadFile(const std::string &Path, bool gammaCorrection) {
+	bool OBJLoader::LoadFile(const std::string &Path, bool gammaCorrection) {
 		// If the file is not an .obj file return false
 		if (Path.substr(Path.size() - 4, 4) != ".obj")
 			return false;
@@ -278,7 +278,7 @@ namespace moon {
 		}
 	}
 
-	void Loader::GenVerticesFromRawOBJ(std::vector<Vertex>& oVerts,
+	void OBJLoader::GenVerticesFromRawOBJ(std::vector<Vertex>& oVerts,
 		const std::vector<Vector3>& iPositions,
 		const std::vector<Vector2>& iTCoords,
 		const std::vector<Vector3>& iNormals,
@@ -364,7 +364,7 @@ namespace moon {
 
 	// Triangulate a list of vertices into a face by printing
 	// inducies corresponding with triangles within it
-	void Loader::VertexTriangluation(std::vector<unsigned int>& oIndices, const std::vector<Vertex>& iVerts) {
+	void OBJLoader::VertexTriangluation(std::vector<unsigned int>& oIndices, const std::vector<Vertex>& iVerts) {
 		// If there are 2 or less verts,
 		// no triangle can be created, so exit
 		if (iVerts.size() < 3) return;
@@ -495,7 +495,7 @@ namespace moon {
 		}
 	}
 
-	bool Loader::LoadMaterials(const std::string &path) {
+	bool OBJLoader::LoadMaterials(const std::string &path) {
 		// If the file is not a material file return false
 		if (path.substr(path.size() - 4, path.size()) != ".mtl")
 			return false;
@@ -598,7 +598,7 @@ namespace moon {
 		//else return true;
 	}
 
-	Texture* Loader::LoadTexture(const TexType &type, const std::string &path) {
+	Texture* OBJLoader::LoadTexture(const TexType &type, const std::string &path) {
 		// if find corresponding texture in loaded textures
 		Texture* searchTex = SceneManager::TextureManager::GetItem(GetPathOrURLShortName(path));
 		if (searchTex != NULL) return searchTex;

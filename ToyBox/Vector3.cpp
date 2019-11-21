@@ -46,7 +46,7 @@ namespace moon {
 	}
 
 	Vector3 operator/(const float &t, const Vector3 &v) {
-		return Vector3(v.x / t, v.y / t, v.z / t);
+		return Vector3(t / v.x, t / v.y, t / v.z);
 	}
 
 	Vector3 operator*(const Vector3 &v, const float &t) {

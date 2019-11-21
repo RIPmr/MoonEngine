@@ -47,9 +47,10 @@
 #include "MShader.h"
 #include "Camera.h"
 #include "MatSphere.h"
+#include "Transform.h"
 #include "Model.h"
 #include "Light.h"
-#include "OBJLoader.h"
+#include "OBJMgr.h"
 
 using namespace moon;
 
@@ -63,6 +64,8 @@ void DrawGround(const float &space, const int &gridCnt, const Shader* groundShad
 Vector3 unProjectMouse();
 void MOON_InputProcessor(GLFWwindow *window);
 void MOON_UpdateClock();
+void MOON_DrawMainUI();
+void MOON_InitEngine();
 void MOON_CleanUp();
 
 // init main ui

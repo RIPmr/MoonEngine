@@ -10,6 +10,7 @@
 #include "ObjectBase.h"
 #include "MathUtils.h"
 #include "Matrix4x4.h"
+#include "BoundingBox.h"
 
 namespace moon {
 	struct Vertex {
@@ -27,19 +28,18 @@ namespace moon {
 		std::vector<unsigned int> indices;
 		Model* parent;
 		Material* material;
+		BoundingBox bbox;
 		unsigned int VAO;
 
 		Mesh() {}
-		Mesh(const Mesh &mesh) : vertices(mesh.vertices), indices(mesh.indices),
-			material(mesh.material), VAO(mesh.VAO) {
-			//std::cout << "copy mat: " << mesh.material->name << std::endl;
-		}
+		Mesh(const Mesh &mesh) : vertices(mesh.vertices), indices(mesh.indices), material(mesh.material), VAO(mesh.VAO), bbox(mesh.bbox) {}
 		Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices) : ObjectBase("Mesh", MOON_UNSPECIFIEDID) {
 			this->vertices = vertices;
 			this->indices = indices;
 
 			// set the vertex buffers and its attribute pointers
 			setupMesh();
+			UpdateBBox();
 		}
 		Mesh(const std::string &name, std::vector<Vertex> vertices, std::vector<unsigned int> indices) : ObjectBase(name, MOON_UNSPECIFIEDID) {
 			this->vertices = vertices;
@@ -47,9 +47,16 @@ namespace moon {
 
 			// set the vertex buffers and its attribute pointers
 			setupMesh();
+			UpdateBBox();
 		}
 		//~Mesh() { delete material; }
 		~Mesh() override {}
+
+		void UpdateBBox() {
+			for (auto &vert : vertices) {
+				bbox.join(vert.Position);
+			}
+		}
 
 		void Draw(Shader* shader, const Matrix4x4 & model);
 
@@ -61,14 +68,16 @@ namespace moon {
 			float tNear = rec.t;
 
 			if (Intersect(r, tNear, triIndex, uv)) {
-				GetSurfaceProperties(triIndex, uv, hitNormal, hitTextureCoordinates);
-				rec.t = tNear;
-				rec.p = r.PointAtParameter(tNear);
-				//rec.normal = Vector3::Normalize(rec.p);
-				rec.normal = hitNormal;
-				//rec.uv = hitTextureCoordinates;
-				rec.mat = material;
-				return true;
+				if (tNear > tmin && tNear < tmax) {
+					GetSurfaceProperties(triIndex, uv, hitNormal, hitTextureCoordinates);
+					rec.t = tNear;
+					rec.p = r.PointAtParameter(tNear);
+					//rec.normal = Vector3::Normalize(rec.p);
+					rec.normal = hitNormal;
+					//rec.uv = hitTextureCoordinates;
+					rec.mat = material;
+					return true;
+				}
 			}
 
 			return false;

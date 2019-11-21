@@ -135,6 +135,7 @@
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="ObjectBase.cpp" />
+    <ClCompile Include="OBJExporter.cpp" />
     <ClCompile Include="OBJLoader.cpp" />
     <ClCompile Include="opengl\src\glad.c" />
     <ClCompile Include="Quaternion.cpp" />
@@ -144,9 +145,11 @@
     <ClCompile Include="Vector4.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BoundingBox.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Color.h" />
     <ClInclude Include="FuzzyMatch.h" />
+    <ClInclude Include="Helper.h" />
     <ClInclude Include="Hitable.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="Material.h" />
@@ -155,7 +158,7 @@
     <ClInclude Include="Matrix4x4.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Model.h" />
-    <ClInclude Include="OBJLoader.h" />
+    <ClInclude Include="OBJMgr.h" />
     <ClInclude Include="OperatorBase.h" />
     <ClInclude Include="PMapGen.h" />
     <ClInclude Include="PreInclude.h" />
@@ -164,7 +167,9 @@
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="SceneMgr.h" />
     <ClInclude Include="MShader.h" />
+    <ClInclude Include="ShapeBase.h" />
     <ClInclude Include="Texture.h" />
+    <ClInclude Include="TextureMgr.h" />
     <ClInclude Include="Transform.h" />
     <ClInclude Include="UIController.h" />
     <ClInclude Include="Utility.h" />

@@ -30,10 +30,11 @@ namespace moon {
 		static bool show_console_window;
 
 		static bool show_create_window;
-		static bool show_timeline;
 		static bool show_material_editor;
 		static bool show_enviroment_editor;
 
+		static bool show_ribbon;
+		static bool show_timeline;
 
 		// window definition
 		static void MainMenu() {

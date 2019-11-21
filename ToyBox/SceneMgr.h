@@ -442,10 +442,9 @@ namespace moon {
 
 		struct TextureManager : ObjectManager<Texture> {
 			// load resources
-			static bool LoadImagesForUI() {
+			static void LoadImagesForUI() {
 				AddItem(new Texture("./Resources/Icon.jpg", "moon_icon"));
 				AddItem(new Texture("./Resources/logo.png", "moon_logo"));
-				return true;
 			}
 
 			// TODO
@@ -484,6 +483,12 @@ namespace moon {
 				}
 
 				return hitAnything;
+			}
+
+			static void DrawModels() {
+				for (auto &obj : itemMap) {
+					obj.second->Draw();
+				}
 			}
 
 			static Model* CreateModel() {
