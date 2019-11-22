@@ -1,8 +1,12 @@
+#include <iostream>
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
+
 #include "ObjectBase.h"
 #include "SceneMgr.h"
 #include "OperatorBase.h"
-
-#include <iostream>
+#include "IconsFontAwesome4.h"
 
 namespace moon {
 	ObjectBase::ObjectBase(const int &_id) : visible(true) {
@@ -19,32 +23,37 @@ namespace moon {
 	}
 
 	void ObjectBase::Rename(const std::string &newName) {
-		if (typeid(this) == typeid(Shader*)) SceneManager::ShaderManager::RenameItem(this, newName);
-		else if (typeid(this) == typeid(Texture*)) SceneManager::TextureManager::RenameItem(this, newName);
-		else if (typeid(this) == typeid(Material*)) SceneManager::MaterialManager::RenameItem(this, newName);
-		else if (typeid(this) == typeid(Light*)) SceneManager::LightManager::RenameItem(this, newName);
-		else if (typeid(this) == typeid(Model*)) SceneManager::ModelManager::RenameItem(this, newName);
-		else if (typeid(this) == typeid(Camera*)) SceneManager::CameraManager::RenameItem(this, newName);
-		else std::cout << "Unknown type, rename failed!" << std::endl;
+		SceneManager::RenameItem(this, newName);
+	}
+
+	void ObjectBase::ListName() {
+		// list name
+		std::string buf(name);
+		char* buf_c = (char*)buf.c_str();
+		ImGui::Text("Name:"); ImGui::SameLine();
+		ImGui::InputText("NameInput_" + ID, buf_c, 64); ImGui::SameLine();
+		ImGui::Checkbox("isVisible_" + ID, &visible);
+		// if user renamed this object
+		if (strcmp(buf_c, name.c_str())) Rename(buf);
 	}
 
 	void ObjectBase::ListProperties() {
-		// list name
-		char* buf = (char*)name.c_str();
-		ImGui::Text("Name:"); ImGui::SameLine();
-		ImGui::InputText("NameInput_" + ID, buf, 64); ImGui::SameLine();
-		ImGui::Checkbox("isVisible_" + ID, &visible);
-		if (strcmp(buf, name.c_str())) Rename(buf);
+		ListName();
+		ImGui::Spacing();
 	}
 
-	void MObject::OPStack::ExecuteAll() const {
+	void MObject::OPStack::ExecuteAll() {
 		for (auto &iter : opList) {
 			iter->Execute();
 		}
 	}
-	void MObject::OPStack::ListStacks() const {
-		for (auto &iter : opList) {
-			iter->ListProperties();
+	void MObject::OPStack::ListStacks() {
+		ImGui::Checkbox("", &enable); ImGui::SameLine();
+		ImGui::Button(ICON_FA_PLUS, ImVec2(22, 22)); ImGui::SameLine();
+		if (ImGui::CollapsingHeader((std::string(ICON_FA_WRENCH) + " OP-Stack").c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
+			for (auto &iter : opList) {
+				iter->ListProperties();
+			}
 		}
 	}
 
@@ -68,20 +77,8 @@ namespace moon {
 		}
 	}
 
-	void MObject::ListProperties() {
-		// list name ----------------------------------------------------------------------
-		char* buf = (char*)name.c_str();
-		ImGui::Text("Name:"); ImGui::SameLine();
-		ImGui::InputText("NameInput_" + ID, buf, 64); ImGui::SameLine();
-		ImGui::Checkbox("isVisible_" + ID, &visible);
-		if (strcmp(buf, name.c_str())) {
-			//std::cout << "new name " << buf << std::endl;
-			Rename(buf);
-		}
-
-		ImGui::Separator();
-
-		// list transform -----------------------------------------------------------------
+	void MObject::ListTransform() {
+		// list transform
 		Vector3 &euler = transform.rotation.eulerAngles;
 		float pos[3] = { transform.position.x, transform.position.y, transform.position.z };
 		float scale[3] = { transform.scale.x, transform.scale.y, transform.scale.z };
@@ -93,14 +90,24 @@ namespace moon {
 		ImGui::DragFloat3("Scale", scale, 0.1f, -INFINITY, INFINITY);
 
 		Quaternion deltaQ = Quaternion(rotEuler[0] - euler.x,
-									   rotEuler[1] - euler.y,
-									   rotEuler[2] - euler.z);
+			rotEuler[1] - euler.y,
+			rotEuler[2] - euler.z);
 		transform.Rotate(deltaQ);
 
 		transform.set(&Vector3(pos), NULL, &Vector3(scale));
+	}
 
-		// list operators -----------------------------------------------------------------
+	void MObject::ListProperties() {
+		// list name
+		ListName();
+		ImGui::Separator();
+
+		// list transform
+		ListTransform();
+		ImGui::Separator();
+
+		// list operators
 		opstack.ListStacks();
-
+		ImGui::Spacing();
 	}
 }

@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 
+#include "IconsFontAwesome4.h"
 #include "BoundingBox.h"
 #include "ObjectBase.h"
 #include "Transform.h"
@@ -63,34 +64,67 @@ namespace moon {
 
 		void LoadModel(const std::string &path, const bool &gammaCorrection) {
 			OBJLoader loader;
-			loader.LoadFile(path, gammaCorrection);
+			loader.LoadFile(path, meshList, gammaCorrection);
 
 			std::cout << "- OBJ file loaded, copying mesh list... ..." << std::endl;
 
 			// transfer data in loader to model & building b-box
-			meshList = loader.LoadedMeshes;
 			for (auto &iter : meshList) {
 				iter->parent = this;
 				bbox.join(iter->bbox);
 			}
 		}
 
-		bool Hit(const Ray &r, float tmin, float tmax, HitRecord &rec) const {
+		bool Hit(const Ray &r, HitRecord &rec) const {
 			HitRecord tempRec;
 			bool hitAnything = false;
-			double closestSoFar = tmax;
+			tempRec.t = rec.t;
 
 			if (bbox_world.intersect(r)) {
 				for (auto &iter : meshList) {
-					if (iter->Hit(r, tmin, closestSoFar, tempRec)) {
+					if (iter->Hit(r, tempRec)) {
 						hitAnything = true;
-						closestSoFar = tempRec.t;
 						rec = tempRec;
 					}
 				}
 			}
 
 			return hitAnything;
+		}
+
+		unsigned int CountVerts() {
+			unsigned int vertNum = 0;
+			for (auto &iter : meshList) {
+				vertNum += iter->vertices.size();
+			}
+			return vertNum;
+		}
+
+		void ListProperties() override {
+			// list name ----------------------------------------------------------------------
+			ListName();
+			ImGui::Separator();
+
+			// list transform -----------------------------------------------------------------			ListTransform();
+			ListTransform();
+			ImGui::Separator();
+
+			// list Mesh ----------------------------------------------------------------------
+			ImGui::Text("Mesh:");
+			if (ImGui::TreeNode((std::to_string(meshList.size()) + " meshes, " + std::to_string(CountVerts()) + " verts").c_str())) {
+				for (auto &iter : meshList) {
+					ImGui::Columns(2, "mycolumns", false);
+					ImGui::Text((std::string(ICON_FA_PUZZLE_PIECE) + " " + iter->name).c_str()); ImGui::NextColumn();
+					ImGui::Text((std::string(ICON_FA_GLOBE) + " " + iter->material->name).c_str());
+					ImGui::Columns(1);
+				}
+				ImGui::TreePop();
+			}
+			ImGui::Separator();
+
+			// list operators -----------------------------------------------------------------
+			opstack.ListStacks();
+			ImGui::Spacing();
 		}
 
 	};

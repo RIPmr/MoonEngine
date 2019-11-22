@@ -10,8 +10,8 @@ float SceneManager::aspect = MOON_WndSize.x / MOON_WndSize.y;
 Vector2 MOON_OutputSize = Vector2(200, 100);
 float Renderer::aspect = MOON_OutputSize.x / MOON_OutputSize.y;
 
-ImVec4 clearColor = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-ImVec4 grdLineColor = ImVec4(0.8f, 0.8f, 0.8f, 1.0f);
+Vector4 clearColor(0.45f, 0.55f, 0.60f, 1.00f);
+Vector4 grdLineColor(0.8f, 0.8f, 0.8f, 1.0f);
 
 unsigned int Renderer::samplingRate = 5;
 unsigned int Renderer::maxReflectionDepth = 5;
@@ -31,10 +31,10 @@ int main() {
 	MOON_InitEngine();
 
 	// test objects
-	Model* teapot = MOON_ModelManager::LoadModel("Resources/teapot.obj");
+	//Model* teapot = MOON_ModelManager::LoadModel("Resources/teapot.obj");
 	Model* boxes = MOON_ModelManager::LoadModel("Resources/box_stack.obj");
-	teapot->transform.Scale(Vector3(0.1f, 0.1f, 0.1f));
-	boxes->transform.Translate(Vector3(5.0f, 1.0f, 0.0f));
+	//teapot->transform.Scale(Vector3(0.1f, 0.1f, 0.1f));
+	boxes->transform.Translate(Vector3(0.0f, 1.0f, 0.0f));
 
 	std::cout << "done." << std::endl;
 
@@ -57,7 +57,7 @@ int main() {
 		MOON_DrawMainUI();
 
 		// rendering objects
-		DrawGround(1.0, 5, SceneManager::ShaderManager::GetItem("ConstColor"));
+		DrawGround(1.0, 5, MOON_ShaderManager::GetItem("ConstColor"));
 		MOON_ModelManager::DrawModels();
 
 		// process user input
@@ -124,14 +124,30 @@ GLFWwindow* InitWnd() {
 	// glsl_version can be replaced with string "#version 150"
 	ImGui_ImplOpenGL3_Init("#version 150");
 
+	// add fonts
 	MainUI::io = &ImGui::GetIO();
-	auto fonts = MainUI::io->Fonts;
-	fonts->AddFontFromFileTTF(
+	//MainUI::io->Fonts->AddFontDefault();
+
+	// add simplified Chinese
+	MainUI::io->Fonts->AddFontFromFileTTF(
 		"./Resources/msyh.ttc",
 		16.0f,
 		NULL,
-		fonts->GetGlyphRangesChineseSimplifiedCommon()
+		MainUI::io->Fonts->GetGlyphRangesChineseSimplifiedCommon()
 	);
+
+	// merge FontAwesome
+	ImFontConfig config;
+	config.MergeMode = true;
+	config.GlyphMinAdvanceX = 13.0f; // Use if you want to make the icon monospaced
+	static const ImWchar icon_ranges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
+	MainUI::io->Fonts->AddFontFromFileTTF(
+		"./Resources/fontawesome-webfont.ttf", 
+		13.0f, 
+		&config, 
+		icon_ranges
+	);
+
 	MainUI::io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 	MainUI::io->ConfigWindowsMoveFromTitleBarOnly = true;
 
@@ -370,6 +386,11 @@ void MOON_DrawMainUI() {
 	if (MainUI::show_console_window) MainUI::ConsoleWnd();
 	if (MainUI::show_project_window) MainUI::ProjectWnd();
 	if (MainUI::show_create_window) MainUI::CreateWnd();
+	if (MainUI::show_ribbon) MainUI::RibbonBar();
+	if (MainUI::show_enviroment_editor) MainUI::EnviromentWnd();
+	if (MainUI::show_codeEditor) MainUI::CodeEditor();
+	if (MainUI::show_timeline) MainUI::ShowTimeline();
+	if (MainUI::show_material_editor) MainUI::MaterialEditor();
 }
 
 void MOON_InitEngine() {

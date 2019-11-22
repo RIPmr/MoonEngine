@@ -30,14 +30,13 @@ namespace moon {
 	class OBJLoader {
 	public:
 		bool gammaCorrection;
-		std::vector<Mesh*> LoadedMeshes;
 		std::vector<Vertex> LoadedVertices;
 		std::vector<unsigned int> LoadedIndices;
 
 		OBJLoader() = default;
-		~OBJLoader() { LoadedMeshes.clear(); }
+		~OBJLoader() = default;
 
-		bool LoadFile(const std::string &Path, bool gammaCorrection = false);
+		bool LoadFile(const std::string &Path, std::vector<Mesh*> &LoadedMeshes, bool gammaCorrection = false);
 
 	private:
 		// Generate vertices from a list of positions, tcoords, normals and a face line

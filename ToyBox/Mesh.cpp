@@ -119,19 +119,17 @@ namespace moon {
 
 	// Test if the ray interesests this triangle mesh
 	bool Mesh::Intersect(const Ray &ray, float &tNear, uint32_t &triIndex, Vector2 &uv) const {
-		uint32_t j = 0;
 		bool isect = false;
-		for (uint32_t i = 0; i < indices.size() / 3; ++i) {
+		for (uint32_t i = 0, j = 0; i < indices.size() / 3; ++i) {
 			Vector3 const &v0 = modelToWorld(vertices[indices[j]].Position);
 			Vector3 const &v1 = modelToWorld(vertices[indices[j + 1]].Position);
 			Vector3 const &v2 = modelToWorld(vertices[indices[j + 2]].Position);
 
 			float t = tNear, u, v;
-			if (MoonMath::RayTriangleIntersect(ray, v0, v1, v2, t, u, v) && t < tNear) {
-				if (t > EPSILON && t < INFINITY) {
+			if (MoonMath::RayTriangleIntersect(ray, v0, v1, v2, t, u, v)) {
+				if (t > EPSILON && t < tNear) {
 					tNear = t;
-					uv.x = u;
-					uv.y = v;
+					uv.setValue(u, v);
 					triIndex = i;
 					isect = true;
 				}

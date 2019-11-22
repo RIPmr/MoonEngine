@@ -43,8 +43,9 @@ namespace moon {
 			else return false;
 		}
 
-		void Rename(const std::string &newName);
+		virtual void Rename(const std::string &newName);
 
+		virtual void ListName();
 		virtual void ListProperties();
 	};
 
@@ -52,13 +53,14 @@ namespace moon {
 	class MObject : public ObjectBase {
 	public:
 		struct OPStack {
+			bool enable;
 			std::vector<Operator*> opList;
 
-			OPStack() = default;
+			OPStack() : enable(true) {}
 			~OPStack() { ClearStack(); }
 
-			void ExecuteAll() const;
-			void ListStacks() const;
+			void ExecuteAll();
+			void ListStacks();
 
 			void AddStack(Operator* op);
 			void RemoveStack(Operator* op);
@@ -76,6 +78,7 @@ namespace moon {
 			ObjectBase(_name, _id), transform(transform) {}
 		~MObject() override {}
 
+		virtual void ListTransform();
 		virtual void ListProperties() override;
 	};
 }

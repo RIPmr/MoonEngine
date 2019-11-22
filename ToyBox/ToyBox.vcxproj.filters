@@ -212,6 +212,9 @@
     <ClInclude Include="OBJMgr.h">
       <Filter>HeadFiles\Component</Filter>
     </ClInclude>
+    <ClInclude Include="IconsFontAwesome4.h">
+      <Filter>HeadFiles\Miscellaneous</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

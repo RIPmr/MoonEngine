@@ -60,24 +60,20 @@ namespace moon {
 
 		void Draw(Shader* shader, const Matrix4x4 & model);
 
-		bool Hit(const Ray &r, float tmin, float tmax, HitRecord &rec) const {
+		bool Hit(const Ray &r, HitRecord &rec) const {
 			uint32_t triIndex;
 			Vector2 uv;
 			Vector3 hitNormal;
 			Vector2 hitTextureCoordinates;
-			float tNear = rec.t;
 
-			if (Intersect(r, tNear, triIndex, uv)) {
-				if (tNear > tmin && tNear < tmax) {
-					GetSurfaceProperties(triIndex, uv, hitNormal, hitTextureCoordinates);
-					rec.t = tNear;
-					rec.p = r.PointAtParameter(tNear);
-					//rec.normal = Vector3::Normalize(rec.p);
-					rec.normal = hitNormal;
-					//rec.uv = hitTextureCoordinates;
-					rec.mat = material;
-					return true;
-				}
+			if (Intersect(r, rec.t, triIndex, uv)) {
+				GetSurfaceProperties(triIndex, uv, hitNormal, hitTextureCoordinates);
+				rec.p = r.PointAtParameter(rec.t);
+				//rec.normal = Vector3::Normalize(rec.p);
+				rec.normal = hitNormal;
+				//rec.uv = hitTextureCoordinates;
+				rec.mat = material;
+				return true;
 			}
 
 			return false;

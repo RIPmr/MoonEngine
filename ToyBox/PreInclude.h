@@ -82,6 +82,12 @@ bool MainUI::show_inspector_window = true;
 bool MainUI::show_project_window = false;
 bool MainUI::show_console_window = false;
 bool MainUI::show_create_window = true;
+bool MainUI::show_enviroment_editor = false;
+
+bool MainUI::show_ribbon = true;
+bool MainUI::show_timeline = false;
+bool MainUI::show_material_editor = false;
+bool MainUI::show_codeEditor = false;
 
 Texture* MainUI::icon = NULL;
 Texture* MainUI::logo = NULL;
@@ -100,6 +106,7 @@ std::vector<ObjectBase*> SceneManager::objectList;
 std::vector<ObjectBase*> SceneManager::matchedList;
 float SceneManager::Clock::deltaTime = 0;
 float SceneManager::Clock::lastFrame = 0;
+bool SceneManager::showbbox = false;
 
 std::multimap<std::string, Light*> MOON_LightManager::itemMap;
 std::multimap<std::string, Material*> MOON_MaterialManager::itemMap;

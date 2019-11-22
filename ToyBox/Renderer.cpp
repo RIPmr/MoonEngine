@@ -149,7 +149,7 @@ void* Renderer::rendering(void* args) {
 
 Vector3 Renderer::SamplingColor(const Ray &r, int depth) {
 	HitRecord rec;
-	if (SceneManager::ModelManager::Hit(r, EPSILON, INFINITY, rec)) {
+	if (SceneManager::ModelManager::Hit(r, rec)) {
 		Ray scattered;
 		Vector3 attenuation;
 		if (depth < maxReflectionDepth && rec.mat->scatter(r, rec, attenuation, scattered))

@@ -62,7 +62,7 @@ namespace moon {
 		return "";
 	}
 
-	bool OBJLoader::LoadFile(const std::string &Path, bool gammaCorrection) {
+	bool OBJLoader::LoadFile(const std::string &Path, std::vector<Mesh*> &LoadedMeshes, bool gammaCorrection) {
 		// If the file is not an .obj file return false
 		if (Path.substr(Path.size() - 4, 4) != ".obj")
 			return false;
@@ -79,7 +79,6 @@ namespace moon {
 		std::vector<Vector3> Positions;
 		std::vector<Vector2> TCoords;
 		std::vector<Vector3> Normals;
-
 		std::vector<Vertex> Vertices;
 		std::vector<unsigned int> Indices;
 
@@ -177,6 +176,7 @@ namespace moon {
 
 				std::vector<unsigned int> iIndices;
 				VertexTriangluation(iIndices, vVerts);
+
 				// Add Indices
 				for (int i = 0; i < int(iIndices.size()); i++) {
 					unsigned int indnum = (unsigned int)((Vertices.size()) - vVerts.size()) + iIndices[i];

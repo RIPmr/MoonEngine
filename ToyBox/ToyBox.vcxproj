@@ -81,6 +81,8 @@
       <ConformanceMode>true</ConformanceMode>
       <OpenMPSupport>true</OpenMPSupport>
       <AdditionalIncludeDirectories>..\packages\Pre-built.2\dll\x86;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeTypeInfo>
+      </RuntimeTypeInfo>
     </ClCompile>
     <Link>
       <AdditionalDependencies>opengl32.lib;glfw3.lib;assimp.lib;glfw3dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -151,6 +153,7 @@
     <ClInclude Include="FuzzyMatch.h" />
     <ClInclude Include="Helper.h" />
     <ClInclude Include="Hitable.h" />
+    <ClInclude Include="IconsFontAwesome4.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="MatSphere.h" />

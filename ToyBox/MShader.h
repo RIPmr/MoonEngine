@@ -115,9 +115,9 @@ namespace moon {
 			glUniform3f(glGetUniformLocation(localID, name.c_str()), x, y, z);
 		}
 		// ------------------------------------------------------------------------
-		/*void setVec4(const std::string &name, const Vector4 &value) const {
-			glUniform4fv(glGetUniformLocation(localID, name.c_str()), 1, &value[0]);
-		}*/
+		void setVec4(const std::string &name, const Vector4 &value) const {
+			glUniform4f(glGetUniformLocation(localID, name.c_str()), value.x, value.y, value.z, value.w);
+		}
 		void setVec4(const std::string &name, const ImVec4 &value) const {
 			glUniform4f(glGetUniformLocation(localID, name.c_str()), value.x, value.y, value.z, value.w);
 		}

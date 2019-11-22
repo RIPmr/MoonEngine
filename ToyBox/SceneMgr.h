@@ -1,4 +1,8 @@
 #pragma once
+#include <map>
+#include <vector>
+#include <string>
+
 #include "Vector2.h"
 #include "Camera.h"
 #include "Model.h"
@@ -6,10 +10,7 @@
 #include "Texture.h"
 #include "MShader.h"
 #include "MatSphere.h"
-
-#include <map>
-#include <vector>
-#include <string>
+#include "IconsFontAwesome4.h"
 
 namespace moon {
 	template <class T>
@@ -24,15 +25,20 @@ namespace moon {
 		static void PrintID(T* item) {
 			std::cout << " id: " << item->ID << std::endl;
 
-			if (typeid(item) == typeid(Shader*)) std::cout << " local(shader) id: [" << dynamic_cast<Shader*>(item)->localID << "]" << std::endl;
-			else if (typeid(item) == typeid(Texture*)) std::cout << " local(texture) id: [" << dynamic_cast<Texture*>(item)->localID << "]" << std::endl;
+			if (typeid(*item) == typeid(Shader)) std::cout << " local(shader) id: [" << dynamic_cast<Shader*>(item)->localID << "]" << std::endl;
+			else if (typeid(*item) == typeid(Texture)) std::cout << " local(texture) id: [" << dynamic_cast<Texture*>(item)->localID << "]" << std::endl;
 		}
 
 		static void ListItems() {
+			if (itemMap.size() < 1) return;
+
 			std::vector<unsigned int> &sel = MOON_InputManager::selected;
 			auto iter = itemMap.begin();
 			for (int i = 0; i < itemMap.size(); i++, iter++) {
-				if (ImGui::Selectable(iter->second->name.c_str(), MOON_InputManager::selection[iter->second->ID], ImGuiSelectableFlags_SpanAllColumns)) {
+				if (ImGui::Selectable((SceneManager::GetTypeIcon(iter->second) + 
+									   "  " + iter->first).c_str(),
+									   MOON_InputManager::selection[iter->second->ID], 
+									   ImGuiSelectableFlags_SpanAllColumns)) {
 					if (!MainUI::io->KeyCtrl) {
 						sel.clear();
 						memset(MOON_InputManager::selection, 0, SceneManager::GetObjectNum() * sizeof(bool));
@@ -54,9 +60,9 @@ namespace moon {
 		static void ListID() {
 			for (auto &iter : itemMap) {
 				char label[32];
-				if (typeid(itemMap.begin()->second) == typeid(Texture*))
+				if (typeid(*itemMap.begin()->second) == typeid(Texture))
 					sprintf_s(label, "%d-[T%d]", iter.second->ID, dynamic_cast<Texture*>(iter.second)->localID);
-				else if (typeid(itemMap.begin()->second) == typeid(Shader*))
+				else if (typeid(*itemMap.begin()->second) == typeid(Shader))
 					sprintf_s(label, "%d-[S%d]", iter.second->ID, dynamic_cast<Shader*>(iter.second)->localID);
 				else
 					sprintf_s(label, "%d", iter.second->ID);
@@ -66,49 +72,30 @@ namespace moon {
 
 		static void PrintAllItems() {
 			if (itemMap.count() < 1) {
-				std::cout << "empty type!" << std::endl;
+				std::cout << "none object of this type in the scene!" << std::endl;
 				return;
 			}
-
-			if (typeid(itemMap.begin()->second) == typeid(Shader*)) std::cout << " Shaders in scene: " << std::endl;
-			else if (typeid(itemMap.begin()->second) == typeid(Texture*)) std::cout << " Textures in scene: " << std::endl;
-			else if (typeid(itemMap.begin()->second) == typeid(Material*)) std::cout << " Materials in scene: " << std::endl;
-			else if (typeid(itemMap.begin()->second) == typeid(Light*)) std::cout << " Lights in scene: " << std::endl;
-			else if (typeid(itemMap.begin()->second) == typeid(Model*)) std::cout << " Models in scene: " << std::endl;
-			else if (typeid(itemMap.begin()->second) == typeid(Camera*)) std::cout << " Cameras in scene: " << std::endl;
+			std::cout << " " << SceneManager::GetType(itemMap.begin()->second) << "s in the scene: " << std::endl;
 
 			auto end = itemMap.end();
-			std::cout << "items(" << itemMap.count() << "):" << std << std::endl;
+			std::cout << "-items(" << itemMap.count() << "):" << std << std::endl;
 			for (auto it = itemMap.begin(); it != end; it++) {
 				std::cout << "- name: " << it->first; PrintID(it->second);
 			}
 		}
 
-		static bool AddItem(T* item) {
-			std::cout << std::endl;
-			if (typeid(item) == typeid(Shader*))
-				std::cout << "------------------------------------------------ new shader added ------------------------------------------------" << std::endl;
-			else if (typeid(item) == typeid(Texture*))
-				std::cout << "------------------------------------------------ new texture added -----------------------------------------------" << std::endl;
-			else if (typeid(item) == typeid(Material*))
-				std::cout << "------------------------------------------------ new Material added ----------------------------------------------" << std::endl;
-			else if (typeid(item) == typeid(Light*))
-				std::cout << "-------------------------------------------------- new Light added -----------------------------------------------" << std::endl;
-			else if (typeid(item) == typeid(Model*))
-				std::cout << "-------------------------------------------------- new Model added -----------------------------------------------" << std::endl;
-			else if (typeid(item) == typeid(Camera*))
-				std::cout << "------------------------------------------------- new Camera added -----------------------------------------------" << std::endl;
-			else 
-				std::cout << "------------------------------------------ new object added [unknown type] ---------------------------------------" << std::endl;
-			
+		static bool AddItem(T* item, const bool &autoSizeFlag = true) {			
 			//itemMap.insert(std::make_pair(static_cast<ObjectBase*>(item)->name, item));
 			itemMap.insert(std::pair<std::string, T*>(item->name, item));
-			auto iter = itemMap.end(); iter--;
-			std::cout << "- name: \'" << iter->first << "\' added."; PrintID(iter->second);
-
 			SceneManager::AddObject(item);
 
-			sizeFlag = true;
+			if (autoSizeFlag) {
+				std::cout << std::endl;
+				auto iter = itemMap.end(); iter--;
+				std::cout << "------------------------------------------------ new " << SceneManager::GetType(item) << " added ------------------------------------------------" << std::endl;
+				std::cout << "- name: \'" << iter->first << "\' added."; PrintID(iter->second);
+				sizeFlag = true;
+			}
 			return true;
 		}
 
@@ -261,15 +248,15 @@ namespace moon {
 		static bool RenameItem(const int &ID, const std::string newName) {
 			T* item = RemoveItem(ID, false);
 			item->name = newName;
-			AddItem(item);
+			AddItem(item, false);
 			return true;
 		}
 
 		static bool RenameItem(ObjectBase* item, const std::string newName) {
-			std::cout << "new name: " << newName << std::endl;
+			std::cout << "renamed \'" << item->name << "\' to: \'" << newName << "\'" << std::endl;
 			RemoveItem(item->name, item->ID, false);
 			item->name = newName;
-			AddItem(dynamic_cast<T*>(item));
+			AddItem(dynamic_cast<T*>(item), false);
 			return true;
 		}
 
@@ -294,6 +281,8 @@ namespace moon {
 		// global parameters
 		static Vector2 SCR_SIZE;
 		static float aspect;
+
+		static bool showbbox;
 
 		// all objects
 		static std::vector<ObjectBase*> objectList;
@@ -323,6 +312,67 @@ namespace moon {
 				}
 				return delID++;
 			}
+		}
+
+		template<class T>
+		static std::string GetType(T* item) {
+			std::string type;
+			if (typeid(*item) == typeid(Shader)) type = "Shader";
+			else if (typeid(*item) == typeid(Texture)) type = "Texture";
+			else if (typeid(*item) == typeid(MoonMtl) || 
+					 typeid(*item) == typeid(LightMtl) || 
+					 typeid(*item) == typeid(Lambertian) ||
+					 typeid(*item) == typeid(Metal) ||
+					 typeid(*item) == typeid(Dielectric)) type = "Material";
+			else if (typeid(*item) == typeid(DirLight) ||
+					 typeid(*item) == typeid(PointLight) ||
+					 typeid(*item) == typeid(SpotLight) ||
+					 typeid(*item) == typeid(MoonLight) ||
+					 typeid(*item) == typeid(DomeLight)) type = "Light";
+			else if (typeid(*item) == typeid(Model)) type = "Model";
+			else if (typeid(*item) == typeid(Camera)) type = "Camera";
+			else type = "Unknown";
+			return type;
+		}
+
+		template<class T>
+		static std::string GetTypeIcon(T* item) {
+			std::string typeIcon;
+			if (typeid(*item) == typeid(Shader)) typeIcon = ICON_FA_FILE_CODE_O;
+			else if (typeid(*item) == typeid(Texture)) typeIcon = ICON_FA_PICTURE_O;
+			else if (typeid(*item) == typeid(MoonMtl) ||
+					 typeid(*item) == typeid(LightMtl) ||
+					 typeid(*item) == typeid(Lambertian) ||
+					 typeid(*item) == typeid(Metal) ||
+					 typeid(*item) == typeid(Dielectric)) typeIcon = ICON_FA_GLOBE;
+			else if (typeid(*item) == typeid(DirLight) ||
+					 typeid(*item) == typeid(PointLight) ||
+					 typeid(*item) == typeid(SpotLight) ||
+					 typeid(*item) == typeid(MoonLight) ||
+					 typeid(*item) == typeid(DomeLight)) typeIcon = ICON_FA_LIGHTBULB_O;
+			else if (typeid(*item) == typeid(Model)) typeIcon = ICON_FA_CUBE;
+			else if (typeid(*item) == typeid(Camera)) typeIcon = ICON_FA_VIDEO_CAMERA;
+			else typeIcon = ICON_FA_QUESTION;
+			return typeIcon;
+		}
+
+		template<class T>
+		static void RenameItem(T* item, const std::string &newName) {
+			if (typeid(*item) == typeid(Shader)) ShaderManager::RenameItem(item, newName);
+			else if (typeid(*item) == typeid(Texture)) TextureManager::RenameItem(item, newName);
+			else if (typeid(*item) == typeid(MoonMtl) ||
+					 typeid(*item) == typeid(LightMtl) ||
+					 typeid(*item) == typeid(Lambertian) ||
+					 typeid(*item) == typeid(Metal) ||
+					 typeid(*item) == typeid(Dielectric)) MaterialManager::RenameItem(item, newName);
+			else if (typeid(*item) == typeid(DirLight) ||
+					 typeid(*item) == typeid(PointLight) ||
+					 typeid(*item) == typeid(SpotLight) ||
+					 typeid(*item) == typeid(MoonLight) ||
+					 typeid(*item) == typeid(DomeLight)) LightManager::RenameItem(item, newName);
+			else if (typeid(*item) == typeid(Model)) ModelManager::RenameItem(item, newName);
+			else if (typeid(*item) == typeid(Camera)) CameraManager::RenameItem(item, newName);
+			else std::cout << "Unknown type, rename failed!" << std::endl;
 		}
 
 		static unsigned int GetObjectNum() {
@@ -469,16 +519,16 @@ namespace moon {
 		};
 
 		struct ModelManager : ObjectManager<Model> {
-			static bool Hit(const Ray &r, float tmin, float tmax, HitRecord &rec) {
+			static bool Hit(const Ray &r, HitRecord &rec) {
 				HitRecord tempRec;
 				bool hitAnything = false;
-				double closestSoFar = tmax;
 
 				for (auto &iter : itemMap) {
-					if (iter.second->Hit(r, tmin, closestSoFar, tempRec)) {
-						hitAnything = true;
-						closestSoFar = tempRec.t;
-						rec = tempRec;
+					if (iter.second->visible) {
+						if (iter.second->Hit(r, tempRec)) {
+							hitAnything = true;
+							rec = tempRec;
+						}
 					}
 				}
 
@@ -487,7 +537,8 @@ namespace moon {
 
 			static void DrawModels() {
 				for (auto &obj : itemMap) {
-					obj.second->Draw();
+					if (obj.second->visible)
+						obj.second->Draw();
 				}
 			}
 
