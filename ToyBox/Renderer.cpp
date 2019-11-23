@@ -1,13 +1,13 @@
+#include <iostream>
+#include <iomanip>
+#include <random>
+
 #include "Renderer.h"
 #include "Material.h"
 #include "MathUtils.h"
 #include "SceneMgr.h"
 #include "Model.h"
 #include "Camera.h"
-
-#include <iostream>
-#include <iomanip>
-#include <random>
 
 using namespace moon;
 

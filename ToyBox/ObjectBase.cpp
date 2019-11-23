@@ -1,12 +1,8 @@
 #include <iostream>
-#include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_opengl3.h>
 
 #include "ObjectBase.h"
 #include "SceneMgr.h"
 #include "OperatorBase.h"
-#include "IconsFontAwesome4.h"
 
 namespace moon {
 	ObjectBase::ObjectBase(const int &_id) : visible(true) {
@@ -31,8 +27,8 @@ namespace moon {
 		std::string buf(name);
 		char* buf_c = (char*)buf.c_str();
 		ImGui::Text("Name:"); ImGui::SameLine();
-		ImGui::InputText("NameInput_" + ID, buf_c, 64); ImGui::SameLine();
-		ImGui::Checkbox("isVisible_" + ID, &visible);
+		ImGui::InputText(UniquePropName("Name"), buf_c, 64); ImGui::SameLine();
+		ImGui::Checkbox(UniquePropName("Visible"), &visible, true);
 		// if user renamed this object
 		if (strcmp(buf_c, name.c_str())) Rename(buf);
 	}
@@ -48,9 +44,10 @@ namespace moon {
 		}
 	}
 	void MObject::OPStack::ListStacks() {
-		ImGui::Checkbox("", &enable); ImGui::SameLine();
+		static auto stackName = std::string(ICON_FA_WRENCH) + " OP-Stack";
+		ImGui::Checkbox(UniquePropNameFromParent("enableOPStack"), &enable, true); ImGui::SameLine();
 		ImGui::Button(ICON_FA_PLUS, ImVec2(22, 22)); ImGui::SameLine();
-		if (ImGui::CollapsingHeader((std::string(ICON_FA_WRENCH) + " OP-Stack").c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
+		if (ImGui::CollapsingHeader(stackName.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
 			for (auto &iter : opList) {
 				iter->ListProperties();
 			}
@@ -85,13 +82,16 @@ namespace moon {
 		float rotEuler[3] = { euler.x, euler.y, euler.z };
 
 		ImGui::Text("Transform:");
-		ImGui::DragFloat3("Position", pos, 0.1f, -INFINITY, INFINITY);
-		ImGui::DragFloat3("Rotation", rotEuler, 0.1f, -INFINITY, INFINITY);
-		ImGui::DragFloat3("Scale", scale, 0.1f, -INFINITY, INFINITY);
+		ImGui::Text("Position"); ImGui::SameLine(80.0f);
+		ImGui::DragFloat3(UniquePropName("Pos"), pos, 0.1f, -INFINITY, INFINITY, "%.3f", 1.0f, true);
+		ImGui::Text("Rotation"); ImGui::SameLine(80.0f);
+		ImGui::DragFloat3(UniquePropName("Rot"), rotEuler, 0.1f, -INFINITY, INFINITY, "%.3f", 1.0f, true);
+		ImGui::Text("Scale"); ImGui::SameLine(80.0f);
+		ImGui::DragFloat3(UniquePropName("Sca"), scale, 0.1f, -INFINITY, INFINITY, "%.3f", 1.0f, true);
 
 		Quaternion deltaQ = Quaternion(rotEuler[0] - euler.x,
-			rotEuler[1] - euler.y,
-			rotEuler[2] - euler.z);
+									   rotEuler[1] - euler.y,
+									   rotEuler[2] - euler.z);
 		transform.Rotate(deltaQ);
 
 		transform.set(&Vector3(pos), NULL, &Vector3(scale));

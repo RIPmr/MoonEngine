@@ -10,7 +10,6 @@
 #include "Texture.h"
 #include "MShader.h"
 #include "MatSphere.h"
-#include "IconsFontAwesome4.h"
 
 namespace moon {
 	template <class T>
@@ -495,6 +494,7 @@ namespace moon {
 			static void LoadImagesForUI() {
 				AddItem(new Texture("./Resources/Icon.jpg", "moon_icon"));
 				AddItem(new Texture("./Resources/logo.png", "moon_logo"));
+				AddItem(new Texture("./Resources/Icon_fullSize.png", "moon_logo_full"));
 			}
 
 			// TODO
@@ -572,7 +572,7 @@ namespace moon {
 			}
 
 			static bool LoadSceneCamera() {
-				sceneCamera = new Camera("SceneCamera", Vector3(0.0f, 5.0f, 20.0f), 0.0f, MOON_UNSPECIFIEDID);
+				sceneCamera = new Camera("SceneCamera", Vector3(0.0f, 2.0f, 20.0f), 0.0f, MOON_UNSPECIFIEDID);
 				currentCamera = sceneCamera;
 				objectList.push_back(sceneCamera);
 				Renderer::targetCamera = sceneCamera;

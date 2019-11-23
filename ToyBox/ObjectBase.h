@@ -2,18 +2,25 @@
 #include <string>
 #include <vector>
 #include <imgui.h>
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
 
 #include "Transform.h"
+#include "IconsFontAwesome4.h"
 
 #define MOON_AUTOID -1
 #define MOON_UNSPECIFIEDID 0
 #define MOON_FIRSTMATCH -1
 
+#define UniquePropName(x) AppendUniquePrefix(x).c_str()
+#define UniquePropNameFromParent(x) (parent->AppendUniquePrefix(x)).c_str()
+
 namespace moon {
 	extern class SceneManager;
 	class ObjectBase {
 	public:
-		unsigned int ID; // ID is unique in every type of objects
+		unsigned int ID; // ID is unique for each object
 		std::string name;
 		bool visible;
 
@@ -43,6 +50,14 @@ namespace moon {
 			else return false;
 		}
 
+		virtual std::string UniquePrefix(bool skipName = false) {
+			return (skipName ? "" : (name + "_")) + std::to_string(ID) + "_";
+		}
+
+		virtual std::string AppendUniquePrefix(const std::string &propName, bool skipName = false) {
+			return UniquePrefix(skipName) + propName;
+		}
+
 		virtual void Rename(const std::string &newName);
 
 		virtual void ListName();
@@ -53,10 +68,12 @@ namespace moon {
 	class MObject : public ObjectBase {
 	public:
 		struct OPStack {
+			MObject* parent;
 			bool enable;
 			std::vector<Operator*> opList;
 
-			OPStack() : enable(true) {}
+			//OPStack() : enable(true) {}
+			OPStack(MObject* parent) : enable(true), parent(parent) {}
 			~OPStack() { ClearStack(); }
 
 			void ExecuteAll();
@@ -70,12 +87,12 @@ namespace moon {
 		Transform transform;
 		OPStack opstack;
 
-		MObject() : ObjectBase(MOON_AUTOID) { name = "MObject_" + ID; }
-		MObject(const int &_id) : ObjectBase(_id) { name = "MObject_" + _id; }
-		MObject(const std::string &_name) : ObjectBase(_name, MOON_AUTOID) {}
-		MObject(const std::string &_name, const int &_id) : ObjectBase(_name, _id){}
+		MObject() : ObjectBase(MOON_AUTOID), opstack(this) { name = "MObject_" + ID; }
+		MObject(const int &_id) : ObjectBase(_id), opstack(this) { name = "MObject_" + _id; }
+		MObject(const std::string &_name) : ObjectBase(_name, MOON_AUTOID), opstack(this) {}
+		MObject(const std::string &_name, const int &_id) : ObjectBase(_name, _id), opstack(this) {}
 		MObject(const std::string &_name, const Transform &transform, const int &_id) :
-			ObjectBase(_name, _id), transform(transform) {}
+			ObjectBase(_name, _id), transform(transform), opstack(this) {}
 		~MObject() override {}
 
 		virtual void ListTransform();

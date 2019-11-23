@@ -979,7 +979,7 @@ bool ImGui::ImageButton(ImTextureID user_texture_id, const ImVec2& size, const I
     return pressed;
 }
 
-bool ImGui::Checkbox(const char* label, bool* v)
+bool ImGui::Checkbox(const char* label, bool* v, bool hideLabel)
 {
     ImGuiWindow* window = GetCurrentWindow();
     if (window->SkipItems)
@@ -988,7 +988,9 @@ bool ImGui::Checkbox(const char* label, bool* v)
     ImGuiContext& g = *GImGui;
     const ImGuiStyle& style = g.Style;
     const ImGuiID id = window->GetID(label);
-    const ImVec2 label_size = CalcTextSize(label, NULL, true);
+    ImVec2 label_size = CalcTextSize(label, NULL, true);
+
+	if (hideLabel) label_size.x = 0.0f;
 
     const float square_sz = GetFrameHeight();
     const ImVec2 pos = window->DC.CursorPos;
@@ -2138,7 +2140,7 @@ bool ImGui::DragScalar(const char* label, ImGuiDataType data_type, void* p_data,
     return value_changed;
 }
 
-bool ImGui::DragScalarN(const char* label, ImGuiDataType data_type, void* p_data, int components, float v_speed, const void* p_min, const void* p_max, const char* format, float power)
+bool ImGui::DragScalarN(const char* label, ImGuiDataType data_type, void* p_data, int components, float v_speed, const void* p_min, const void* p_max, const char* format, float power, bool hideLabel)
 {
     ImGuiWindow* window = GetCurrentWindow();
     if (window->SkipItems)
@@ -2165,8 +2167,10 @@ bool ImGui::DragScalarN(const char* label, ImGuiDataType data_type, void* p_data
     const char* label_end = FindRenderedTextEnd(label);
     if (label != label_end)
     {
-        SameLine(0, g.Style.ItemInnerSpacing.x);
-        TextEx(label, label_end);
+		if (!hideLabel) {
+			SameLine(0, g.Style.ItemInnerSpacing.x);
+			TextEx(label, label_end);
+		}
     }
 
     EndGroup();
@@ -2183,9 +2187,9 @@ bool ImGui::DragFloat2(const char* label, float v[2], float v_speed, float v_min
     return DragScalarN(label, ImGuiDataType_Float, v, 2, v_speed, &v_min, &v_max, format, power);
 }
 
-bool ImGui::DragFloat3(const char* label, float v[3], float v_speed, float v_min, float v_max, const char* format, float power)
+bool ImGui::DragFloat3(const char* label, float v[3], float v_speed, float v_min, float v_max, const char* format, float power, bool hideLabel)
 {
-    return DragScalarN(label, ImGuiDataType_Float, v, 3, v_speed, &v_min, &v_max, format, power);
+    return DragScalarN(label, ImGuiDataType_Float, v, 3, v_speed, &v_min, &v_max, format, power, hideLabel);
 }
 
 bool ImGui::DragFloat4(const char* label, float v[4], float v_speed, float v_min, float v_max, const char* format, float power)
@@ -3426,9 +3430,8 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
         BeginGroup();
     const ImGuiID id = window->GetID(label);
 
-	ImVec2 label_size;
-	if (hideLabel) label_size = CalcTextSize("", NULL, true);
-	else label_size = CalcTextSize(label, NULL, true);
+	ImVec2 label_size = CalcTextSize(label, NULL, true);
+	if (hideLabel) label_size.x = 0.0f;
 
     const ImVec2 frame_size = CalcItemSize(size_arg, CalcItemWidth(), (is_multiline ? g.FontSize * 8.0f : label_size.y) + style.FramePadding.y*2.0f); // Arbitrary default of 8 lines high for multi-line
     const ImVec2 total_size = ImVec2(frame_size.x + (label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f), frame_size.y);
@@ -5465,7 +5468,7 @@ bool ImGui::CollapsingHeader(const char* label, ImGuiTreeNodeFlags flags)
     if (window->SkipItems)
         return false;
 
-    return TreeNodeBehavior(window->GetID(label), flags | ImGuiTreeNodeFlags_CollapsingHeader, label);
+	return TreeNodeBehavior(window->GetID(label), flags | ImGuiTreeNodeFlags_CollapsingHeader, label);
 }
 
 bool ImGui::CollapsingHeader(const char* label, bool* p_open, ImGuiTreeNodeFlags flags)

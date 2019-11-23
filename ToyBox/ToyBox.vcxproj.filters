@@ -215,6 +215,12 @@
     <ClInclude Include="IconsFontAwesome4.h">
       <Filter>HeadFiles\Miscellaneous</Filter>
     </ClInclude>
+    <ClInclude Include="OP_MeshEditor.h">
+      <Filter>HeadFiles\Operator</Filter>
+    </ClInclude>
+    <ClInclude Include="OperatorLoader.h">
+      <Filter>HeadFiles\Component</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -235,13 +241,13 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="Resources\Icon - fullSize.jpg">
-      <Filter>Resources\Images</Filter>
-    </Image>
     <Image Include="Resources\Icon.jpg">
       <Filter>Resources\Images</Filter>
     </Image>
     <Image Include="Resources\logo.png">
+      <Filter>Resources\Images</Filter>
+    </Image>
+    <Image Include="Resources\Icon_fullSize.jpg">
       <Filter>Resources\Images</Filter>
     </Image>
   </ItemGroup>

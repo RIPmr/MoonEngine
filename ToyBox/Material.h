@@ -1,12 +1,12 @@
 #pragma once
+#include <string>
+
 #include "Ray.h"
 #include "MathUtils.h"
 #include "MShader.h"
 #include "Hitable.h"
 #include "Texture.h"
 #include "ObjectBase.h"
-
-#include <string>
 
 namespace moon {
 	enum MatType {
@@ -25,6 +25,23 @@ namespace moon {
 		Material(const std::string &name) : ObjectBase(name, MOON_AUTOID) {}
 		//~Material() { delete shader; }
 		~Material() override {}
+
+		void ListShader() {
+			if (ImGui::TreeNode(UniquePropName("Shader"))) {
+				ImGui::Text((std::string(ICON_FA_FILE_CODE_O) + " " + shader->name).c_str());
+				ImGui::TreePop();
+			}
+		}
+
+		virtual void ListProperties() override {
+			// list name
+			ListName();
+			ImGui::Separator();
+
+			// list shader
+			ListShader();
+			ImGui::Spacing();
+		}
 
 		virtual bool scatter(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered) const = 0;
 	};
@@ -53,6 +70,57 @@ namespace moon {
 
 		MoonMtl();
 		MoonMtl(const std::string &name);
+
+		virtual void ListProperties() override {
+			// list name
+			ListName();
+			ImGui::Separator();
+
+			// list shader
+			ListShader();
+			ImGui::Separator();
+
+			// list parameters
+			ImGui::Text("Parameters:");
+
+			// Ambient
+			ImGui::Text("Ambient "); ImGui::SameLine(125.0f);
+			ImGui::ColorEdit3(UniquePropName("Ka"), (float*)&Ka, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
+			ImGui::SameLine();
+			ImGui::Button("[Texture]");
+			// Diffuse
+			ImGui::Text("Diffuse "); ImGui::SameLine(125.0f);
+			ImGui::ColorEdit3(UniquePropName("Kd"), (float*)&Kd, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
+			ImGui::SameLine();
+			ImGui::Button("[Texture]");
+			// Specular
+			ImGui::Text("Specular "); ImGui::SameLine(125.0f);
+			ImGui::ColorEdit3(UniquePropName("Ks"), (float*)&Ks, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
+			ImGui::SameLine();
+			ImGui::Button("[Texture]");
+			// Specular Exponent
+			ImGui::Text("Specular Exponent "); ImGui::SameLine(125.0f);
+			ImGui::ColorEdit3(UniquePropName("Ns"), (float*)&Ns, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
+			ImGui::SameLine();
+			ImGui::Button("[Texture]");
+			// Optical Density
+			ImGui::Text("Optical Density "); ImGui::SameLine(125.0f);
+			ImGui::ColorEdit3(UniquePropName("Ni"), (float*)&Ni, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
+			ImGui::SameLine();
+			ImGui::Button("[Texture]");
+			// Dissolve
+			ImGui::Text("Dissolve "); ImGui::SameLine(125.0f);
+			ImGui::ColorEdit3(UniquePropName("d"), (float*)&d, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
+			ImGui::SameLine();
+			ImGui::Button("[Texture]");
+			// Illumination
+			ImGui::Text("Illumination "); ImGui::SameLine(125.0f);
+			ImGui::ColorEdit3(UniquePropName("illum"), (float*)&illum, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
+			ImGui::SameLine();
+			ImGui::Button("[Texture]");
+
+			ImGui::Spacing();
+		}
 
 		virtual bool scatter(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered) const;
 	};

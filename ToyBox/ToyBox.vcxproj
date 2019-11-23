@@ -163,6 +163,8 @@
     <ClInclude Include="Model.h" />
     <ClInclude Include="OBJMgr.h" />
     <ClInclude Include="OperatorBase.h" />
+    <ClInclude Include="OperatorLoader.h" />
+    <ClInclude Include="OP_MeshEditor.h" />
     <ClInclude Include="PMapGen.h" />
     <ClInclude Include="PreInclude.h" />
     <ClInclude Include="Quaternion.h" />
@@ -190,7 +192,7 @@
     <None Include="SimplePhong.vs" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="Resources\Icon - fullSize.jpg" />
+    <Image Include="Resources\Icon_fullSize.jpg" />
     <Image Include="Resources\Icon.jpg" />
     <Image Include="Resources\logo.png" />
   </ItemGroup>

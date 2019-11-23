@@ -2,7 +2,6 @@
 #include <vector>
 #include <string>
 
-#include "IconsFontAwesome4.h"
 #include "BoundingBox.h"
 #include "ObjectBase.h"
 #include "Transform.h"

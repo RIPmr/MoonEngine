@@ -79,12 +79,12 @@ namespace moon {
 				ImGui::EndPopup();
 			}
 
-			ImGui::TextWrapped("Enter 'HELP' for help, press TAB to use text completion.");
+			//ImGui::TextWrapped("Enter 'HELP' for help, press TAB to use text completion.");
 
 			// TODO: display items starting from the bottom
 
-			if (ImGui::SmallButton("Test Text")) { AddLog("%d some text", Items.Size); AddLog("some more text"); AddLog("display message here!"); } ImGui::SameLine();
-			if (ImGui::SmallButton("Test Error")) { AddLog("[error] something went wrong"); } ImGui::SameLine();
+			//if (ImGui::SmallButton("Test Text")) { AddLog("%d some text", Items.Size); AddLog("some more text"); AddLog("display message here!"); } ImGui::SameLine();
+			//if (ImGui::SmallButton("Test Error")) { AddLog("[error] something went wrong"); } ImGui::SameLine();
 			if (ImGui::SmallButton("Clear")) { ClearLog(); } ImGui::SameLine();
 			bool copy_to_clipboard = ImGui::SmallButton("Copy"); ImGui::SameLine();
 			//static float t = 0.0f; if (ImGui::GetTime() - t > 0.02f) { t = ImGui::GetTime(); AddLog("Spam %f", t); }
@@ -321,8 +321,8 @@ namespace moon {
 		static bool show_ribbon;
 		static bool show_timeline;
 
-		// TODO
 		static bool show_curve_editor;
+		static bool show_operator_editor;
 
 		// window definition
 		static void MainMenu() {
@@ -345,6 +345,38 @@ namespace moon {
 				if (ImGui::MenuItem("Preferences", NULL, MainUI::show_preference_window)) {
 					MainUI::show_preference_window = !MainUI::show_preference_window;
 				}
+				ImGui::EndMenu();
+			}
+			if (ImGui::BeginMenu("Animation")) {
+				if (ImGui::BeginMenu("Constraints")) {
+					if (ImGui::MenuItem("IK")) {}
+					if (ImGui::MenuItem("Look At")) {}
+					if (ImGui::MenuItem("Position")) {}
+					if (ImGui::MenuItem("Rotation")) {}
+					ImGui::EndMenu();
+				}
+				if (ImGui::MenuItem("Bone Tool")) {}
+				if (ImGui::MenuItem("Facial")) {}
+				if (ImGui::MenuItem("Retarget")) {}
+				ImGui::EndMenu();
+			}
+			if (ImGui::BeginMenu("Simulation")) {
+				if (ImGui::MenuItem("Fire")) {}
+				if (ImGui::MenuItem("Water")) {}
+				if (ImGui::MenuItem("Cloth")) {}
+				if (ImGui::MenuItem("Fracture")) {}
+				ImGui::Separator();
+				if (ImGui::MenuItem("ParticleSys", "6")) {}
+				ImGui::EndMenu();
+			}
+			if (ImGui::BeginMenu("Rabbit")) {
+				if (ImGui::MenuItem("Enviroment", "8")) {}
+				if (ImGui::MenuItem("Render", "F9")) {}
+				if (ImGui::MenuItem("Settings", "F10")) {}
+				ImGui::EndMenu();
+			}
+			if (ImGui::BeginMenu("Utility")) {
+				if (ImGui::MenuItem("Baker", "0")) {}
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("Window")) {
@@ -413,7 +445,7 @@ namespace moon {
 
 			ImGui::Text("[Settings]");
 			ImGui::Text("Debug:"); ImGui::SameLine();
-			ImGui::Checkbox("BBox", &SceneManager::showbbox);
+			ImGui::Checkbox("BBox", &SceneManager::showbbox, true);
 
 			ImGui::Spacing();
 
@@ -444,6 +476,15 @@ namespace moon {
 				}
 			}
 
+			/*ImGui::OpenPopup("RenderingStacked");
+			bool dummy_open = true;
+			if (ImGui::BeginPopupModal("RenderingStacked", &dummy_open)) {
+				ImGui::Text("Hello from Stacked The Second!");
+				if (ImGui::Button("Close"))
+					ImGui::CloseCurrentPopup();
+				ImGui::EndPopup();
+			}*/
+
 			ImGui::End();
 		}
 
@@ -455,9 +496,16 @@ namespace moon {
 
 		static void ShowVFB() {
 			ImGui::SetNextWindowSize(ImVec2(MOON_OutputSize.x < 100 ? 100 : MOON_OutputSize.x + 18,
-				MOON_OutputSize.y < 100 ? 100 : MOON_OutputSize.y + 80));
+				MOON_OutputSize.y < 100 ? 100 : MOON_OutputSize.y + 115));
 
 			ImGui::Begin((std::string(ICON_FA_FILM) + " VFB").c_str(), &MainUI::show_VFB_window, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize);
+
+			ImGui::Button(ICON_FA_CLOCK_O, ImVec2(22, 22)); ImGui::SameLine();
+			ImGui::Text(u8"|"); ImGui::SameLine();
+			ImGui::Button(ICON_FA_OBJECT_GROUP, ImVec2(22, 22)); ImGui::SameLine();
+			ImGui::Button(ICON_FA_ADJUST, ImVec2(22, 22));
+			ImGui::Separator();
+			
 			ImGui::Text("size = %.0f x %.0f", MOON_OutputSize.x, MOON_OutputSize.y);
 
 			ImVec2 pos = ImGui::GetCursorScreenPos();
@@ -574,9 +622,12 @@ namespace moon {
 				showLight = showAll; showCam = showAll; showShader = showAll;
 			}
 
+			static float colWidth = 180;
+
 			ImGui::Spacing();
 			ImGui::Columns(2, "mycolumns", false);
 			ImGui::Separator();
+			ImGui::SetColumnWidth(-1, colWidth);
 			ImGui::Text("Name"); ImGui::NextColumn();
 			ImGui::Text("ID");
 			ImGui::Separator();
@@ -586,6 +637,7 @@ namespace moon {
 							  ImVec2(0, ImGui::GetFrameHeightWithSpacing() * 10 + 30), 
 							  false, ImGuiWindowFlags_HorizontalScrollbar);
 			ImGui::Columns(2, "mycolumns", false);
+			ImGui::SetColumnWidth(-1, colWidth - 8);
 			MOON_InputManager::UpdateSelectionState();
 			if (showModel) MOON_ModelManager::ListItems();
 			if (showMat) MOON_MaterialManager::ListItems();
@@ -609,7 +661,9 @@ namespace moon {
 		}
 
 		static void SceneWnd() {
-			ImGui::Begin((std::string(ICON_FA_GAMEPAD) + " Scene").c_str(), &MainUI::show_scene_window);
+			ImGui::Begin((std::string(ICON_FA_GAMEPAD) + " Scene").c_str(), 
+						  &MainUI::show_scene_window, 
+						  ImGuiWindowFlags_NoBackground);
 
 			ImGui::End();
 		}
@@ -661,6 +715,51 @@ namespace moon {
 
 		static void MaterialEditor() {
 			ImGui::Begin((std::string(ICON_FA_FUTBOL_O) + " MaterialEditor").c_str(), &MainUI::show_material_editor);
+
+			ImGui::Columns(2, "mycolumns");
+			ImGui::SetColumnWidth(-1, 160);
+			// left
+			static int selected = 0;
+			static unsigned int prevID = MOON_TextureManager::GetItem("moon_logo_full")->localID;
+			ImGui::BeginChild("Previewer", ImVec2(150, 140), true);
+			ImGui::Image((void*)(intptr_t)prevID, ImVec2(125, 125));
+			ImGui::EndChild();
+			//ImGui::SameLine();
+
+			ImGui::BeginChild("Mat Explorer", ImVec2(150, 0), true);
+			for (int i = 0; i < 100; i++) {
+				char label[128];
+				sprintf(label, "Material %d", i);
+				if (ImGui::Selectable(label, selected == i))
+					selected = i;
+			}
+			ImGui::EndChild();
+
+			ImGui::NextColumn();
+
+			// right
+			ImGui::BeginGroup();
+			ImGui::BeginChild("item view", ImVec2(0, -ImGui::GetFrameHeightWithSpacing())); // Leave room for 1 line below us
+			ImGui::Text("Material: %d", selected);
+			ImGui::Separator();
+			if (ImGui::BeginTabBar("##Tabs", ImGuiTabBarFlags_None)) {
+				if (ImGui::BeginTabItem("Information")) {
+					ImGui::TextWrapped("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. ");
+					ImGui::EndTabItem();
+				}
+				if (ImGui::BeginTabItem("Node Editor")) {
+					ImGui::Text("ID: 0123456789");
+					ImGui::EndTabItem();
+				}
+				ImGui::EndTabBar();
+			}
+			ImGui::EndChild();
+			if (ImGui::Button("Revert")) {}
+			ImGui::SameLine();
+			if (ImGui::Button("Save")) {}
+			ImGui::EndGroup();
+
+			ImGui::Columns(1);
 
 			ImGui::End();
 		}
@@ -766,7 +865,7 @@ namespace moon {
 		}
 
 		static void RibbonBar() {
-			//ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
+			//ImGui::PushStyleVar(ImGuiStyleVar_IndentSpacing, 0.1f);
 
 			ImGui::Begin("Ribbon", &MainUI::show_ribbon, 
 						 ImGuiWindowFlags_NoDecoration | 
@@ -774,16 +873,122 @@ namespace moon {
 						 ImGuiWindowFlags_NoScrollWithMouse
 						);
 
-			ImGui::Button(ICON_FA_MOUSE_POINTER, ImVec2(20, 20)); ImGui::SameLine();
-			ImGui::Button(ICON_FA_ARROWS, ImVec2(20, 20)); ImGui::SameLine();
-			ImGui::Button(ICON_FA_REFRESH, ImVec2(20, 20)); ImGui::SameLine();
-			ImGui::Button(ICON_FA_EXPAND, ImVec2(20, 20)); 
+			ImGui::Button(ICON_FA_FILE, ImVec2(22, 22)); ImGui::SameLine();
+			ImGui::Button(ICON_FA_FLOPPY_O, ImVec2(22, 22)); ImGui::SameLine();
+			ImGui::Button(ICON_FA_HISTORY, ImVec2(22, 22)); ImGui::SameLine();
+
+			ImGui::Text(u8"|"); ImGui::SameLine();
+
+			ImGui::Button(ICON_FA_LINK, ImVec2(22, 22)); ImGui::SameLine();
+			ImGui::Button(ICON_FA_CHAIN_BROKEN, ImVec2(22, 22)); ImGui::SameLine();
+
+			ImGui::Text(u8"|"); ImGui::SameLine();
+
+			ImGui::Button(ICON_FA_MOUSE_POINTER, ImVec2(22, 22)); ImGui::SameLine();
+			ImGui::Button(ICON_FA_ARROWS, ImVec2(22, 22)); ImGui::SameLine();
+			ImGui::Button(ICON_FA_REFRESH, ImVec2(22, 22)); ImGui::SameLine();
+			ImGui::Button(ICON_FA_EXPAND, ImVec2(22, 22)); ImGui::SameLine();
+
+			//ImGui::Text(u8"|"); ImGui::SameLine();
+			//ImGui::Button(ICON_FA_DELICIOUS, ImVec2(22, 22)); ImGui::SameLine();
+
+			ImGui::Text(u8"|"); ImGui::SameLine();
+
+			ImGui::Button(ICON_FA_BOLT, ImVec2(22, 22)); ImGui::SameLine();
+			ImGui::Button(ICON_FA_FIRE, ImVec2(22, 22)); ImGui::SameLine();
+			ImGui::Button(ICON_FA_TINT, ImVec2(22, 22)); ImGui::SameLine();
+			ImGui::Button(ICON_FA_FLAG, ImVec2(22, 22)); ImGui::SameLine();
+			ImGui::Button(ICON_FA_GLASS, ImVec2(22, 22)); ImGui::SameLine();
+
+			ImGui::Text(u8"|"); ImGui::SameLine();
+
+			ImGui::Button(ICON_FA_TH, ImVec2(22, 22)); ImGui::SameLine();
+			ImGui::Button(ICON_FA_RANDOM, ImVec2(22, 22)); ImGui::SameLine();
+
+			ImGui::Text(u8"|"); ImGui::SameLine();
+
+			ImGui::Button(ICON_FA_PAINT_BRUSH, ImVec2(22, 22)); ImGui::SameLine();
+			ImGui::Button(ICON_FA_AREA_CHART, ImVec2(22, 22)); ImGui::SameLine();
+
+			ImGui::Text(u8"|"); ImGui::SameLine();
+
+			ImGui::Button(ICON_FA_LEAF, ImVec2(22, 22)); ImGui::SameLine();
+			ImGui::Button(ICON_FA_ROAD, ImVec2(22, 22)); ImGui::SameLine();
+			ImGui::Button(ICON_FA_UNIVERSAL_ACCESS, ImVec2(22, 22)); ImGui::SameLine();
+			ImGui::Button(ICON_FA_STREET_VIEW, ImVec2(22, 22)); ImGui::SameLine();
+
+			ImGui::Text(u8"|"); ImGui::SameLine();
+
+			ImGui::Button(ICON_FA_CAMERA, ImVec2(22, 22)); ImGui::SameLine();
+			ImGui::Button(ICON_FA_LIST_ALT, ImVec2(22, 22)); ImGui::SameLine();
+
+			ImGui::Text(u8"|"); ImGui::SameLine();
+
+			ImGui::Button(ICON_FA_QUESTION_CIRCLE, ImVec2(22, 22));
+
+			ImGui::Separator();
 
 			//ImGui::PopStyleVar();
 			ImGui::End();
 		}
 
+		static void CurveEditor() {
+		
+		}
+
+		static void OperatorEditor() {
+			
+		}
+
 	private:
+		static void ShowExampleAppLayout(bool* p_open) {
+			ImGui::SetNextWindowSize(ImVec2(500, 440), ImGuiCond_FirstUseEver);
+			if (ImGui::Begin("Example: Simple layout", p_open, ImGuiWindowFlags_MenuBar)) {
+				if (ImGui::BeginMenuBar()) {
+					if (ImGui::BeginMenu("File")) {
+						if (ImGui::MenuItem("Close")) *p_open = false;
+						ImGui::EndMenu();
+					}
+					ImGui::EndMenuBar();
+				}
+
+				// left
+				static int selected = 0;
+				ImGui::BeginChild("left pane", ImVec2(150, 0), true);
+				for (int i = 0; i < 100; i++) {
+					char label[128];
+					sprintf(label, "MyObject %d", i);
+					if (ImGui::Selectable(label, selected == i))
+						selected = i;
+				}
+				ImGui::EndChild();
+				ImGui::SameLine();
+
+				// right
+				ImGui::BeginGroup();
+				ImGui::BeginChild("item view", ImVec2(0, -ImGui::GetFrameHeightWithSpacing())); // Leave room for 1 line below us
+				ImGui::Text("MyObject: %d", selected);
+				ImGui::Separator();
+				if (ImGui::BeginTabBar("##Tabs", ImGuiTabBarFlags_None)) {
+					if (ImGui::BeginTabItem("Description")) {
+						ImGui::TextWrapped("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. ");
+						ImGui::EndTabItem();
+					}
+					if (ImGui::BeginTabItem("Details")) {
+						ImGui::Text("ID: 0123456789");
+						ImGui::EndTabItem();
+					}
+					ImGui::EndTabBar();
+				}
+				ImGui::EndChild();
+				if (ImGui::Button("Revert")) {}
+				ImGui::SameLine();
+				if (ImGui::Button("Save")) {}
+				ImGui::EndGroup();
+			}
+			ImGui::End();
+		}
+
 		static void ShowExampleMenuFile() {
 			ImGui::MenuItem("(dummy menu)", NULL, false, false);
 			if (ImGui::MenuItem("New")) {}

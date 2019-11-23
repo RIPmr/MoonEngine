@@ -79,8 +79,8 @@ bool MainUI::show_preference_window = false;
 bool MainUI::show_about_window = false;
 
 bool MainUI::show_inspector_window = true;
-bool MainUI::show_project_window = false;
-bool MainUI::show_console_window = false;
+bool MainUI::show_project_window = true;
+bool MainUI::show_console_window = true;
 bool MainUI::show_create_window = true;
 bool MainUI::show_enviroment_editor = false;
 
