@@ -7,7 +7,7 @@
 #include "Vector3.h"
 #include "Ray.h"
 
-namespace moon {
+namespace MOON {
 	#define MOON_m 0x100000000LL
 	#define MOON_c 0xB16
 	#define MOON_a 0x5DEECE66DLL

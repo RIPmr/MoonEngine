@@ -12,7 +12,7 @@
 #include "Vector3.h"
 #include "Matrix4x4.h"
 
-namespace moon {
+namespace MOON {
 	class Shader : public ObjectBase {
 	public:
 		unsigned int localID;

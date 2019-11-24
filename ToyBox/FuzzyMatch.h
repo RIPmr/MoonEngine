@@ -4,7 +4,7 @@
 #include <cstring>
 #include <cstdio>
 
-namespace moon {
+namespace MOON {
 	class MatchTool {
 	public:
 		inline static bool fuzzy_match_simple(char const *pattern, char const *str) {

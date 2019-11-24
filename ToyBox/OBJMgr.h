@@ -8,7 +8,7 @@
 #include "Vector3.h"
 #include "Mesh.h"
 
-namespace moon {
+namespace MOON {
 	// Get element at given index position
 	template <class T>
 	inline const T & getElement(const std::vector<T> &elements, std::string &index) {

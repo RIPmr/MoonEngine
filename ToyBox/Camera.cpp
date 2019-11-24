@@ -1,7 +1,7 @@
 #include "Camera.h"
 #include "SceneMgr.h"
 
-namespace moon {
+namespace MOON {
 	Matrix4x4 Camera::GetProjectionMatrix() {
 		return Matrix4x4::Perspective(fov, SceneManager::SCR_SIZE.x / SceneManager::SCR_SIZE.y, zNear, zFar);
 	}

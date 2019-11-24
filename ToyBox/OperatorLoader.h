@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 
-namespace moon {
+namespace MOON {
 	class OPLoader {
 	public:
 		OPLoader() = default;

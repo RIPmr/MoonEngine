@@ -3,7 +3,7 @@
 
 #include "ObjectBase.h"
 
-namespace moon {
+namespace MOON {
 	class Operator : public ObjectBase {
 	public:
 		Operator(const std::string &name) : ObjectBase(name, MOON_UNSPECIFIEDID) {}

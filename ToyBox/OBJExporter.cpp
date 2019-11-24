@@ -9,6 +9,6 @@
 
 #define MOON_DEBUG_MODE
 
-namespace moon {
+namespace MOON {
 	// TODO
 }

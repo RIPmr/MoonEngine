@@ -4,7 +4,7 @@
 
 #include <cmath>
 
-namespace moon {
+namespace MOON {
 	extern class Matrix4x4;
 	class Quaternion {
 	public:

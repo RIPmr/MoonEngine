@@ -9,7 +9,7 @@
 
 #define MOON_DEBUG_MODE
 
-namespace moon {
+namespace MOON {
 	// Split a String into a string array at a given token
 	void split(const std::string &in, std::vector<std::string> &out, std::string token) {
 		out.clear();

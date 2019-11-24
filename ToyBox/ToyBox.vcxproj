@@ -167,6 +167,7 @@
     <ClInclude Include="OP_MeshEditor.h" />
     <ClInclude Include="PMapGen.h" />
     <ClInclude Include="PreInclude.h" />
+    <ClInclude Include="AssetLoader.h" />
     <ClInclude Include="Quaternion.h" />
     <ClInclude Include="Ray.h" />
     <ClInclude Include="Renderer.h" />

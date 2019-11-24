@@ -2,7 +2,7 @@
 #include "MathUtils.h"
 #include "Matrix4x4.h"
 
-namespace moon {
+namespace MOON {
 	// Not tested yet
 	Quaternion::Quaternion(const Matrix4x4 &mat) {
 		float m11 = mat.x[1][1], m12 = mat.x[2][1], m13 = mat.x[3][1];

@@ -191,9 +191,7 @@ void MOON_CleanUp() {
 	MOON_CameraManager::Clear();
 	MOON_InputManager::Clear();
 	SceneManager::Clear();
-
-	delete MOON_MaterialManager::matBall;
-	delete MOON_SceneCamera;
+	AssetLoader::CleanUp();
 }
 
 Vector3 unProjectMouse() {
@@ -394,6 +392,9 @@ void MOON_DrawMainUI() {
 }
 
 void MOON_InitEngine() {
+	std::cout << "- Loading Assets..." << std::endl;
+	AssetLoader::BuildDirTree("F:\\VisualStudioWorkspace\\ToyBox\\ToyBox");
+	std::cout << "- Dir Tree Created." << std::endl;
 	MOON_TextureManager::LoadImagesForUI();
 	std::cout << "- Images For UI Loaded." << std::endl;
 	MOON_ShaderManager::LoadDefaultShaders();

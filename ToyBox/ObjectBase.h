@@ -8,6 +8,7 @@
 
 #include "Transform.h"
 #include "IconsFontAwesome4.h"
+#pragma warning(disable:4996)
 
 #define MOON_AUTOID -1
 #define MOON_UNSPECIFIEDID 0
@@ -16,7 +17,7 @@
 #define UniquePropName(x) AppendUniquePrefix(x).c_str()
 #define UniquePropNameFromParent(x) (parent->AppendUniquePrefix(x)).c_str()
 
-namespace moon {
+namespace MOON {
 	extern class SceneManager;
 	class ObjectBase {
 	public:
@@ -50,11 +51,11 @@ namespace moon {
 			else return false;
 		}
 
-		virtual std::string UniquePrefix(bool skipName = false) {
+		virtual std::string UniquePrefix(bool skipName = true) {
 			return (skipName ? "" : (name + "_")) + std::to_string(ID) + "_";
 		}
 
-		virtual std::string AppendUniquePrefix(const std::string &propName, bool skipName = false) {
+		virtual std::string AppendUniquePrefix(const std::string &propName, bool skipName = true) {
 			return UniquePrefix(skipName) + propName;
 		}
 

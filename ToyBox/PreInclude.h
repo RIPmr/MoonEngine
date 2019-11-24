@@ -33,6 +33,7 @@
 #include <random>
 #include <map>
 
+#include "AssetLoader.h"
 #include "SceneMgr.h"
 #include "Vector2.h"
 #include "Vector3.h"
@@ -52,7 +53,7 @@
 #include "Light.h"
 #include "OBJMgr.h"
 
-using namespace moon;
+using namespace MOON;
 
 // function declaration
 GLFWwindow* InitWnd();
@@ -136,3 +137,6 @@ bool MOON_InputManager::mouse_middle_hold = false;
 bool MOON_InputManager::mouse_right_hold = false;
 bool MOON_InputManager::isHoverUI = false;
 std::vector<unsigned int> MOON_InputManager::selected;
+
+// init dir tree
+DirNode* AssetLoader::DirTree = NULL;

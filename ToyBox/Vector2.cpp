@@ -1,7 +1,7 @@
 #include "Vector2.h"
 #include "Vector3.h"
 
-namespace moon {
+namespace MOON {
 	Vector2::Vector2(const Vector3 &v) {
 		x = v.x; y = v.y;
 	}

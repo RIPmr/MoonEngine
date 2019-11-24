@@ -11,7 +11,7 @@
 #include "Utility.h"
 #include "Hitable.h"
 
-namespace moon {
+namespace MOON {
 	class Model : public MObject, public Hitable {
 	public:
 		std::vector<Mesh*> meshList;
@@ -110,7 +110,8 @@ namespace moon {
 
 			// list Mesh ----------------------------------------------------------------------
 			ImGui::Text("Mesh:");
-			if (ImGui::TreeNode((std::to_string(meshList.size()) + " meshes, " + std::to_string(CountVerts()) + " verts").c_str())) {
+			if (ImGui::TreeNode((std::to_string(meshList.size()) + " meshes, " + 
+								 std::to_string(CountVerts()) + " verts").c_str(), ID)) {
 				for (auto &iter : meshList) {
 					ImGui::Columns(2, "mycolumns", false);
 					ImGui::Text((std::string(ICON_FA_PUZZLE_PIECE) + " " + iter->name).c_str()); ImGui::NextColumn();

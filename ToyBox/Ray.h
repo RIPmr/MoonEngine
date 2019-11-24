@@ -2,7 +2,7 @@
 
 #include "Vector3.h"
 
-namespace moon {
+namespace MOON {
 	class Ray {
 	public:
 		Vector3 pos;

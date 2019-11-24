@@ -221,6 +221,9 @@
     <ClInclude Include="OperatorLoader.h">
       <Filter>HeadFiles\Component</Filter>
     </ClInclude>
+    <ClInclude Include="AssetLoader.h">
+      <Filter>HeadFiles\Component</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

@@ -9,7 +9,7 @@
 #include "MathUtils.h"
 #include "ObjectBase.h"
 
-namespace moon {
+namespace MOON {
 	// An Euler Angles Version
 	class Camera : public MObject {
 	private:

@@ -9,7 +9,7 @@
 #include "Model.h"
 #include "Camera.h"
 
-using namespace moon;
+using namespace MOON;
 
 #define MAX_THREADSNUM 6
 

@@ -4,7 +4,7 @@
 #include "Vector3.h"
 #include "Vector2.h"
 
-namespace moon {
+namespace MOON {
 	extern class Material;
 
 	struct HitRecord {

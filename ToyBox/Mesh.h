@@ -12,7 +12,7 @@
 #include "Matrix4x4.h"
 #include "BoundingBox.h"
 
-namespace moon {
+namespace MOON {
 	struct Vertex {
 		Vector3 Position;
 		Vector3 Normal;

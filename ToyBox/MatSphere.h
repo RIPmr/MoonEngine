@@ -5,7 +5,7 @@
 
 #include <cmath>
 
-namespace moon {
+namespace MOON {
 	class Sphere : public Hitable {
 	public:
 		Vector3 pos;

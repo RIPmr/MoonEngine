@@ -8,7 +8,7 @@
 #include "Texture.h"
 #include "ObjectBase.h"
 
-namespace moon {
+namespace MOON {
 	enum MatType {
 		moonMtl,
 		lambertian,

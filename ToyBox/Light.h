@@ -6,7 +6,7 @@
 #include "ObjectBase.h"
 #include "Vector3.h"
 
-namespace moon {
+namespace MOON {
 	class Light : public MObject {
 	public:
 		std::string name;

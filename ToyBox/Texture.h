@@ -4,7 +4,7 @@
 #include "Utility.h"
 #include "ObjectBase.h"
 
-namespace moon {
+namespace MOON {
 	enum TexFormat {
 		oneD,
 		twoD,

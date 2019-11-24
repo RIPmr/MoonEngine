@@ -6,7 +6,7 @@
 
 #include <vector>
 
-namespace moon {
+namespace MOON {
 	enum Direction {
 		FORWARD,
 		BACKWARD,

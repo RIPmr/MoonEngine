@@ -2,7 +2,7 @@
 #include <cmath>
 #include <iostream>
 
-namespace moon {
+namespace MOON {
 	extern class Vector3;
 	class Vector4 {
 	public:

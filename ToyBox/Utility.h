@@ -7,7 +7,7 @@
 #include "stb_image.h"
 #include "Renderer.h"
 
-namespace moon {
+namespace MOON {
 	inline void string_replace(std::string &strBig, const std::string &strsrc, const std::string &strdst) {
 		std::string::size_type pos = 0;
 		std::string::size_type srclen = strsrc.size();

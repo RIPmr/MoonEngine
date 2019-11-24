@@ -2,7 +2,7 @@
 
 #include "Vector4.h"
 
-namespace moon {
+namespace MOON {
 	class Color {
 	public:
 		static Vector4 RED() { return Vector4(1.0, 0.0, 0.0, 1.0); }

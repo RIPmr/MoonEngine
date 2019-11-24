@@ -4,7 +4,7 @@
 
 #define modelToWorld parent->transform.modelMat.multVec
 
-namespace moon {
+namespace MOON {
 	void Mesh::Draw(Shader* shader, const Matrix4x4 & model) {
 		// bind appropriate textures
 		unsigned int diffuseNr = 1;

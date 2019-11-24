@@ -11,7 +11,7 @@
 #include "MShader.h"
 #include "MatSphere.h"
 
-namespace moon {
+namespace MOON {
 	template <class T>
 	struct ObjectManager {
 		static bool sizeFlag;
@@ -389,6 +389,8 @@ namespace moon {
 		}
 
 		static void Clear() {
+			delete CameraManager::sceneCamera;
+			delete MaterialManager::matBall;
 			objectList.clear();
 		}
 

@@ -8,7 +8,7 @@
 #include "Utility.h"
 #include "Hitable.h"
 
-namespace moon {
+namespace MOON {
 	extern class Camera;
 	class Renderer {
 	public:

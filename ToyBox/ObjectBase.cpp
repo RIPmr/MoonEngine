@@ -4,7 +4,7 @@
 #include "SceneMgr.h"
 #include "OperatorBase.h"
 
-namespace moon {
+namespace MOON {
 	ObjectBase::ObjectBase(const int &_id) : visible(true) {
 		if (_id == MOON_AUTOID) {
 			ID = SceneManager::GenUniqueID();
@@ -24,13 +24,14 @@ namespace moon {
 
 	void ObjectBase::ListName() {
 		// list name
-		std::string buf(name);
-		char* buf_c = (char*)buf.c_str();
+		char buf[64]; strcpy(buf, name.c_str());
+
 		ImGui::Text("Name:"); ImGui::SameLine();
-		ImGui::InputText(UniquePropName("Name"), buf_c, 64); ImGui::SameLine();
+		ImGui::InputText(UniquePropName("Name"), buf, 64); ImGui::SameLine();
 		ImGui::Checkbox(UniquePropName("Visible"), &visible, true);
+
 		// if user renamed this object
-		if (strcmp(buf_c, name.c_str())) Rename(buf);
+		if (strcmp(buf, name.c_str())) Rename(buf);
 	}
 
 	void ObjectBase::ListProperties() {
@@ -46,8 +47,8 @@ namespace moon {
 	void MObject::OPStack::ListStacks() {
 		static auto stackName = std::string(ICON_FA_WRENCH) + " OP-Stack";
 		ImGui::Checkbox(UniquePropNameFromParent("enableOPStack"), &enable, true); ImGui::SameLine();
-		ImGui::Button(ICON_FA_PLUS, ImVec2(22, 22)); ImGui::SameLine();
-		if (ImGui::CollapsingHeader(stackName.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
+		ImGui::Button(ICON_FA_PLUS, ImVec2(22, 22), parent->ID); ImGui::SameLine();
+		if (ImGui::CollapsingHeader(stackName.c_str(), ImGuiTreeNodeFlags_DefaultOpen, parent->ID)) {
 			for (auto &iter : opList) {
 				iter->ListProperties();
 			}
@@ -82,12 +83,14 @@ namespace moon {
 		float rotEuler[3] = { euler.x, euler.y, euler.z };
 
 		ImGui::Text("Transform:");
+		ImGui::Indent(10.0f);
 		ImGui::Text("Position"); ImGui::SameLine(80.0f);
 		ImGui::DragFloat3(UniquePropName("Pos"), pos, 0.1f, -INFINITY, INFINITY, "%.3f", 1.0f, true);
 		ImGui::Text("Rotation"); ImGui::SameLine(80.0f);
 		ImGui::DragFloat3(UniquePropName("Rot"), rotEuler, 0.1f, -INFINITY, INFINITY, "%.3f", 1.0f, true);
 		ImGui::Text("Scale"); ImGui::SameLine(80.0f);
 		ImGui::DragFloat3(UniquePropName("Sca"), scale, 0.1f, -INFINITY, INFINITY, "%.3f", 1.0f, true);
+		ImGui::Unindent(10.0f);
 
 		Quaternion deltaQ = Quaternion(rotEuler[0] - euler.x,
 									   rotEuler[1] - euler.y,

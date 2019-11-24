@@ -8,11 +8,12 @@
 #include <algorithm>
 #include <string>
 
+#include "AssetLoader.h"
 #include "Texture.h"
 #include "IconsFontAwesome4.h"
 #pragma warning(disable:4996)
 
-namespace moon {
+namespace MOON {
 	
 	struct ConsoleWnd {
 		char                  InputBuf[256];
@@ -583,7 +584,8 @@ namespace moon {
 		}
 
 		static void ExplorerWnd() {
-			ImGui::Begin((std::string(ICON_FA_SHOPPING_BASKET) + " Explorer").c_str(), &MainUI::show_explorer_window);
+			ImGui::Begin((std::string(ICON_FA_SHOPPING_BASKET) + " Explorer").c_str(), &MainUI::show_explorer_window, 
+						  ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
 			static bool showAll = true;
 			static bool showModel = true;
@@ -633,8 +635,7 @@ namespace moon {
 			ImGui::Separator();
 			ImGui::Columns(1);
 
-			ImGui::BeginChild("explorer_scrolling", 
-							  ImVec2(0, ImGui::GetFrameHeightWithSpacing() * 10 + 30), 
+			ImGui::BeginChild("explorer_scrolling", ImVec2(0, 0), 
 							  false, ImGuiWindowFlags_HorizontalScrollbar);
 			ImGui::Columns(2, "mycolumns", false);
 			ImGui::SetColumnWidth(-1, colWidth - 8);
@@ -670,12 +671,25 @@ namespace moon {
 		
 		static void ConsoleWnd() {
 			// class-like window
-			static moon::ConsoleWnd console;
+			static MOON::ConsoleWnd console;
 			console.Draw((std::string(ICON_FA_TERMINAL) + "Console").c_str(), &MainUI::show_console_window);
 		}
 
 		static void ProjectWnd() {
 			ImGui::Begin((std::string(ICON_FA_FOLDER_OPEN) + "Project").c_str(), &MainUI::show_project_window);
+
+			// tree view
+			ImGui::BeginChild("TreeView", ImVec2(150, 0), true);
+			static DirNode* selNode = NULL;
+			if (AssetLoader::DirTree != NULL) AssetLoader::DirTree->ListNode(selNode);
+			ImGui::EndChild();
+			ImGui::SameLine();
+
+			// folder view
+			ImGui::BeginChild("FolderView", ImVec2(0, 0), true);
+			float window_visible_x2 = ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x;
+			if (selNode != NULL) selNode->RenderFolderView(window_visible_x2);
+			ImGui::EndChild();
 
 			ImGui::End();
 		}
@@ -689,7 +703,7 @@ namespace moon {
 				if (ImGui::CollapsingHeader((SceneManager::GetTypeIcon(MOON_ObjectList[iter]) + 
 											 "  " + MOON_ObjectList[iter]->name).c_str(),
 											&MOON_InputManager::selection[MOON_ObjectList[iter]->ID], 
-											 ImGuiTreeNodeFlags_DefaultOpen)) {
+											ImGuiTreeNodeFlags_DefaultOpen), MOON_ObjectList[iter]->ID) {
 					MOON_ObjectList[iter]->ListProperties();
 				}
 

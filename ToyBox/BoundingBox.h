@@ -7,7 +7,7 @@
 #include "Vector3.h"
 #include "Ray.h"
 
-namespace moon {
+namespace MOON {
 	class BoundingBox {
 	public:
 		Vector3 min;

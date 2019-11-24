@@ -4,7 +4,7 @@
 
 #include "Vector2.h"
 
-namespace moon {
+namespace MOON {
 	/* CPU based procedural map generator */
 	class ProceduralMapGenerator {
 	public:

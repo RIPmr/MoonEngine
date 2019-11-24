@@ -11,7 +11,7 @@
 #include "Vector4.h"
 #include "Quaternion.h"
 
-namespace moon {
+namespace MOON {
 	class Matrix4x4 {
 	public:
 		float x[4][4] = { {1,0,0,0},
