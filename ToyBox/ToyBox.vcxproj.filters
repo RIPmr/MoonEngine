@@ -114,6 +114,15 @@
     <ClCompile Include="OBJExporter.cpp">
       <Filter>SourceFiles\Implementation</Filter>
     </ClCompile>
+    <ClCompile Include="imgui\ImNodesEz.cpp">
+      <Filter>SourceFiles\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\ImNodes.cpp">
+      <Filter>SourceFiles\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="MShader.cpp">
+      <Filter>SourceFiles\Implementation</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Vector3.h">
@@ -223,6 +232,21 @@
     </ClInclude>
     <ClInclude Include="AssetLoader.h">
       <Filter>HeadFiles\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="MaterialEditor.h">
+      <Filter>HeadFiles\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\ImNodesEz.h">
+      <Filter>HeadFiles\Miscellaneous</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\ImNodes.h">
+      <Filter>HeadFiles\Miscellaneous</Filter>
+    </ClInclude>
+    <ClInclude Include="CodeEditor.h">
+      <Filter>HeadFiles\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="StackWindow.h">
+      <Filter>HeadFiles\Miscellaneous</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

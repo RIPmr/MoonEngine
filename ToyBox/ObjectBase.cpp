@@ -27,6 +27,7 @@ namespace MOON {
 		char buf[64]; strcpy(buf, name.c_str());
 
 		ImGui::Text("Name:"); ImGui::SameLine();
+		ImGui::SetNextItemWidth(ImGui::GetContentRegionAvailWidth() - 30);
 		ImGui::InputText(UniquePropName("Name"), buf, 64); ImGui::SameLine();
 		ImGui::Checkbox(UniquePropName("Visible"), &visible, true);
 

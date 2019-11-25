@@ -133,9 +133,12 @@
     <ClCompile Include="imgui\imgui_impl_glfw.cpp" />
     <ClCompile Include="imgui\imgui_impl_opengl3.cpp" />
     <ClCompile Include="imgui\imgui_widgets.cpp" />
+    <ClCompile Include="imgui\ImNodes.cpp" />
+    <ClCompile Include="imgui\ImNodesEz.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="Mesh.cpp" />
+    <ClCompile Include="MShader.cpp" />
     <ClCompile Include="ObjectBase.cpp" />
     <ClCompile Include="OBJExporter.cpp" />
     <ClCompile Include="OBJLoader.cpp" />
@@ -149,13 +152,17 @@
   <ItemGroup>
     <ClInclude Include="BoundingBox.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="CodeEditor.h" />
     <ClInclude Include="Color.h" />
     <ClInclude Include="FuzzyMatch.h" />
     <ClInclude Include="Helper.h" />
     <ClInclude Include="Hitable.h" />
     <ClInclude Include="IconsFontAwesome4.h" />
+    <ClInclude Include="imgui\ImNodes.h" />
+    <ClInclude Include="imgui\ImNodesEz.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="Material.h" />
+    <ClInclude Include="MaterialEditor.h" />
     <ClInclude Include="MatSphere.h" />
     <ClInclude Include="MathUtils.h" />
     <ClInclude Include="Matrix4x4.h" />
@@ -174,6 +181,7 @@
     <ClInclude Include="SceneMgr.h" />
     <ClInclude Include="MShader.h" />
     <ClInclude Include="ShapeBase.h" />
+    <ClInclude Include="StackWindow.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="TextureMgr.h" />
     <ClInclude Include="Transform.h" />

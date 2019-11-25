@@ -87,7 +87,7 @@ bool MainUI::show_enviroment_editor = false;
 
 bool MainUI::show_ribbon = true;
 bool MainUI::show_timeline = false;
-bool MainUI::show_material_editor = false;
+bool MainUI::show_material_editor = true;
 bool MainUI::show_codeEditor = false;
 
 Texture* MainUI::icon = NULL;

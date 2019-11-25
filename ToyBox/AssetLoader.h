@@ -1,5 +1,6 @@
 #pragma once
 #include <imgui.h>
+#include <imgui_internal.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 #include <iostream>
@@ -32,14 +33,20 @@ namespace MOON {
 			}
 		}
 
-		inline void RenderFolderView(float window_visible_x2) {
+		inline void RenderFolderView(float window_visible_x2, DirNode* &parent) {
 			static ImVec2 button_sz(60, 45);
 			static float itemSpacing = ImGui::GetStyle().ItemSpacing.x;
 			int n = 0;
 			for (auto &file : childs) {
 				//ImGui::PushID(n);
 				std::string icon = file->isFolder ? std::string(u8"\uf07b") : std::string(u8"\uf016");
-				ImGui::Button((icon + "\n" + file->name).c_str(), button_sz);
+				if (ImGui::ButtonEx((icon + "\n" + file->name).c_str(), button_sz, ImGuiButtonFlags_PressedOnDoubleClick)) {
+					if (isFolder) {
+						root->ResetFolderClickState();
+						file->isClicked = true;
+						parent = file;
+					}
+				}
 				/*
 				float offset = (button_sz.x - ImGui::CalcTextSize("folder").x) / 2.0f;
 				ImGui::Button(ICON_FA_FOLDER, button_sz);
@@ -84,9 +91,11 @@ namespace MOON {
 			}
 
 			if (node_open) {
+				ImGui::Indent(-12.0f);
 				for (auto &node : childs) {
 					node->ListNode(selectedNode);
 				}
+				ImGui::Unindent(-12.0f);
 				ImGui::TreePop();
 			}
 		}

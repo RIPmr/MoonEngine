@@ -388,12 +388,12 @@ void MOON_DrawMainUI() {
 	if (MainUI::show_enviroment_editor) MainUI::EnviromentWnd();
 	if (MainUI::show_codeEditor) MainUI::CodeEditor();
 	if (MainUI::show_timeline) MainUI::ShowTimeline();
-	if (MainUI::show_material_editor) MainUI::MaterialEditor();
+	if (MainUI::show_material_editor) MainUI::MaterialEditorWnd();
 }
 
 void MOON_InitEngine() {
 	std::cout << "- Loading Assets..." << std::endl;
-	AssetLoader::BuildDirTree("F:\\VisualStudioWorkspace\\ToyBox\\ToyBox");
+	AssetLoader::BuildDirTree(".\\Assets");
 	std::cout << "- Dir Tree Created." << std::endl;
 	MOON_TextureManager::LoadImagesForUI();
 	std::cout << "- Images For UI Loaded." << std::endl;
