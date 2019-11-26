@@ -49,6 +49,12 @@ namespace MOON {
 		static bool show_curve_editor;
 		static bool show_operator_editor;
 
+		// class-like wnds
+		static MaterialEditor nodeEditor;
+
+		static void CleanUp() {
+			nodeEditor.CleanUp();
+		}
 
 		// window definition
 		static void MainMenu() {
@@ -171,7 +177,7 @@ namespace MOON {
 		static void ControlPanel(const ImGuiIO *io, const Vector4 &clear_color) {
 			static int width = MOON_OutputSize.x, height = MOON_OutputSize.y;
 
-			ImGui::Begin((std::string(ICON_FA_COGS) + " ControlPanel").c_str());
+			ImGui::Begin(Icon_Name_To_ID(ICON_FA_COGS, " ControlPanel"));
 
 			ImGui::Text("[Statistics]");
 			ImGui::Text("FPS: %.1f (%.2f ms/frame)", ImGui::GetIO().Framerate, 1000.0f / ImGui::GetIO().Framerate);
@@ -216,7 +222,7 @@ namespace MOON {
 		}
 
 		static void PreferencesWnd() {
-			ImGui::Begin((std::string(ICON_FA_COG) + " Style Editor").c_str(), &MainUI::show_preference_window);
+			ImGui::Begin(Icon_Name_To_ID(ICON_FA_COG, " Style Editor"), &MainUI::show_preference_window);
 			ImGui::ShowStyleEditor();
 			ImGui::End();
 		}
@@ -225,7 +231,7 @@ namespace MOON {
 			ImGui::SetNextWindowSize(ImVec2(MOON_OutputSize.x < 100 ? 100 : MOON_OutputSize.x + 18,
 				MOON_OutputSize.y < 100 ? 100 : MOON_OutputSize.y + 115));
 
-			ImGui::Begin((std::string(ICON_FA_FILM) + " VFB").c_str(), &MainUI::show_VFB_window, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize);
+			ImGui::Begin(Icon_Name_To_ID(ICON_FA_FILM, " VFB"), &MainUI::show_VFB_window, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize);
 
 			ImGui::Button(ICON_FA_CLOCK_O, ImVec2(22, 22)); ImGui::SameLine();
 			ImGui::Text(u8"|"); ImGui::SameLine();
@@ -281,7 +287,7 @@ namespace MOON {
 		static void AboutWnd() {
 			if (logo == NULL) logo = MOON_TextureManager::GetItem("moon_logo");
 
-			ImGui::Begin((std::string(ICON_FA_USER) + " ABOUT ME").c_str(), &MainUI::show_about_window, ImGuiWindowFlags_NoResize);
+			ImGui::Begin(Icon_Name_To_ID(ICON_FA_USER, " ABOUT ME"), &MainUI::show_about_window, ImGuiWindowFlags_NoResize);
 			ImGui::Image((void*)(intptr_t)logo->localID, ImVec2(logo->width / 3, logo->height / 3));
 
 			ImGui::Text(u8"¡¾HU ANIME¡¿");
@@ -310,8 +316,8 @@ namespace MOON {
 		}
 
 		static void ExplorerWnd() {
-			ImGui::Begin((std::string(ICON_FA_SHOPPING_BASKET) + " Explorer").c_str(), &MainUI::show_explorer_window, 
-						  ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+			ImGui::Begin(Icon_Name_To_ID(ICON_FA_SHOPPING_BASKET, " Explorer"), 
+				&MainUI::show_explorer_window,ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
 			static bool showAll = true;
 			static bool showModel = true;
@@ -388,20 +394,19 @@ namespace MOON {
 		}
 
 		static void SceneWnd() {
-			ImGui::Begin((std::string(ICON_FA_GAMEPAD) + " Scene").c_str(), 
-						  &MainUI::show_scene_window, 
-						  ImGuiWindowFlags_NoBackground);
+			ImGui::Begin(Icon_Name_To_ID(ICON_FA_GAMEPAD, " Scene"),
+						  &MainUI::show_scene_window, ImGuiWindowFlags_NoBackground);
 
 			ImGui::End();
 		}
 		
 		static void ConsoleWnd() {
 			static MOON::ConsoleWnd console;
-			console.Draw((std::string(ICON_FA_TERMINAL) + "Console").c_str(), &MainUI::show_console_window);
+			console.Draw(Icon_Name_To_ID(ICON_FA_TERMINAL, " Console"), &MainUI::show_console_window);
 		}
 
 		static void ProjectWnd() {
-			ImGui::Begin((std::string(ICON_FA_FOLDER_OPEN) + "Project").c_str(), &MainUI::show_project_window);
+			ImGui::Begin(Icon_Name_To_ID(ICON_FA_FOLDER_OPEN, " Project"), &MainUI::show_project_window);
 
 			// tree view
 			ImGui::BeginChild("TreeView", ImVec2(150, 0), true);
@@ -420,7 +425,7 @@ namespace MOON {
 		}
 
 		static void InspectorWnd() {
-			ImGui::Begin((std::string(ICON_FA_SEARCH) + " Inspector").c_str(), &MainUI::show_inspector_window);
+			ImGui::Begin(Icon_Name_To_ID(ICON_FA_SEARCH, " Inspector"), &MainUI::show_inspector_window);
 			// loop all selected objects and list their properties
 			for (auto &iter : MOON_InputManager::selected) {
 				bool checker = MOON_InputManager::selection[MOON_ObjectList[iter]->ID];
@@ -428,7 +433,7 @@ namespace MOON {
 				if (ImGui::CollapsingHeader((SceneManager::GetTypeIcon(MOON_ObjectList[iter]) + 
 											 "  " + MOON_ObjectList[iter]->name).c_str(),
 											&MOON_InputManager::selection[MOON_ObjectList[iter]->ID], 
-											ImGuiTreeNodeFlags_DefaultOpen), MOON_ObjectList[iter]->ID) {
+											ImGuiTreeNodeFlags_DefaultOpen, MOON_ObjectList[iter]->ID)) {
 					MOON_ObjectList[iter]->ListProperties();
 				}
 
@@ -453,20 +458,23 @@ namespace MOON {
 		}
 
 		static void MaterialEditorWnd() {
-			ImGui::Begin((std::string(ICON_FA_FUTBOL_O) + " MaterialEditor").c_str(), &MainUI::show_material_editor);
+			ImGui::Begin(Icon_Name_To_ID(ICON_FA_FUTBOL_O, " MaterialEditor"), &MainUI::show_material_editor);
 
 			ImGui::Columns(2, "mycolumns");
-			ImGui::SetColumnWidth(-1, 160);
+			static bool firstLoop = true;
+			if (firstLoop) ImGui::SetColumnWidth(-1, 160);
+			float floatWidth = ImGui::GetColumnWidth(-1) - 20;
 
 			// left
 			static Material* selectedMat = NULL;
 			static unsigned int prevID = MOON_TextureManager::GetItem("moon_logo_full")->localID;
-			ImGui::BeginChild("Previewer", ImVec2(150, 140), true);
+
+			ImGui::BeginChild("Previewer", ImVec2(floatWidth, 140), true, ImGuiWindowFlags_NoScrollbar);
 			ImGui::Image((void*)(intptr_t)prevID, ImVec2(125, 125));
 			ImGui::EndChild();
 
 			// materials in the scene ------------------------------------------------------
-			ImGui::BeginChild("Mat Explorer", ImVec2(150, 0), true);
+			ImGui::BeginChild("Mat Explorer", ImVec2(floatWidth, 0), true);
 			int loopID = 0;
 			for (auto &mat : MOON_MaterialManager::itemMap) {
 				if (ImGui::Selectable(mat.second->name.c_str(), selectedMat == mat.second))
@@ -477,47 +485,61 @@ namespace MOON {
 			ImGui::NextColumn();
 
 			// right
-			ImGui::BeginGroup();
-			ImGui::BeginChild("item view", ImVec2(0, -ImGui::GetFrameHeightWithSpacing()));
+			ImGui::BeginChild("item view", ImVec2(0, 0));
+			ImGui::Button("Save"); ImGui::SameLine();
+			ImGui::Button("Load"); ImGui::SameLine();
+			if (ImGui::Button("Clear")) {
+				RegistStackWnd("Information");
+			}
+			StackWnd("Information", "Clear node editor?", &nodeEditor, &MaterialEditor::ClearEditor);
+			ImGui::SameLine();
+			ImGui::Text(u8"|"); ImGui::SameLine();
 			ImGui::Text("Material: %d", MOON_MaterialManager::CountItem());
 			ImGui::Separator();
-			if (ImGui::BeginTabBar("##Tabs", ImGuiTabBarFlags_None)) {
-				// material properties -----------------------------------------------------
-				if (ImGui::BeginTabItem("Property")) {
-					if (selectedMat == NULL) ImGui::Text("No material selected");
-					else selectedMat->ListProperties();
-					ImGui::EndTabItem();
-				}
-				// start node editor -------------------------------------------------------
-				if (ImGui::BeginTabItem("Node Editor")) {
-					ImGui::BeginChild("nodeEditor", ImVec2(0, 0), true, 
-						ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-					static ImGui::MaterialEditor nodeEditor;
-					nodeEditor.Draw();
-					ImGui::EndChild();
-					ImGui::EndTabItem();
-				}
-				ImGui::EndTabBar();
+			ImGui::Spacing();
+
+			ImGui::Columns(2, "matView");
+			if (firstLoop) {
+				firstLoop = false;
+				ImGui::SetColumnWidth(-1, 500);
+			}
+			floatWidth = ImGui::GetColumnWidth(-1) - 15;
+			// node editor -------------------------------------------------------------
+			ImGui::BeginChild("nodeEditor", ImVec2(floatWidth, 0), true,
+				ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+			{
+				nodeEditor.Draw();
 			}
 			ImGui::EndChild();
 
-			if (ImGui::Button("Load")) {}
-			ImGui::SameLine();
-			if (ImGui::Button("Save")) {}
-			ImGui::EndGroup();
+			ImGui::NextColumn();
+			// properties view ---------------------------------------------------------
+			ImGui::BeginChild("propView");
+			{
+				if (nodeEditor.anythingSelected) {
+					selectedMat = NULL; // TODO
+
+					nodeEditor.selectedNode->ProcessContent(false);
+				} else {
+					if (selectedMat == NULL) ImGui::Text("Nothing selected");
+					else selectedMat->ListProperties();
+				}
+			}
+			ImGui::EndChild();
 
 			ImGui::Columns(1);
+			ImGui::EndChild();
 			ImGui::End();
 		}
 
 		static void EnviromentWnd() {
-			ImGui::Begin((std::string(ICON_FA_CLOUD) + " Enviroment").c_str(), &MainUI::show_enviroment_editor);
+			ImGui::Begin(Icon_Name_To_ID(ICON_FA_CLOUD, " Enviroment"), &MainUI::show_enviroment_editor);
 			
 			ImGui::End();
 		}
 
 		static void CreateWnd() {
-			ImGui::Begin((std::string(ICON_FA_CUBES) + " Creator").c_str(), &MainUI::show_create_window);
+			ImGui::Begin(Icon_Name_To_ID(ICON_FA_CUBES, " Creator"), &MainUI::show_create_window);
 
 			ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None | 
 											 ImGuiTabBarFlags_FittingPolicyScroll | 

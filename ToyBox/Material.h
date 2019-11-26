@@ -28,7 +28,7 @@ namespace MOON {
 
 		void ListShader() {
 			if (ImGui::TreeNode("Shader", ID)) {
-				ImGui::Text((std::string(ICON_FA_FILE_CODE_O) + " " + shader->name).c_str());
+				ImGui::Text(Icon_Name_To_ID(ICON_FA_FILE_CODE_O, " " + shader->name));
 				ImGui::TreePop();
 			}
 		}
@@ -83,44 +83,45 @@ namespace MOON {
 			// list parameters
 			ImGui::Text("Parameters:");
 
-
+			ImGui::Indent(10.0f);
 			// Ambient
-			ImGui::Text("Ambient "); ImGui::SameLine(125.0f);
+			ImGui::Text("Ambient "); ImGui::SameLine(100.0f);
 			ImGui::ColorEdit3(UniquePropName("Ka"), (float*)&Ka, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
 			ImGui::SameLine();
 			float btnWidth = ImGui::GetContentRegionAvailWidth() - 20;
 			ImGui::Button("[Texture]", ImVec2(btnWidth, 20));
 			// Diffuse
-			ImGui::Text("Diffuse "); ImGui::SameLine(125.0f);
+			ImGui::Text("Diffuse "); ImGui::SameLine(100.0f);
 			ImGui::ColorEdit3(UniquePropName("Kd"), (float*)&Kd, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
 			ImGui::SameLine();
 			ImGui::Button("[Texture]", ImVec2(btnWidth, 20));
 			// Specular
-			ImGui::Text("Specular "); ImGui::SameLine(125.0f);
+			ImGui::Text("Specular "); ImGui::SameLine(100.0f);
 			ImGui::ColorEdit3(UniquePropName("Ks"), (float*)&Ks, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
 			ImGui::SameLine();
 			ImGui::Button("[Texture]", ImVec2(btnWidth, 20));
 			// Specular Exponent
-			ImGui::Text("Specular Exponent "); ImGui::SameLine(125.0f);
+			ImGui::Text("SpecExpo "); ImGui::SameLine(100.0f);
 			ImGui::ColorEdit3(UniquePropName("Ns"), (float*)&Ns, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
 			ImGui::SameLine();
 			ImGui::Button("[Texture]", ImVec2(btnWidth, 20));
 			// Optical Density
-			ImGui::Text("Optical Density "); ImGui::SameLine(125.0f);
+			ImGui::Text("OptiDens "); ImGui::SameLine(100.0f);
 			ImGui::ColorEdit3(UniquePropName("Ni"), (float*)&Ni, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
 			ImGui::SameLine();
 			ImGui::Button("[Texture]", ImVec2(btnWidth, 20));
 			// Dissolve
-			ImGui::Text("Dissolve "); ImGui::SameLine(125.0f);
+			ImGui::Text("Dissolve "); ImGui::SameLine(100.0f);
 			ImGui::ColorEdit3(UniquePropName("d"), (float*)&d, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
 			ImGui::SameLine();
 			ImGui::Button("[Texture]", ImVec2(btnWidth, 20));
 			// Illumination
-			ImGui::Text("Illumination "); ImGui::SameLine(125.0f);
+			ImGui::Text("Illumina "); ImGui::SameLine(100.0f);
 			ImGui::ColorEdit3(UniquePropName("illum"), (float*)&illum, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
 			ImGui::SameLine();
 			ImGui::Button("[Texture]", ImVec2(btnWidth, 20));
 
+			ImGui::Unindent(10.0f);
 			ImGui::Spacing();
 		}
 

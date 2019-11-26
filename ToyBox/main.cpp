@@ -190,6 +190,7 @@ void MOON_CleanUp() {
 	MOON_ModelManager::Clear();
 	MOON_CameraManager::Clear();
 	MOON_InputManager::Clear();
+	MainUI::CleanUp();
 	SceneManager::Clear();
 	AssetLoader::CleanUp();
 }

@@ -114,8 +114,8 @@ namespace MOON {
 								 std::to_string(CountVerts()) + " verts").c_str(), ID)) {
 				for (auto &iter : meshList) {
 					ImGui::Columns(2, "mycolumns", false);
-					ImGui::Text((std::string(ICON_FA_PUZZLE_PIECE) + " " + iter->name).c_str()); ImGui::NextColumn();
-					ImGui::Text((std::string(ICON_FA_GLOBE) + " " + iter->material->name).c_str());
+					ImGui::Text(Icon_Name_To_ID(ICON_FA_PUZZLE_PIECE, " " + iter->name)); ImGui::NextColumn();
+					ImGui::Text(Icon_Name_To_ID(ICON_FA_GLOBE, " " + iter->material->name));
 					ImGui::Columns(1);
 				}
 				ImGui::TreePop();

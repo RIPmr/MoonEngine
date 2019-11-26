@@ -24,7 +24,6 @@
 #   define IMGUI_DEFINE_MATH_OPERATORS
 #endif
 
-#include <iostream>
 #include "ImNodes.h"
 
 namespace ImNodes {
@@ -430,7 +429,7 @@ namespace ImNodes {
 				// Unselect other nodes when some node was left-clicked.
 				node_selected = impl->single_selected_node == node_id;
 			} else if (ImGui::IsMouseClicked(0) && ImGui::IsItemHovered() && ImGui::IsItemActive()) {
-				node_selected ^= true;
+				node_selected = true;
 				if (!io.KeyCtrl && node_selected) {
 					impl->single_selected_node = node_id;
 					impl->do_selections_frame = ImGui::GetCurrentContext()->FrameCount + 1;

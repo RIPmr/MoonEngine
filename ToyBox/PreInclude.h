@@ -109,6 +109,8 @@ float SceneManager::Clock::deltaTime = 0;
 float SceneManager::Clock::lastFrame = 0;
 bool SceneManager::showbbox = false;
 
+MaterialEditor MainUI::nodeEditor;
+
 std::multimap<std::string, Light*> MOON_LightManager::itemMap;
 std::multimap<std::string, Material*> MOON_MaterialManager::itemMap;
 std::multimap<std::string, Shader*> MOON_ShaderManager::itemMap;

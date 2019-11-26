@@ -16,6 +16,7 @@
 
 #define UniquePropName(x) AppendUniquePrefix(x).c_str()
 #define UniquePropNameFromParent(x) (parent->AppendUniquePrefix(x)).c_str()
+#define Icon_Name_To_ID(x, y) (std::string(x) + y).c_str()
 
 namespace MOON {
 	extern class SceneManager;

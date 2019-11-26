@@ -289,7 +289,7 @@ namespace MOON {
 
 	struct CodeEditor {
 		void Draw(bool* isOpen) {
-			ImGui::Begin((std::string(ICON_FA_CODE) + " Code Editor").c_str(), isOpen);
+			ImGui::Begin(Icon_Name_To_ID(ICON_FA_CODE, " Code Editor"), isOpen);
 			static char text[1024 * 16] =
 				"/*\n"
 				" The Pentium F00F bug, shorthand for F0 0F C7 C8,\n"
