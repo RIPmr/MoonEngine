@@ -2,7 +2,7 @@
 #define MOON_WndSize SceneManager::SCR_SIZE
 #define MOON_OutputSize Renderer::OUTPUT_SIZE
 #define MOON_OutputTexID Renderer::outputTexID
-#define MOON_CountObject SceneManager::TotalObjectNum()
+#define MOON_CountObject SceneManager::GetObjectNum()
 #define MOON_SceneCamera SceneManager::CameraManager::sceneCamera
 #define MOON_CurrentCamera SceneManager::CameraManager::currentCamera
 #define MOON_MousePos SceneManager::InputManager::mousePos
@@ -40,6 +40,7 @@
 #include "Quaternion.h"
 #include "Matrix4x4.h"
 #include "MathUtils.h"
+#include "Material.h"
 #include "Utility.h"
 #include "Renderer.h"
 #include "UIController.h"

@@ -248,6 +248,9 @@
     <ClInclude Include="StackWindow.h">
       <Filter>HeadFiles\Miscellaneous</Filter>
     </ClInclude>
+    <ClInclude Include="NodeEditorBase.h">
+      <Filter>HeadFiles\Component</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

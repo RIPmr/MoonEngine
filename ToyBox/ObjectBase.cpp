@@ -79,26 +79,25 @@ namespace MOON {
 	void MObject::ListTransform() {
 		// list transform
 		Vector3 &euler = transform.rotation.eulerAngles;
-		float pos[3] = { transform.position.x, transform.position.y, transform.position.z };
-		float scale[3] = { transform.scale.x, transform.scale.y, transform.scale.z };
+		//float pos[3] = { transform.position.x, transform.position.y, transform.position.z };
+		//float scale[3] = { transform.scale.x, transform.scale.y, transform.scale.z };
 		float rotEuler[3] = { euler.x, euler.y, euler.z };
 
 		ImGui::Text("Transform:");
 		ImGui::Indent(10.0f);
 		ImGui::Text("Position"); ImGui::SameLine(80.0f);
-		ImGui::DragFloat3(UniquePropName("Pos"), pos, 0.1f, -INFINITY, INFINITY, "%.3f", 1.0f, true);
+		ImGui::DragFloat3(UniquePropName("Pos"), (float*)&transform.position, 0.1f, -INFINITY, INFINITY, "%.3f", 1.0f, true);
 		ImGui::Text("Rotation"); ImGui::SameLine(80.0f);
 		ImGui::DragFloat3(UniquePropName("Rot"), rotEuler, 0.1f, -INFINITY, INFINITY, "%.3f", 1.0f, true);
 		ImGui::Text("Scale"); ImGui::SameLine(80.0f);
-		ImGui::DragFloat3(UniquePropName("Sca"), scale, 0.1f, -INFINITY, INFINITY, "%.3f", 1.0f, true);
+		ImGui::DragFloat3(UniquePropName("Sca"), (float*)&transform.scale, 0.1f, -INFINITY, INFINITY, "%.3f", 1.0f, true);
 		ImGui::Unindent(10.0f);
 
 		Quaternion deltaQ = Quaternion(rotEuler[0] - euler.x,
 									   rotEuler[1] - euler.y,
 									   rotEuler[2] - euler.z);
 		transform.Rotate(deltaQ);
-
-		transform.set(&Vector3(pos), NULL, &Vector3(scale));
+		//transform.set(&Vector3(pos), NULL, &Vector3(scale));
 	}
 
 	void MObject::ListProperties() {

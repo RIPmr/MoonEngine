@@ -47,5 +47,28 @@ namespace MOON {
 		}
 		
 		~Texture() override {}
+
+		void ListProperties() override {
+			// list name
+			ListName();
+
+			// list preview
+			ImGui::Text("Location: ");
+			ImGui::Button(path.c_str(), ImVec2(ImGui::GetContentRegionAvailWidth(), 0));
+
+			ImGui::Separator();
+
+			float maxPrevWidth = 124.0f;
+			ImGui::Text("Preview: "); ImGui::SameLine();
+			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvailWidth() - 30.0f);
+			ImGui::SliderFloat("size", &maxPrevWidth, 50.0f, 200.0f);
+			float prevWidth = width > maxPrevWidth ? maxPrevWidth : width;
+			float centering = (ImGui::GetContentRegionAvailWidth() - prevWidth) / 2.0f;
+			ImGui::Indent(centering);
+			ImGui::Image((void*)(intptr_t)localID, ImVec2(prevWidth, height * prevWidth / width));
+			ImGui::Unindent(centering);
+
+			ImGui::Separator();
+		}
 	};
 }

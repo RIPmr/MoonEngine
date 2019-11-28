@@ -57,18 +57,18 @@ namespace ImNodes {
 			ImNodes::EndNode();
 		}
 
-		bool Slot(const char* title, int kind) {
+		bool Slot(const std::string &title, int kind) {
 			auto* storage = ImGui::GetStateStorage();
 			const auto& style = ImGui::GetStyle();
 			const float CIRCLE_RADIUS = 5.f * gCanvas->zoom;
-			ImVec2 title_size = ImGui::CalcTextSize(title);
+			ImVec2 title_size = ImGui::CalcTextSize(title.c_str());
 			// Pull entire slot a little bit out of the edge so that curves connect into int without visible seams
 			float item_offset_x = style.ItemSpacing.x * gCanvas->zoom;
 			if (!ImNodes::IsOutputSlotKind(kind))
 				item_offset_x = -item_offset_x;
 			ImGui::SetCursorScreenPos(ImGui::GetCursorScreenPos() + ImVec2{ item_offset_x, 0 });
 
-			if (ImNodes::BeginSlot(title, kind)) {
+			if (ImNodes::BeginSlot(title.c_str(), kind)) {
 				auto* draw_lists = ImGui::GetWindowDrawList();
 
 				// Slot appearance can be altered depending on curve hovering state.
@@ -88,7 +88,8 @@ namespace ImNodes {
 					//ImGui::SetCursorPosX(ImGui::GetCursorPosX() + offset);
 					ImGui::SetCursorPosX(ImGui::GetCursorPosX());
 
-					ImGui::TextUnformatted(title);
+					//ImGui::TextUnformatted(title.c_str());
+					ImGui::TextUnformatted(title.c_str());
 					ImGui::SameLine();
 				}
 
@@ -103,11 +104,11 @@ namespace ImNodes {
 				draw_lists->AddCircleFilled(circle_rect.GetCenter(), CIRCLE_RADIUS, color);
 
 				ImGui::ItemSize(circle_rect.GetSize());
-				ImGui::ItemAdd(circle_rect, ImGui::GetID(title));
+				ImGui::ItemAdd(circle_rect, ImGui::GetID(title.c_str()));
 
 				if (ImNodes::IsInputSlotKind(kind)) {
 					ImGui::SameLine();
-					ImGui::TextUnformatted(title);
+					ImGui::TextUnformatted(title.c_str());
 				}
 
 				ImGui::PopStyleColor();
@@ -121,19 +122,22 @@ namespace ImNodes {
 		}
 
 		void InputSlots(const SlotInfo* slots, int snum) {
-			const auto& style = ImGui::GetStyle();
+			if (snum > 0) {
+				const auto& style = ImGui::GetStyle();
 
-			// Render input slots
-			ImGui::BeginGroup();
-			{
-				for (int i = 0; i < snum; i++)
-					ImNodes::Ez::Slot(slots[i].title, ImNodes::InputSlotKind(slots[i].kind));
+				// Render input slots
+				ImGui::BeginGroup();
+				{
+					for (int i = 0; i < snum; i++)
+						if (!slots[i].hideSlot)
+							ImNodes::Ez::Slot(slots[i].title, ImNodes::InputSlotKind(slots[i].kind));
+				}
+				ImGui::EndGroup();
+
+				// Move cursor to the next column
+				if (!slots[0].title._Equal("Incremental"))
+					ImGui::SetCursorScreenPos({ ImGui::GetItemRectMax().x + style.ItemSpacing.x, ImGui::GetItemRectMin().y });
 			}
-			ImGui::EndGroup();
-
-			// Move cursor to the next column
-			ImGui::SetCursorScreenPos({ ImGui::GetItemRectMax().x + style.ItemSpacing.x, ImGui::GetItemRectMin().y });
-
 			// Begin region for node content
 			ImGui::BeginGroup();
 		}
@@ -149,7 +153,8 @@ namespace ImNodes {
 			ImGui::BeginGroup();
 			{
 				for (int i = 0; i < snum; i++)
-					ImNodes::Ez::Slot(slots[i].title, ImNodes::OutputSlotKind(slots[i].kind));
+					if (!slots[i].hideSlot)
+						ImNodes::Ez::Slot(slots[i].title, ImNodes::OutputSlotKind(slots[i].kind));
 			}
 			ImGui::EndGroup();
 		}

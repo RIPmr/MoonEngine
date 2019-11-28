@@ -29,6 +29,7 @@ namespace MOON {
 		static bool isAbort;
 
 		// functions
+		static void* renderingMatPreview(void* args);
 		static void* renderingTestImage(void* args);
 		static void* rendering(void* args);
 		static bool PrepareVFB();

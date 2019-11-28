@@ -17,14 +17,18 @@ namespace MOON {
 		light
 	};
 
+	extern class renderer;
 	class Material : public ObjectBase {
 	public:
 		Shader* shader;
+		Texture* preview;
 
-		Material() : ObjectBase(MOON_AUTOID) {}
-		Material(const std::string &name) : ObjectBase(name, MOON_AUTOID) {}
+		Material() : ObjectBase(MOON_AUTOID), preview(NULL) {}
+		Material(const std::string &name) : ObjectBase(name, MOON_AUTOID), preview(NULL) {}
 		//~Material() { delete shader; }
-		~Material() override {}
+		~Material() override {
+			if (preview != NULL) delete preview;
+		}
 
 		void ListShader() {
 			if (ImGui::TreeNode("Shader", ID)) {
@@ -41,6 +45,18 @@ namespace MOON {
 			// list shader
 			ListShader();
 			ImGui::Spacing();
+		}
+
+		virtual void GeneratePreview();
+
+		virtual void ListPreview() {
+			ImGui::Text("Preview: ");
+			GeneratePreview();
+
+			float centering = (ImGui::GetContentRegionAvailWidth() - preview->width) / 2.0f;
+			ImGui::Indent(centering);
+			ImGui::Image((void*)(intptr_t)preview->localID, ImVec2(preview->width, preview->height));
+			ImGui::Unindent(centering);
 		}
 
 		virtual bool scatter(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered) const = 0;
@@ -122,6 +138,11 @@ namespace MOON {
 			ImGui::Button("[Texture]", ImVec2(btnWidth, 20));
 
 			ImGui::Unindent(10.0f);
+			ImGui::Separator();
+
+			// list preview
+			ListPreview();
+
 			ImGui::Spacing();
 		}
 

@@ -168,6 +168,7 @@
     <ClInclude Include="Matrix4x4.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Model.h" />
+    <ClInclude Include="NodeEditorBase.h" />
     <ClInclude Include="OBJMgr.h" />
     <ClInclude Include="OperatorBase.h" />
     <ClInclude Include="OperatorLoader.h" />

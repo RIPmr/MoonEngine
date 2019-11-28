@@ -1,158 +1,121 @@
 #pragma once
-#include <vector>
 #include <map>
-#include <string>
-#include <imgui.h>
 
-#include "ImNodesEz.h"
+#include "NodeEditorBase.h"
 #include "Vector3.h"
 #include "Vector4.h"
 #include "Color.h"
 #include "Matrix4x4.h"
 
 #define DataSizeDef ImNodes::Ez::SlotData
+#define inputData(slotID) node->input_slots[slotID].data
+#define outputData(slotID) node->output_slots[slotID].data
 #define IMGUI_DEFINE_MATH_OPERATORS
 
 namespace MOON {
-	// *NOTE: ID can not be 0
-	enum NodeSlotTypes {
-		Slot_Material = 1,
-		Slot_Texture,
-		Slot_Number,
-		Slot_Matrix,
-		Slot_Color,
-	};
-
-	// A structure defining a connection between two slots of two nodes.
-	struct Connection {
-		/// `id` that was passed to BeginNode() of input node.
-		void* input_node = nullptr;
-		/// Descriptor of input slot.
-		const char* input_slot = nullptr;
-		void* output_node = nullptr;
-		const char* output_slot = nullptr;
-
-		bool operator==(const Connection& other) const {
-			return input_node  == other.input_node  &&
-				   input_slot  == other.input_slot  &&
-				   output_node == other.output_node &&
-				   output_slot == other.output_slot ;
-		}
-
-		bool operator!=(const Connection& other) const {
-			return !operator ==(other);
-		}
-	};
-
-	// A structure holding node state.
-	struct MyNode {
-		std::string title;
-		bool selected = false;
-		ImVec2 pos{};
-
-		std::vector<Connection> connections{};
-		std::vector<ImNodes::Ez::SlotInfo> input_slots{};
-		std::vector<ImNodes::Ez::SlotInfo> output_slots{};
-
-		void(*content)(MyNode*, bool);
-
-		~MyNode() = default;
-
-		explicit MyNode(const std::string& title,
-			const std::vector<ImNodes::Ez::SlotInfo>&& input_slots,
-			const std::vector<ImNodes::Ez::SlotInfo>&& output_slots,
-			void(*content)(MyNode*, bool)) {
-			this->title = title;
-			this->input_slots = input_slots;
-			this->output_slots = output_slots;
-			this->content = content;
-		}
-
-		void ListName() {
-			// list name
-			char buf[64]; strcpy(buf, title.c_str());
-
-			ImGui::Text("Name:"); ImGui::SameLine();
-			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvailWidth() - 30);
-			ImGui::InputText("Node_Name", buf, 64);
-
-			// if user renamed this node
-			if (strcmp(buf, title.c_str())) title = buf;
-
-			ImGui::Separator();
-		}
-
-		void ProcessContent(bool hideInNode) {
-			(*content)(this, hideInNode);
-		}
-
-		/// Deletes connection from this node.
-		void DeleteConnection(const Connection& connection) {
-			for (auto it = connections.begin(); it != connections.end(); ++it) {
-				if (connection == *it) {
-					connections.erase(it);
-					break;
-				}
-			}
-		}
-
-	};
 
 	struct MaterialEditor {
 		bool anythingSelected;
-		int selectedID;
+		unsigned int selectedID;
 		MyNode* selectedNode;
+		bool flipExecute;
 
 		std::multimap<std::string, MyNode*(*)()> available_nodes{
 			// Numeric nodes -----------------------------------------------------------------
-			{"Numeric", []() -> MyNode* { return new MyNode("Color", {
-				/// Input slots
-			}, {
+			{"Numeric", []() -> MyNode* { return new MyNode("Color", {}, {
 				/// Output slots
-				{ "Color", Slot_Color, DataSizeDef(0, 1) }
+				{ "out", Slot_Color, DataSizeDef(0, 1) }
 			}, 
 				/// content renderer
 				[](MyNode* node, bool hideInNode) {
 					if (!hideInNode) {
 						node->ListName();
 						ImGui::Text("Output Color: ");
-						ImGui::ColorEdit3("Color", (float*)&node->output_slots[0].data.col[0],
+						ImGui::ColorEdit3("Color", (float*)&outputData(0).col[0],
 							ImGuiColorEditFlags_NoLabel);
 					} else {
-						ImGui::ColorEdit3("Color", (float*)&node->output_slots[0].data.col[0],
+						ImGui::ColorEdit3("Color", (float*)&outputData(0).col[0],
 							ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
 					}
 				}
 			); } },
 
 			{"Numeric", []() -> MyNode* { return new MyNode("Bitmap", {
-				/// Input slots
+				/// internal data
+				{ "Offset",		InnerData,   DataSizeDef(0, 1), true },
+				{ "Tiling",		InnerData,   DataSizeDef(0, 1), true },
+				{ "FiltType",	InnerData,   DataSizeDef(1, 0), true }
 			}, {
 				/// Output slots
-				{ "Texture", Slot_Texture, DataSizeDef(1, 0) }
+				{ "out", Slot_Texture, DataSizeDef(1, 0) }
 			}, 
 				/// content renderer
 				[](MyNode* node, bool hideInNode) {
-					if (!hideInNode) node->ListName();
+					unsigned int prevID = outputData(0).id[0] ? outputData(0).id[0] :
+											MOON_TextureManager::GetItem("moon_logo_full")->ID;
+					Texture* tex = dynamic_cast<Texture*>(MOON_ObjectList[prevID]);
+					int width = 30 * node->zoomFactor;
+
+					if (!hideInNode) {
+						node->ListName();
+						ImGui::Text("Location: ");
+						ImGui::Button(tex->path.c_str(), ImVec2(ImGui::GetContentRegionAvailWidth(), 0));
+						ImGui::Text("UV: ");
+						ImGui::DragFloat2("Offset", (float*)&inputData(0).col[0]);
+						ImGui::DragFloat2("Tiling", (float*)&inputData(1).col[0]);
+						//ImGui::Text("Filtering: ");
+						//ImGui::RadioButton();
+
+						ImGui::Separator();
+						ImGui::Text("Preview: ");
+						width <<= 2;
+					}
+
+					ImGui::Image((void*)(intptr_t)tex->localID, ImVec2(width, tex->height / tex->width * width));
 				}
 			); }},
 
 			// Operators ---------------------------------------------------------------------
 			{"Operator", []() -> MyNode* { return new MyNode("ColorMixer", {
+				/// internal data
+				{ "Ratio",	InnerData,  DataSizeDef(1, 0), true },
 				/// Input slots
-				{ "Color_1", Slot_Color, DataSizeDef(0, 1) },
-				{ "Color_2", Slot_Color, DataSizeDef(0, 1) }
+				{ "A",		Slot_Color, DataSizeDef(0, 1) },
+				{ "B",		Slot_Color, DataSizeDef(0, 1) }
 			}, {
 				/// Output slots
-				{ "Color",	 Slot_Color, DataSizeDef(0, 1) }
+				{ "Mixed",	Slot_Color, DataSizeDef(0, 1) }
 			},
 				/// content renderer
 				[](MyNode* node, bool hideInNode) {
-					if (!hideInNode) node->ListName();
+					if (!hideInNode) {
+						node->ListName();
+						ImGui::Text("Input Color: ");
+						ImGui::Text("A: "); ImGui::SameLine();
+						ImGui::ColorEdit3("ColorA", (float*)&inputData(1).col[0],
+							ImGuiColorEditFlags_NoLabel);
+						ImGui::Text("B: "); ImGui::SameLine();
+						ImGui::ColorEdit3("ColorB", (float*)&inputData(2).col[0],
+							ImGuiColorEditFlags_NoLabel);
+
+						ImGui::Separator();
+						ImGui::SliderInt("Mix Ratio", &inputData(0).id[0], 0, 100);
+
+						ImGui::Separator();
+						ImGui::Text("Output Color: ");
+						ImGui::ColorEdit3("ColorO", (float*)&outputData(0).col[0],
+							ImGuiColorEditFlags_NoLabel);
+					} else {
+						ImGui::ColorEdit3("ColorO", (float*)&outputData(0).col[0],
+							ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
+					}
+
+					outputData(0).col[0].setValue(Vector3::Lerp(inputData(1).col[0], inputData(2).col[0],
+						(float)inputData(0).id[0] / 100.0f));
 				}
 			); } },
 
-			{ "Operator", []() -> MyNode* { return new MyNode("ColtoTex", {
+			{"Operator", []() -> MyNode* { return new MyNode("ColtoTex", {
 				/// Input slots
 				{ "Color",	 Slot_Color, DataSizeDef(0, 1) }
 			}, {
@@ -162,24 +125,164 @@ namespace MOON {
 				/// content renderer
 				[](MyNode* node, bool hideInNode) {
 					if (!hideInNode) node->ListName();
+
+					// TODO : generate a new tex based on input color
+
 				}
 			); } },
 
-			{"Operator", []() -> MyNode* { return new MyNode("TexAdjustor", {
+			{"Operator", []() -> MyNode* { return new MyNode("LiteTexFilter", {
+				/// internal data
+				{ "Invert",		InnerData,   DataSizeDef(1, 0), true },
+				{ "OutAmt",		InnerData,   DataSizeDef(1, 0), true },
+				{ "Level",		InnerData,   DataSizeDef(1, 0), true },
+				{ "HueShift",	InnerData,   DataSizeDef(1, 0), true },
+				{ "Saturation",	InnerData,   DataSizeDef(1, 0), true },
+				{ "Brightness",	InnerData,   DataSizeDef(1, 0), true },
+				{ "Contrast",	InnerData,   DataSizeDef(1, 0), true },
 				/// Input slots
-				{ "Texture", Slot_Texture, DataSizeDef(1, 0) }
+				{ "Input", Slot_Texture, DataSizeDef(1, 0) }
 			}, {
 				/// Output slots
-				{ "Texture", Slot_Texture, DataSizeDef(1, 0) }
+				{ "Output",Slot_Texture, DataSizeDef(1, 0) }
 			},
 				/// content renderer
 				[](MyNode* node, bool hideInNode) {
-					if (!hideInNode) node->ListName();
+					if (!hideInNode) {
+						node->ListName();
+
+						ImGui::Text("Filters: ");
+
+						for (auto &iter : node->input_slots) {
+							ImGui::SliderInt(iter.title.c_str(), &iter.data.id[0], 0, 100);
+						}
+					}
+				}
+			); } },
+
+			// Procedural --------------------------------------------------------------------
+			{ "Procedural", []() -> MyNode* { return new MyNode("Perline", {
+				/// internal data
+			}, {
+				/// Output slots
+				{ "Out",	Slot_Texture, DataSizeDef(1, 0) }
+			},
+				/// content renderer
+				[](MyNode* node, bool hideInNode) {
+					unsigned int prevID = outputData(0).id[0] ? outputData(0).id[0] :
+						MOON_TextureManager::GetItem("moon_logo_full")->ID;
+					Texture* tex = dynamic_cast<Texture*>(MOON_ObjectList[prevID]);
+					int width = 30 * node->zoomFactor;
+
+					if (!hideInNode) {
+						node->ListName();
+
+						ImGui::Text("Preview: ");
+						width <<= 2;
+					}
+
+					ImGui::Image((void*)(intptr_t)tex->localID, ImVec2(width, tex->height / tex->width * width));
+				}
+			); } },
+
+			{ "Procedural", []() -> MyNode* { return new MyNode("Wood", {
+				/// internal data
+			}, {
+				/// Output slots
+				{ "Out",	Slot_Texture, DataSizeDef(1, 0) }
+			},
+				/// content renderer
+				[](MyNode* node, bool hideInNode) {
+					unsigned int prevID = outputData(0).id[0] ? outputData(0).id[0] :
+						MOON_TextureManager::GetItem("moon_logo_full")->ID;
+					Texture* tex = dynamic_cast<Texture*>(MOON_ObjectList[prevID]);
+					int width = 30 * node->zoomFactor;
+
+					if (!hideInNode) {
+						node->ListName();
+
+						ImGui::Text("Preview: ");
+						width <<= 2;
+					}
+
+					ImGui::Image((void*)(intptr_t)tex->localID, ImVec2(width, tex->height / tex->width * width));
+				}
+			); } },
+
+			{ "Procedural", []() -> MyNode* { return new MyNode("Worley", {
+				/// internal data
+			}, {
+				/// Output slots
+				{ "Out",	Slot_Texture, DataSizeDef(1, 0) }
+			},
+				/// content renderer
+				[](MyNode* node, bool hideInNode) {
+					unsigned int prevID = outputData(0).id[0] ? outputData(0).id[0] :
+						MOON_TextureManager::GetItem("moon_logo_full")->ID;
+					Texture* tex = dynamic_cast<Texture*>(MOON_ObjectList[prevID]);
+					int width = 30 * node->zoomFactor;
+
+					if (!hideInNode) {
+						node->ListName();
+
+						ImGui::Text("Preview: ");
+						width <<= 2;
+					}
+
+					ImGui::Image((void*)(intptr_t)tex->localID, ImVec2(width, tex->height / tex->width * width));
+				}
+			); } },
+
+			{ "Procedural", []() -> MyNode* { return new MyNode("Marble", {
+				/// internal data
+			}, {
+				/// Output slots
+				{ "Out",	Slot_Texture, DataSizeDef(1, 0) }
+			},
+				/// content renderer
+				[](MyNode* node, bool hideInNode) {
+					unsigned int prevID = outputData(0).id[0] ? outputData(0).id[0] :
+						MOON_TextureManager::GetItem("moon_logo_full")->ID;
+					Texture* tex = dynamic_cast<Texture*>(MOON_ObjectList[prevID]);
+					int width = 30 * node->zoomFactor;
+
+					if (!hideInNode) {
+						node->ListName();
+
+						ImGui::Text("Preview: ");
+						width <<= 2;
+					}
+
+					ImGui::Image((void*)(intptr_t)tex->localID, ImVec2(width, tex->height / tex->width * width));
+				}
+			); } },
+
+			{ "Procedural", []() -> MyNode* { return new MyNode("[Custom]", {
+				/// internal data
+			}, {
+				/// Output slots
+				{ "Out",	Slot_Texture, DataSizeDef(1, 0) }
+			},
+				/// content renderer
+				[](MyNode* node, bool hideInNode) {
+					unsigned int prevID = outputData(0).id[0] ? outputData(0).id[0] :
+						MOON_TextureManager::GetItem("moon_logo_full")->ID;
+					Texture* tex = dynamic_cast<Texture*>(MOON_ObjectList[prevID]);
+					int width = 30 * node->zoomFactor;
+
+					if (!hideInNode) {
+						node->ListName();
+
+						ImGui::Text("Preview: ");
+						width <<= 2;
+					}
+
+					ImGui::Image((void*)(intptr_t)tex->localID, ImVec2(width, tex->height / tex->width * width));
 				}
 			); } },
 
 			// Materials ---------------------------------------------------------------------
-			{"Material", []() -> MyNode* { return new MyNode("MoonMtl", {
+			{ "Material", []() -> MyNode* { return new MyNode("MoonMtl", {
 				/// Input slots
 				{ "Ambient",	Slot_Texture, DataSizeDef(1, 0) },
 				{ "Diffuse",	Slot_Texture, DataSizeDef(1, 0) },
@@ -194,16 +297,212 @@ namespace MOON {
 			},
 				/// content renderer
 				[](MyNode* node, bool hideInNode) {
-					node->output_slots[0].data.id[0] = 5;
-					if (!hideInNode)
-						MOON_ObjectList[node->output_slots[0].data.id[0]]->ListProperties();
+					if (!hideInNode) {
+						if (outputData(0).id[0])
+							MOON_ObjectList[outputData(0).id[0]]->ListProperties();
+						else {
+							// TODO : Create a new mat
+
+						}
+					}
+				}
+			); } },
+
+			{ "Material", []() -> MyNode* { return new MyNode("Light", {
+				/// Input slots
+				{ "Illumination",	Slot_Texture, DataSizeDef(1, 0) },
+				{ "Temperature",	Slot_Texture, DataSizeDef(1, 0) }
+			}, {
+				/// Output slots
+				{ "LightMtl",	Slot_Material, DataSizeDef(1, 0) }
+			},
+				/// content renderer
+				[](MyNode* node, bool hideInNode) {
+					if (!hideInNode) {
+						if (outputData(0).id[0])
+							MOON_ObjectList[outputData(0).id[0]]->ListProperties();
+						else {
+							// TODO : Create a new mat
+
+						}
+					}
+				}
+			); } },
+
+			{ "Material", []() -> MyNode* { return new MyNode("SSS", {
+				/// Input slots
+				{ "Diffuse",	Slot_Texture, DataSizeDef(1, 0) },
+				{ "Highlight",	Slot_Texture, DataSizeDef(1, 0) },
+				{ "SSS_Color",	Slot_Texture, DataSizeDef(1, 0) },
+				{ "Thickness",	Slot_Texture, DataSizeDef(1, 0) }
+			}, {
+				/// Output slots
+				{ "SSSMtl",	Slot_Material, DataSizeDef(1, 0) }
+			},
+				/// content renderer
+				[](MyNode* node, bool hideInNode) {
+					if (!hideInNode) {
+						if (outputData(0).id[0])
+							MOON_ObjectList[outputData(0).id[0]]->ListProperties();
+						else {
+							// TODO : Create a new mat
+
+						}
+					}
+				}
+			); } },
+
+			{ "Material", []() -> MyNode* { return new MyNode("Volumn", {
+				/// Input slots
+				{ "BaseColor",	Slot_Texture, DataSizeDef(1, 0) },
+				{ "Scatter",	Slot_Texture, DataSizeDef(1, 0) }
+			}, {
+				/// Output slots
+				{ "VolumnMtl",	Slot_Material, DataSizeDef(1, 0) }
+			},
+				/// content renderer
+				[](MyNode* node, bool hideInNode) {
+					if (!hideInNode) {
+						if (outputData(0).id[0])
+							MOON_ObjectList[outputData(0).id[0]]->ListProperties();
+						else {
+							// TODO : Create a new mat
+
+						}
+					}
+				}
+			); } },
+
+			{ "Material", []() -> MyNode* { return new MyNode("Hair", {
+				/// Input slots
+				{ "Diffuse",	Slot_Texture, DataSizeDef(1, 0) },
+				{ "Transmition",	Slot_Texture, DataSizeDef(1, 0) }
+			}, {
+				/// Output slots
+				{ "HairMtl",	Slot_Material, DataSizeDef(1, 0) }
+			},
+				/// content renderer
+				[](MyNode* node, bool hideInNode) {
+					if (!hideInNode) {
+						if (outputData(0).id[0])
+							MOON_ObjectList[outputData(0).id[0]]->ListProperties();
+						else {
+							// TODO : Create a new mat
+
+						}
+					}
+				}
+			); } },
+
+			{ "Material", []() -> MyNode* { return new MyNode("Matte", {
+				/// Input slots
+				{ "AffectBackground",	Slot_Number,   DataSizeDef(1, 0) }
+			}, {
+				/// Output slots
+				{ "MatteMtl",	Slot_Material, DataSizeDef(1, 0) }
+			},
+				/// content renderer
+				[](MyNode* node, bool hideInNode) {
+					if (!hideInNode) {
+						if (outputData(0).id[0])
+							MOON_ObjectList[outputData(0).id[0]]->ListProperties();
+						else {
+							// TODO : Create a new mat
+
+						}
+					}
+				}
+			); } },
+
+			{ "Material", []() -> MyNode* { return new MyNode("Cartoon", {
+				/// Input slots
+				{ "LineColor",	Slot_Number,   DataSizeDef(1, 0) },
+				{ "Thickness",	Slot_Number,   DataSizeDef(1, 0) }
+			}, {
+				/// Output slots
+				{ "CartoonMtl",	Slot_Material, DataSizeDef(1, 0) }
+			},
+				/// content renderer
+				[](MyNode* node, bool hideInNode) {
+					if (!hideInNode) {
+						if (outputData(0).id[0])
+							MOON_ObjectList[outputData(0).id[0]]->ListProperties();
+						else {
+							// TODO : Create a new mat
+
+						}
+					}
+				}
+			); } },
+
+			{"Material", []() -> MyNode* { return new MyNode("MatMixer", {
+				/// internal data
+				{ "Incremental",  InnerData,   DataSizeDef(1, 0), true },
+				/// Input slots
+				{ "BaseMat",	Slot_Material, DataSizeDef(1, 0) },
+
+				{ "Coat_1",		Slot_Material, DataSizeDef(1, 0) },
+				{ "Mask_1",		Slot_Texture,  DataSizeDef(1, 1), true },
+				{ "Coat_2",		Slot_Material, DataSizeDef(1, 0) },
+				{ "Mask_2",		Slot_Texture,  DataSizeDef(1, 1), true },
+				{ "Coat_3",		Slot_Material, DataSizeDef(1, 0) },
+				{ "Mask_3",		Slot_Texture,  DataSizeDef(1, 1), true },
+				{ "Coat_4",		Slot_Material, DataSizeDef(1, 0) },
+				{ "Mask_4",		Slot_Texture,  DataSizeDef(1, 1), true },
+				{ "Coat_5",		Slot_Material, DataSizeDef(1, 0) },
+				{ "Mask_5",		Slot_Texture,  DataSizeDef(1, 1), true }
+			}, {
+				/// Output slots
+				{ "Output",		Slot_Material, DataSizeDef(1, 0) }
+			},
+				/// content renderer
+				[](MyNode* node, bool hideInNode) {
+					if (!hideInNode) node->ListName();
+
+					int oldNum = (node->input_slots.size() - 2) >> 1;
+					inputData(0).id[0] = oldNum;
+
+					ImGui::Text("Coat Layer: ");
+					ImGui::InputInt("LayerCnt", &inputData(0).id[0], 1, 1, 0, true, 1.5f);
+
+					int diff = inputData(0).id[0] - oldNum;
+					if (inputData(0).id[0] >= 1 && diff) {
+						if (diff >= 0) {
+							for (int i = 0; i < diff; i++) {
+								node->input_slots.push_back({ std::string("Coat_") + std::to_string(++oldNum),  Slot_Material, DataSizeDef(1, 0) });
+								node->input_slots.push_back({ std::string("Mask_") + std::to_string(oldNum),    Slot_Texture,  DataSizeDef(1, 1), true });
+							}
+						} else {
+							for (int i = 0; i > diff << 1; i--) node->input_slots.pop_back();
+						}
+					}
+
+					if (!hideInNode) {
+						ImGui::Separator();
+						ImGui::Text("Base Material: "); ImGui::SameLine();
+						ImGui::Button(inputData(1).id[0] ? MOON_ObjectList[inputData(1).id[0]]->name.c_str() : "[BaseMat]", 
+									  ImVec2(ImGui::GetContentRegionAvailWidth() - 10.0f, 0));
+						// list all coat mats and masks
+						int loopID = 1;
+						for (auto iter = node->input_slots.begin() + 2; iter != node->input_slots.end(); iter++) {
+							ImGui::Text(iter->title.c_str());
+							ImGui::Indent(10.0f);
+							ImGui::Button(iter->data.id[0] ? MOON_ObjectList[iter->data.id[0]]->name.c_str() : ("[" + iter->title + "]").c_str()); ImGui::SameLine();
+							iter++;
+							ImGui::Text("Mask: "); ImGui::SameLine();
+							ImGui::ColorEdit3((iter->title + "_col").c_str(), (float*)&iter->data.col[0],
+								ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);  ImGui::SameLine();
+							ImGui::Button("[MaskMap]", ImVec2(0, 0), loopID);
+							ImGui::Unindent(10.0f);
+						}
+					}
 				}
 			); } }
 
 		};
 		std::vector<MyNode*> nodes;
 
-		// TODO
+		// TODO : clear canvas
 		void ClearEditor() {
 			std::cout << "node editor cleared." << std::endl;
 		}
@@ -236,19 +535,32 @@ namespace MOON {
 
 			ImNodes::BeginCanvas(&canvas);
 
+			if (ImGui::IsWindowHovered()) 
+				if (!ImGui::IsWindowFocused() && 
+				   (ImGui::GetIO().MouseWheel != 0 ||
+					ImGui::IsMouseDown(2)))
+					ImGui::FocusWindow(ImGui::GetCurrentWindow());
+
 			// restore props
-			selectedID = -1;
+			selectedID = 0;
 			selectedNode = NULL;
 			anythingSelected = false;
+			flipExecute = !flipExecute;
 
 			for (auto it = nodes.begin(); it != nodes.end();) {
 				MyNode* node = *it;
 
+				node->zoomFactor = canvas.zoom;
+
 				if (node->selected) {
 					anythingSelected = true;
 					selectedNode = node;
-					if (node->output_slots[0].data.id != NULL)
-						selectedID = node->output_slots[0].data.id[0];
+					if (outputData(0).id != NULL) selectedID = outputData(0).id[0];
+					/*std::cout << "- Connection: -" << std::endl;
+					for (auto &iter : node->input_slots) {
+						if (iter.con != NULL)
+						std::cout << iter.title << " is con to: " << ((MyNode*)iter.parent)->title << std::endl;
+					}*/
 				}
 
 				// Start rendering node
@@ -257,6 +569,8 @@ namespace MOON {
 					ImNodes::Ez::InputSlots(node->input_slots.data(), node->input_slots.size());
 
 					// node content go here
+					//if (node->executed != flipExecute) node->Execute();
+					//else node->ProcessContent(true);
 					node->ProcessContent(true);
 
 					// Render output nodes first (order is important)
@@ -266,8 +580,27 @@ namespace MOON {
 					Connection new_connection;
 					if (ImNodes::GetNewConnection(&new_connection.input_node, &new_connection.input_slot,
 						&new_connection.output_node, &new_connection.output_slot)) {
-						((MyNode*)new_connection.input_node)->connections.push_back(new_connection);
-						((MyNode*)new_connection.output_node)->connections.push_back(new_connection);
+						MyNode* conIn = (MyNode*)new_connection.input_node;
+						MyNode* conOut = (MyNode*)new_connection.output_node;
+
+						conIn->connections.push_back(new_connection);
+						conOut->connections.push_back(new_connection);
+
+						/// store connection ptr to input slot
+						/// there is no need to store connection to output slot
+						for (auto &islot : conIn->input_slots) {
+							if (!strcmp(islot.title.c_str(), new_connection.input_slot)) {
+								for (auto &oslot : conOut->output_slots) {
+									if (!strcmp(oslot.title.c_str(), new_connection.output_slot)) {
+										islot.con = &oslot;
+										islot.parent = new_connection.output_node;
+										break;
+									}
+								}
+								break;
+							}
+						}
+
 					}
 
 					// Render output connections of this node
@@ -280,8 +613,18 @@ namespace MOON {
 
 						if (!ImNodes::Connection(connection.input_node, connection.input_slot, connection.output_node,
 							connection.output_slot)) {
+							/// delete connection ptr in input slot
+							MyNode* conIn = (MyNode*)connection.input_node;
+							for (auto &islot : conIn->input_slots) {
+								if (!strcmp(islot.title.c_str(), connection.input_slot)) {
+									islot.con = NULL;
+									islot.parent = NULL;
+									break;
+								}
+							}
+
 							// Remove deleted connections
-							((MyNode*)connection.input_node)->DeleteConnection(connection);
+							conIn->DeleteConnection(connection);
 							((MyNode*)connection.output_node)->DeleteConnection(connection);
 						}
 					}
@@ -293,6 +636,14 @@ namespace MOON {
 					// Deletion order is critical: first we delete connections to us
 					for (auto& connection : node->connections) {
 						if (connection.output_node == node) {
+							/// delete connection ptr in input slot
+							for (auto &islot : ((MyNode*)connection.input_node)->input_slots) {
+								if (!strcmp(islot.title.c_str(), connection.input_slot)) {
+									islot.con = NULL;
+									islot.parent = NULL;
+									break;
+								}
+							}
 							((MyNode*)connection.input_node)->DeleteConnection(connection);
 						} else {
 							((MyNode*)connection.output_node)->DeleteConnection(connection);
@@ -300,6 +651,14 @@ namespace MOON {
 					}
 					// Then we delete our own connections, so we don't corrupt the list
 					node->connections.clear();
+
+					if (anythingSelected) {
+						if (selectedNode == node) {
+							anythingSelected = false;
+							selectedNode = NULL;
+							selectedID = 0;
+						}
+					}
 
 					delete node;
 					it = nodes.erase(it);
@@ -326,13 +685,19 @@ namespace MOON {
 					ImGui::EndMenu();
 				}
 
+				// Procedural Texture ------------------------
+				if (ImGui::BeginMenu("Procedural")) {
+					ListSlots("Procedural");
+					ImGui::EndMenu();
+				}
+
 				ImGui::Separator();
 				// Mtls --------------------------------------
 				ListSlots("Material");
 
-				ImGui::Separator();
 				// Other funcs -------------------------------
 				if (anythingSelected) {
+					ImGui::Separator();
 					if (ImGui::MenuItem("Delete")) {}
 					if (ImGui::MenuItem("Copy")) {}
 					if (ImGui::MenuItem("Paste")) {}
@@ -347,4 +712,5 @@ namespace MOON {
 
 		}
 	};
+
 }

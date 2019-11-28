@@ -87,6 +87,48 @@ void* Renderer::renderingTestImage(void* args) {
 	return 0;
 }
 
+// TODO
+void* Renderer::renderingMatPreview(void* args) {
+	int currLine = 0;
+	int width = OUTPUT_SIZE.x;
+	int height = OUTPUT_SIZE.y;
+	Texture* prevTex = (Texture*)args;
+
+	// start rendering
+	std::cout << "rendering preview..." << std::endl;
+
+#pragma omp parallel for num_threads(MAX_THREADSNUM)
+	for (int i = height - 1; i >= 0; i--) {
+		for (int j = 0; j < width; j++) {
+			int stp = ((height - 1 - i) * width + j) * 3;
+
+			// MonteCarlo Sampling [BruteForce] ----------
+			Vector3 col = Vector3::ZERO();
+
+			for (int s = 0; s < samplingRate; s++) {
+				float u = float(j + MoonMath::drand48()) / width;
+				float v = float(i + MoonMath::drand48()) / height;
+				Ray ray = targetCamera->GetRay(u, v);
+				Vector3 p = ray.PointAtParameter(2.0);
+				col += SamplingColor(ray, 0);
+			}
+			// -------------------------------------------
+
+			col /= float(samplingRate);
+			MoonMath::GammaCorrection(col);
+
+			outputImage[stp] = (GLubyte)(255.99 * col.x);
+			outputImage[stp + 1] = (GLubyte)(255.99 * col.y);
+			outputImage[stp + 2] = (GLubyte)(255.99 * col.z);
+		}
+	}
+
+	// finished
+	std::cout << "done." << std::endl;
+
+	return 0;
+}
+
 void* Renderer::rendering(void* args) {
 	int currLine = 0;
 	int width = OUTPUT_SIZE.x;

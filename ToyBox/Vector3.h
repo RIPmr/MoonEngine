@@ -74,6 +74,11 @@ namespace MOON {
 		inline void setValue(float _x, float _y, float _z) { x = _x; y = _y; z = _z; }
 		inline void setValue(const Vector3 &v) { x = v.x; y = v.y; z = v.z; }
 
+		// ratio: [0, 1]
+		inline static Vector3 Lerp(const Vector3 &a, const Vector3 &b, const float &ratio) {
+			return a * (1.0f - ratio) + b * ratio;
+		}
+
 		static Vector3 Normalize(const Vector3 &v);
 		static Vector3 Cross(const Vector3 &v1, const Vector3 &v2);
 		static float Dot(const Vector3 &v1, const Vector3 &v2);

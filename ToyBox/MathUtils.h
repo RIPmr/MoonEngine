@@ -1,6 +1,6 @@
 #pragma once
-
 #include <cmath>
+#include <vector>
 #include <cstdlib>
 #include <algorithm>
 
@@ -11,7 +11,9 @@ namespace MOON {
 	#define MOON_m 0x100000000LL
 	#define MOON_c 0xB16
 	#define MOON_a 0x5DEECE66DLL
-	#define MOON_IDBOUNDARY std::numeric_limits<unsigned int>::max()
+	/// actually it's pow(255, 4) = 0xfc05fc01
+	/// but range of int is ¡À2147483647, smaller than 0xfc05fc01
+	#define MOON_IDBOUNDARY std::numeric_limits<int>::max()
 	#define PI acos(-1.0)
 	#define Rad2Deg 180/PI
 	#define Deg2Rad PI/180
@@ -22,6 +24,16 @@ namespace MOON {
 	private:
 		static unsigned long long seed;
 	public:
+
+		inline static std::vector<int> TENtoNBase(int num, int n) {
+			std::vector<int> v;
+			while (num) {
+				v.push_back(num % n);
+				num /= n;
+			}
+			return v;
+		}
+
 		inline static void GammaCorrection(Vector3 &GammaSpaceCol) {
 			GammaSpaceCol.x = sqrt(GammaSpaceCol.x);
 			GammaSpaceCol.y = sqrt(GammaSpaceCol.y);

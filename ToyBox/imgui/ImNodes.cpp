@@ -286,7 +286,7 @@ namespace ImNodes {
 			ImGuiID canvas_id = ImGui::GetID("canvas");
 			if (ImGui::IsMouseDown(0) && ImGui::GetCurrentWindow()->ContentsRegionRect.Contains(ImGui::GetMousePos())) {
 				if (ImGui::IsWindowHovered()) {
-					if (!ImGui::IsWindowFocused())
+					if (!ImGui::IsWindowFocused()) 
 						ImGui::FocusWindow(ImGui::GetCurrentWindow());
 
 					if (!ImGui::IsAnyItemActive()) {
@@ -357,9 +357,12 @@ namespace ImNodes {
 		} else {
 			// Top-let corner of the node
 			ImGuiIO& io = ImGui::GetIO();
-			if (io.MouseWheel != 0) {
-				//ImVec2 mousePos = ImGui::GetMousePos() - ImGui::GetWindowPos();
-				ImVec2 mousePos = ImGui::GetMousePos() - ImGui::GetWindowPos() - canvas->offset;
+			ImVec2 mousePos = ImGui::GetMousePos() - ImGui::GetWindowPos();
+			if (io.MouseWheel != 0 && 
+				mousePos.x > 0 && mousePos.x < ImGui::GetWindowWidth() && 
+				mousePos.y > 0 && mousePos.y < ImGui::GetWindowHeight() &&
+				ImGui::IsWindowFocused()) {
+				mousePos -= canvas->offset;
 				*pos = mousePos + (*pos - mousePos) * zoomDelta;
 			}
 			//ImVec2 nodePos = ImGui::GetWindowPos() + (*pos) * canvas->zoom + canvas->offset;

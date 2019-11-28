@@ -576,7 +576,7 @@ namespace MOON {
 			static bool LoadSceneCamera() {
 				sceneCamera = new Camera("SceneCamera", Vector3(0.0f, 2.0f, 20.0f), 0.0f, MOON_UNSPECIFIEDID);
 				currentCamera = sceneCamera;
-				objectList.push_back(sceneCamera);
+				objectList.push_back(NULL); // ID ZERO
 				Renderer::targetCamera = sceneCamera;
 				return true;
 			}

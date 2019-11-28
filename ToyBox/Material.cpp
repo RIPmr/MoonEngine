@@ -1,7 +1,22 @@
 #include "Material.h"
 #include "SceneMgr.h"
+#include "Renderer.h"
+
+#define HAVE_STRUCT_TIMESPEC
+#include <pthread.h>
+#pragma comment(lib, "pthreadVC2.lib")
 
 namespace MOON {
+	void Material::GeneratePreview() {
+		if (preview == NULL)
+			preview = new Texture(124, 124, "preview_for_" + name, MOON_UNSPECIFIEDID);
+
+		/*pthread_t renderThread;
+		int ret = pthread_create(&renderThread, NULL, Renderer::renderingMatPreview, preview);
+		if (!ret) std::cout << "renderer thread created!" << std::endl;
+		else std::cout << "renderer thread error! pthread_create error: error_code=" << ret << std::endl;
+	*/}
+
 	MoonMtl::MoonMtl() : Ns(0.0f), Ni(0.0f), d(0.0f), illum(0) {
 		Kd.setValue(0.8, 0.8, 0.8);
 		shader = SceneManager::ShaderManager::CreateShader("SimplePhong", "SimplePhong.vs", "SimplePhong.fs");

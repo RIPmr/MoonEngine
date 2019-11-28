@@ -32,13 +32,26 @@ namespace ImNodes {
 		/// 'union' is unsafe with class object
 		struct SlotData {
 			unsigned int idSize, colSize;
-			unsigned int* id;
+			int* id;
 			MOON::Vector3* col;
+
+			SlotData& operator=(const SlotData &data) {
+				if (idSize > 0) {
+					id = new int[idSize];
+					memcpy(id, data.id, idSize * sizeof(int));
+				} else id = NULL;
+				if (colSize > 0) {
+					col = new MOON::Vector3[colSize];
+					for (int i = 0; i < colSize; i++)
+						col[i].setValue(data.col[i]);
+				} else col = NULL;
+				return *this;
+			}
 
 			SlotData(const SlotData& data) : idSize(data.idSize), colSize(data.colSize) {
 				if (idSize > 0) {
-					id = new unsigned int[idSize];
-					memcpy(id, data.id, idSize * sizeof(unsigned int));
+					id = new int[idSize];
+					memcpy(id, data.id, idSize * sizeof(int));
 				} else id = NULL;
 				if (colSize > 0) {
 					col = new MOON::Vector3[colSize];
@@ -47,10 +60,12 @@ namespace ImNodes {
 				} else col = NULL;
 			}
 
-			SlotData(const unsigned int& itemCnt, const unsigned int& colorCnt) : 
+			SlotData(const unsigned int& itemCnt, const unsigned int& colorCnt) :
 					 idSize(itemCnt), colSize(colorCnt) {
-				if (itemCnt > 0) id = new unsigned int[itemCnt];
-				else id = NULL;
+				if (itemCnt > 0) {
+					id = new int[itemCnt];
+					memset(id, 0, itemCnt * sizeof(unsigned int));
+				} else id = NULL;
 				if (colorCnt > 0) col = new MOON::Vector3[colorCnt];
 				else col = NULL;
 			}
@@ -68,9 +83,20 @@ namespace ImNodes {
 		};
 
 		struct SlotInfo {
-			const char* title;
-			int kind; // NodeSlotTypes
+			std::string title;
+			/// NodeSlotTypes
+			int kind;
+			bool hideSlot;
+			/// Data
 			SlotData data;
+			/// Connection
+			SlotInfo* con;
+			void* parent;
+
+			SlotInfo(const std::string& title, const int &kind,
+					 const SlotData &data, const bool &hideSlot = false) : 
+					 data(data), title(title), kind(kind), 
+					 hideSlot(hideSlot), con(NULL), parent(NULL) {}
 		};
 
 		// Begin rendering of node in a graph. Render node content when returns `true`.

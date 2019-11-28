@@ -9,6 +9,7 @@ namespace MOON {
 		float x, y, z, w;
 		Vector4() :x(0), y(0), z(0), w(0) {}
 		Vector4(float x1, float y1, float z1, float w1) :x(x1), y(y1), z(z1), w(w1) {}
+		Vector4(float *v) :x(v[0]), y(v[1]), z(v[2]), w(v[3]) {}
 		Vector4(const Vector4 &v) :x(v.x), y(v.y), z(v.z), w(v.w) {}
 		Vector4(const Vector3 &v);
 		~Vector4() {}
