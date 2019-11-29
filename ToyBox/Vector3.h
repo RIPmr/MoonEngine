@@ -1,7 +1,8 @@
 #pragma once
-
 #include <cmath>
 #include <iostream>
+
+#include "MoonEnums.h"
 
 namespace MOON {
 	extern class Vector2;
@@ -87,5 +88,21 @@ namespace MOON {
 		static Vector3 Projection(const Vector3 &a, const Vector3 &b);
 		static Vector3 ONE();
 		static Vector3 ZERO();
+
+		inline static Vector3 WORLD(const Direction &direction) {
+			if (direction == Direction::UP) {
+				return Vector3(0, 1, 0);
+			} else if (direction == Direction::DOWN) {
+				return Vector3(0, -1, 0);
+			} else if (direction == Direction::LEFT) {
+				return Vector3(1, 0, 0);
+			} else if (direction == Direction::RIGHT) {
+				return Vector3(-1, 0, 0);
+			} else if (direction == Direction::FORWARD) {
+				return Vector3(0, 0, 1);
+			} else if (direction == Direction::BACKWARD) {
+				return Vector3(0, 0, -1);
+			}
+		}
 	};
 }

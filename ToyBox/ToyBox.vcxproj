@@ -155,6 +155,7 @@
     <ClInclude Include="CodeEditor.h" />
     <ClInclude Include="Color.h" />
     <ClInclude Include="FuzzyMatch.h" />
+    <ClInclude Include="Gizmo.h" />
     <ClInclude Include="Helper.h" />
     <ClInclude Include="Hitable.h" />
     <ClInclude Include="IconsFontAwesome4.h" />
@@ -168,6 +169,7 @@
     <ClInclude Include="Matrix4x4.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Model.h" />
+    <ClInclude Include="MoonEnums.h" />
     <ClInclude Include="NodeEditorBase.h" />
     <ClInclude Include="OBJMgr.h" />
     <ClInclude Include="OperatorBase.h" />

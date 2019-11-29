@@ -7,20 +7,6 @@
 #include <vector>
 
 namespace MOON {
-	enum Direction {
-		FORWARD,
-		BACKWARD,
-		LEFT,
-		RIGHT,
-		UP,
-		DOWN
-	};
-
-	enum CoordSys {
-		WORLD,
-		LOCAL
-	};
-
 	extern class Model;
 	class Transform {
 	public:
@@ -128,5 +114,6 @@ namespace MOON {
 		inline Vector3 forward() const;
 		inline Vector3 right() const;
 		inline Vector3 up() const;
+		inline Vector2 GetLocalAxis(const Direction &direction) const;
 	};
 }

@@ -68,7 +68,7 @@ namespace MOON {
 			ImGui::Image((void*)(intptr_t)localID, ImVec2(prevWidth, height * prevWidth / width));
 			ImGui::Unindent(centering);
 
-			ImGui::Separator();
+			ImGui::Spacing();
 		}
 	};
 }

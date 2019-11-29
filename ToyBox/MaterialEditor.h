@@ -22,7 +22,7 @@ namespace MOON {
 
 		std::multimap<std::string, MyNode*(*)()> available_nodes{
 			// Numeric nodes -----------------------------------------------------------------
-			{"Numeric", []() -> MyNode* { return new MyNode("Color", {}, {
+			{ "Numeric", []() -> MyNode* { return new MyNode("Color", {}, {
 				/// Output slots
 				{ "out", Slot_Color, DataSizeDef(0, 1) }
 			}, 
@@ -40,7 +40,7 @@ namespace MOON {
 				}
 			); } },
 
-			{"Numeric", []() -> MyNode* { return new MyNode("Bitmap", {
+			{ "Numeric", []() -> MyNode* { return new MyNode("Bitmap", {
 				/// internal data
 				{ "Offset",		InnerData,   DataSizeDef(0, 1), true },
 				{ "Tiling",		InnerData,   DataSizeDef(0, 1), true },
@@ -76,7 +76,7 @@ namespace MOON {
 			); }},
 
 			// Operators ---------------------------------------------------------------------
-			{"Operator", []() -> MyNode* { return new MyNode("ColorMixer", {
+			{ "Operator", []() -> MyNode* { return new MyNode("ColorMixer", {
 				/// internal data
 				{ "Ratio",	InnerData,  DataSizeDef(1, 0), true },
 				/// Input slots
@@ -115,7 +115,7 @@ namespace MOON {
 				}
 			); } },
 
-			{"Operator", []() -> MyNode* { return new MyNode("ColtoTex", {
+			{ "Operator", []() -> MyNode* { return new MyNode("ColtoTex", {
 				/// Input slots
 				{ "Color",	 Slot_Color, DataSizeDef(0, 1) }
 			}, {
@@ -131,7 +131,7 @@ namespace MOON {
 				}
 			); } },
 
-			{"Operator", []() -> MyNode* { return new MyNode("LiteTexFilter", {
+			{ "Operator", []() -> MyNode* { return new MyNode("LiteTexFilter", {
 				/// internal data
 				{ "Invert",		InnerData,   DataSizeDef(1, 0), true },
 				{ "OutAmt",		InnerData,   DataSizeDef(1, 0), true },
@@ -435,7 +435,7 @@ namespace MOON {
 				}
 			); } },
 
-			{"Material", []() -> MyNode* { return new MyNode("MatMixer", {
+			{ "Material", []() -> MyNode* { return new MyNode("MatMixer", {
 				/// internal data
 				{ "Incremental",  InnerData,   DataSizeDef(1, 0), true },
 				/// Input slots

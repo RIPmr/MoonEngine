@@ -251,6 +251,12 @@
     <ClInclude Include="NodeEditorBase.h">
       <Filter>HeadFiles\Component</Filter>
     </ClInclude>
+    <ClInclude Include="Gizmo.h">
+      <Filter>HeadFiles\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="MoonEnums.h">
+      <Filter>HeadFiles\Miscellaneous</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

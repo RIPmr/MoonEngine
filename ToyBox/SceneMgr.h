@@ -3,13 +3,16 @@
 #include <vector>
 #include <string>
 
+#include "Gizmo.h"
 #include "Vector2.h"
 #include "Camera.h"
 #include "Model.h"
 #include "Light.h"
 #include "Texture.h"
 #include "MShader.h"
+#include "Material.h"
 #include "MatSphere.h"
+#include "ShapeBase.h"
 
 namespace MOON {
 	template <class T>
@@ -394,6 +397,28 @@ namespace MOON {
 			objectList.clear();
 		}
 
+		static void DrawGizmos() {
+			Gizmo::Draw(ShaderManager::lineShader, InputManager::GetFirstSelected());
+		}
+
+		static void Init() {
+			TextureManager::LoadImagesForUI();
+			std::cout << "- Images For UI Loaded." << std::endl;
+			ShaderManager::LoadDefaultShaders();
+			std::cout << "- Default Shaders Loaded." << std::endl;
+			MaterialManager::PrepareMatBall();
+			std::cout << "- Material Ball Created." << std::endl;
+			MaterialManager::CreateDefaultMats();
+			std::cout << "- Default Materials Created." << std::endl;
+			CameraManager::LoadSceneCamera();
+			std::cout << "- Scene Camera Created." << std::endl;
+
+			Gizmo::RecalcCircle(); Gizmo::RecalcTranslate();
+			std::cout << "- Gizmo Initialized." << std::endl;
+
+			objectList.push_back(NULL); // ID ZERO
+		}
+
 		// scene components
 		struct Clock {
 			static float deltaTime;
@@ -415,6 +440,11 @@ namespace MOON {
 			// selection
 			static bool* selection;
 			static std::vector<unsigned int> selected;
+
+			static ObjectBase* GetFirstSelected() {
+				if (selected.size() < 1) return NULL;
+				else return SceneManager::objectList[selected[0]];
+			}
 
 			static void UpdateSelectionState() {
 				if (ModelManager::sizeFlag || TextureManager::sizeFlag || LightManager::sizeFlag ||
@@ -466,8 +496,11 @@ namespace MOON {
 		};
 
 		struct ShaderManager : ObjectManager<Shader> {
+			static Shader* lineShader;
+
 			static void LoadDefaultShaders() {
-				AddItem(new Shader("ConstColor", "ConstColor.vs", "ConstColor.fs"));
+				lineShader = new Shader("ConstColor", "ConstColor.vs", "ConstColor.fs");
+				AddItem(lineShader);
 				//AddItem(new Shader("SimplePhong", "SimplePhong.vs", "SimplePhong.fs"));
 			}
 
@@ -518,6 +551,10 @@ namespace MOON {
 				}
 				return true;
 			}
+		};
+
+		struct ShapeManager : ObjectManager<Shape> {
+
 		};
 
 		struct ModelManager : ObjectManager<Model> {
@@ -576,7 +613,6 @@ namespace MOON {
 			static bool LoadSceneCamera() {
 				sceneCamera = new Camera("SceneCamera", Vector3(0.0f, 2.0f, 20.0f), 0.0f, MOON_UNSPECIFIEDID);
 				currentCamera = sceneCamera;
-				objectList.push_back(NULL); // ID ZERO
 				Renderer::targetCamera = sceneCamera;
 				return true;
 			}

@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <algorithm>
 
+#include "Vector2.h"
 #include "Vector3.h"
 #include "Ray.h"
 
@@ -154,6 +155,29 @@ namespace MOON {
 			// If the distance from the triangle to the point is 0£¬it lies on the triangle
 			if (proj.magnitude() == 0) return true;
 			else return false;
+		}
+
+		inline static Vector2 RotateAround(const Vector2 &targetPoint, const Vector2 &rotCenter, const float theta) {
+			// discard y val
+			float cx = rotCenter.x, cy = rotCenter.y; // rotCenter
+			float px = targetPoint.x, py = targetPoint.y; // point
+
+			float s = sin(theta);
+			float c = cos(theta);
+
+			// translate point back to rotCenter:
+			px -= cx;
+			py -= cy;
+
+			// rotate point
+			float xnew = px * c + py * s;
+			float ynew = -px * s + py * c;
+
+			// translate point back:
+			px = xnew + cx;
+			py = ynew + cy;
+
+			return Vector2(px, py);
 		}
 
 	};

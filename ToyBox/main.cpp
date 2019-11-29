@@ -2,8 +2,8 @@
 
 //#define MOON_DEBUG_MODE
 
-// global settings
-const char *title = "MoonEngine - v0.015 WIP";
+// global settings ------------------------------------------------
+const char *title = "MoonEngine - v0.018 WIP";
 
 Vector2 MOON_WndSize = Vector2(1600, 900);
 float SceneManager::aspect = MOON_WndSize.x / MOON_WndSize.y;
@@ -15,7 +15,7 @@ Vector4 grdLineColor(0.8f, 0.8f, 0.8f, 1.0f);
 
 unsigned int Renderer::samplingRate = 5;
 unsigned int Renderer::maxReflectionDepth = 5;
-
+// ----------------------------------------------------------------
 
 int main() {
 	std::cout << "starting moon engine... ..." << std::endl;
@@ -57,8 +57,11 @@ int main() {
 		MOON_DrawMainUI();
 
 		// rendering objects
-		DrawGround(1.0, 5, MOON_ShaderManager::GetItem("ConstColor"));
 		MOON_ModelManager::DrawModels();
+
+		// drawing Gizmos
+		DrawGround(1.0, 5, MOON_ShaderManager::lineShader);
+		SceneManager::DrawGizmos();
 
 		// process user input
 		MOON_InputManager::isHoverUI = MainUI::io->WantCaptureMouse;
@@ -158,6 +161,7 @@ GLFWwindow* InitWnd() {
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 	// make sure the viewport matches the new window dimensions; note that width and 
 	// height will be significantly larger than specified on retina displays.
+	SceneManager::SetWndSize(width, height);
 	glViewport(0, 0, width, height);
 }
 
@@ -220,6 +224,11 @@ void MOON_UpdateClock() {
 	MOON_Clock::lastFrame = currentFrame;
 }
 
+// TODO
+void DrawLine(const Vector3 &start, const Vector3 &end, const Vector4 &color = Vector4::ONE()) {
+
+}
+
 void DrawGround(const float &space, const int &gridCnt, const Shader* groundShader) {
 	std::vector<float> grid;
 
@@ -280,8 +289,8 @@ void DrawGround(const float &space, const int &gridCnt, const Shader* groundShad
 	glDeleteBuffers(1, &VBO);
 
 	// disable anti-aliasing
-	glDisable(GL_LINE_SMOOTH);
-	glDisable(GL_BLEND);
+	//glDisable(GL_LINE_SMOOTH);
+	//glDisable(GL_BLEND);
 }
 
 void MOON_InputProcessor(GLFWwindow *window) {
@@ -396,14 +405,6 @@ void MOON_InitEngine() {
 	std::cout << "- Loading Assets..." << std::endl;
 	AssetLoader::BuildDirTree(".\\Assets");
 	std::cout << "- Dir Tree Created." << std::endl;
-	MOON_TextureManager::LoadImagesForUI();
-	std::cout << "- Images For UI Loaded." << std::endl;
-	MOON_ShaderManager::LoadDefaultShaders();
-	std::cout << "- Default Shaders Loaded." << std::endl;
-	MOON_MaterialManager::PrepareMatBall();
-	std::cout << "- Material Ball Created." << std::endl;
-	MOON_MaterialManager::CreateDefaultMats();
-	std::cout << "- Default Materials Created." << std::endl;
-	MOON_CameraManager::LoadSceneCamera();
-	std::cout << "- Scene Camera Created." << std::endl;
+	SceneManager::Init();
+	std::cout << "- Scene Manager Initialized." << std::endl;
 }

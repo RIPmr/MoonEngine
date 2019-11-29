@@ -83,9 +83,10 @@ namespace MOON {
 
 			for (auto &input : input_slots) {
 				if (input.parent != NULL) {
-					if (((MyNode*)input.parent)->executed != executed)
+					if (((MyNode*)input.parent)->executed != executed) {
 						((MyNode*)input.parent)->Execute();
-					input.data = input.con->data;
+						input.data = input.con->data;
+					}
 				}
 			}
 
@@ -95,8 +96,6 @@ namespace MOON {
 		void ProcessContent(bool hideInNode) {
 			for (auto &input : input_slots) {
 				if (input.parent != NULL) {
-					if (((MyNode*)input.parent)->executed != executed)
-						((MyNode*)input.parent)->Execute();
 					input.data = input.con->data;
 				}
 			}

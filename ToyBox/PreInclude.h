@@ -21,8 +21,6 @@
 #define HAVE_STRUCT_TIMESPEC
 #pragma comment(lib, "pthreadVC2.lib")
 
-//#include <windows.h>
-//#include <GL/gl.h>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <pthread.h>
@@ -34,6 +32,8 @@
 #include <map>
 
 #include "AssetLoader.h"
+#include "MoonEnums.h"
+#include "Gizmo.h"
 #include "SceneMgr.h"
 #include "Vector2.h"
 #include "Vector3.h"
@@ -88,7 +88,7 @@ bool MainUI::show_enviroment_editor = false;
 
 bool MainUI::show_ribbon = true;
 bool MainUI::show_timeline = false;
-bool MainUI::show_material_editor = true;
+bool MainUI::show_material_editor = false;
 bool MainUI::show_codeEditor = false;
 
 Texture* MainUI::icon = NULL;
@@ -97,6 +97,9 @@ ImGuiIO* MainUI::io;
 
 // init math tool
 unsigned long long MoonMath::seed = 1;
+
+// init dir tree
+DirNode* AssetLoader::DirTree = NULL;
 
 // init scene manager
 Camera* MOON_SceneCamera = NULL;
@@ -126,6 +129,7 @@ bool MOON_TextureManager::sizeFlag = true;
 bool MOON_ModelManager::sizeFlag = true;
 bool MOON_CameraManager::sizeFlag = true;
 bool* MOON_InputManager::selection = NULL;
+Shader* MOON_ShaderManager::lineShader = NULL;
 Material* MOON_MaterialManager::defaultMat = NULL;
 Sphere* MOON_MaterialManager::matBall = NULL;
 
@@ -141,5 +145,11 @@ bool MOON_InputManager::mouse_right_hold = false;
 bool MOON_InputManager::isHoverUI = false;
 std::vector<unsigned int> MOON_InputManager::selected;
 
-// init dir tree
-DirNode* AssetLoader::DirTree = NULL;
+// init Gizmo
+CoordSys Gizmo::manipCoord = CoordSys::WORLD;
+GizmoPos Gizmo::gizmoPos = GizmoPos::pivot;
+GizmoMode Gizmo::gizmoMode = GizmoMode::none;
+std::vector<float> Gizmo::circle;
+std::vector<float> Gizmo::translate;
+bool Gizmo::isActive = true;
+

@@ -7,6 +7,7 @@
 #include "Hitable.h"
 #include "Texture.h"
 #include "ObjectBase.h"
+#include "MatSphere.h"
 
 namespace MOON {
 	enum MatType {
