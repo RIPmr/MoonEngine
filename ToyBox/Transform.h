@@ -19,6 +19,7 @@ namespace MOON {
 		Vector3 localScale;
 
 		Matrix4x4 modelMat;
+		Matrix4x4 transformMat;
 		Matrix4x4 localModelMat;
 
 		Model* parent;
@@ -88,6 +89,8 @@ namespace MOON {
 			modelMat = Matrix4x4::Rotate(modelMat, rotation);
 			modelMat = Matrix4x4::Translate(modelMat, position);
 
+			transformMat = modelMat.inverse();
+
 			return modelMat;
 		}
 
@@ -111,9 +114,15 @@ namespace MOON {
 			}
 		}
 
-		inline Vector3 forward() const;
-		inline Vector3 right() const;
-		inline Vector3 up() const;
+		inline Vector3 forward() const {
+			return Vector3(transformMat.x[0][2], transformMat.x[1][2], transformMat.x[2][2]);
+		}
+		inline Vector3 left() const {
+			return Vector3(transformMat.x[0][0], transformMat.x[1][0], transformMat.x[2][0]);
+		}
+		inline Vector3 up() const {
+			return Vector3(transformMat.x[0][1], transformMat.x[1][1], transformMat.x[2][1]);
+		}
 		inline Vector2 GetLocalAxis(const Direction &direction) const;
 	};
 }

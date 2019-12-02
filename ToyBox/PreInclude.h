@@ -146,7 +146,7 @@ bool MOON_InputManager::isHoverUI = false;
 std::vector<unsigned int> MOON_InputManager::selected;
 
 // init Gizmo
-CoordSys Gizmo::manipCoord = CoordSys::WORLD;
+CoordSys Gizmo::manipCoord = CoordSys::LOCAL;
 GizmoPos Gizmo::gizmoPos = GizmoPos::pivot;
 GizmoMode Gizmo::gizmoMode = GizmoMode::none;
 std::vector<float> Gizmo::circle;

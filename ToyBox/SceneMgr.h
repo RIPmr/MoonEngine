@@ -398,7 +398,10 @@ namespace MOON {
 		}
 
 		static void DrawGizmos() {
-			Gizmo::Draw(ShaderManager::lineShader, InputManager::GetFirstSelected());
+			ObjectBase* first = InputManager::GetFirstSelected();
+			if (!first) return;
+			if (!GetType(first)._Equal("Model")) return;
+			Gizmo::Draw(ShaderManager::lineShader, &dynamic_cast<Model*>(first)->transform);
 		}
 
 		static void Init() {

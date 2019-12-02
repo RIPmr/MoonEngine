@@ -24,9 +24,6 @@ int main() {
 	GLFWwindow* window = InitWnd();
 	if (window == NULL) return -1;
 
-	// configure global opengl state
-	glEnable(GL_DEPTH_TEST);
-
 	// engine resources initialization
 	MOON_InitEngine();
 
@@ -34,7 +31,7 @@ int main() {
 	//Model* teapot = MOON_ModelManager::LoadModel("Resources/teapot.obj");
 	Model* boxes = MOON_ModelManager::LoadModel("Resources/box_stack.obj");
 	//teapot->transform.Scale(Vector3(0.1f, 0.1f, 0.1f));
-	boxes->transform.Translate(Vector3(0.0f, 1.0f, 0.0f));
+	//boxes->transform.Translate(Vector3(0.0f, 1.0f, 0.0f));
 
 	std::cout << "done." << std::endl;
 
@@ -56,11 +53,14 @@ int main() {
 		// UI controller
 		MOON_DrawMainUI();
 
+		// configure global opengl state
+		glEnable(GL_DEPTH_TEST);
 		// rendering objects
 		MOON_ModelManager::DrawModels();
 
 		// drawing Gizmos
 		DrawGround(1.0, 5, MOON_ShaderManager::lineShader);
+		glDisable(GL_DEPTH_TEST);
 		SceneManager::DrawGizmos();
 
 		// process user input
@@ -225,7 +225,7 @@ void MOON_UpdateClock() {
 }
 
 // TODO
-void DrawLine(const Vector3 &start, const Vector3 &end, const Vector4 &color = Vector4::ONE()) {
+void DebugLine(const Vector3 &start, const Vector3 &end, const Vector4 &color = Vector4::ONE()) {
 
 }
 
