@@ -1,12 +1,16 @@
+#include <iostream>
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+
 #include "Camera.h"
 #include "SceneMgr.h"
 
 namespace MOON {
-	Matrix4x4 Camera::GetProjectionMatrix() {
-		return Matrix4x4::Perspective(fov, SceneManager::SCR_SIZE.x / SceneManager::SCR_SIZE.y, zNear, zFar);
+	Matrix4x4 Camera::GetProjectionMatrix() const {
+		return Matrix4x4::Perspective(fov, SceneManager::aspect, zNear, zFar);
 	}
 
-	Matrix4x4 Camera::GetViewMatrix() {
+	Matrix4x4 Camera::GetViewMatrix() const {
 		return Matrix4x4::LookAt(transform.position, transform.position + Front, Up);
 	}
 
@@ -54,7 +58,8 @@ namespace MOON {
 		updateCameraVectors();
 	}
 
-	Ray Camera::GetRay(float s, float t) {
+	// screen pos to world ray fast version (used in renderer)
+	Ray Camera::GetRay(float s, float t) const {
 		Vector3 rd = lens_radius * MoonMath::RandomInUnitDisk();
 		Vector3 offset = Right * rd.x + Up * rd.y;
 		return Ray(transform.position + offset,
@@ -88,5 +93,42 @@ namespace MOON {
 		Up = Vector3::Normalize(Vector3::Cross(Right, Front));
 
 		UpdateMatrix();
+	}
+
+	// screen pos to world ray
+	Ray Camera::GetMouseRay() const {
+		// gives mouse pixel in NDC coordinates [-1, 1]
+		Vector2 n(MOON_MousePos.x / MOON_WndSize.x * 2 - 1, 
+				 (MOON_WndSize.y - MOON_MousePos.y - 1) / MOON_WndSize.y * 2 - 1);
+
+		Vector3 ray_start, ray_end;
+		Matrix4x4 view_proj_inverse = (projection * view).inverse();
+
+		ray_start = view_proj_inverse.multVec(Vector3(n.x, n.y, 0.f));
+		ray_end = view_proj_inverse.multVec(Vector3(n.x, n.y, 1.f));
+
+		return Ray(ray_start, Vector3::Normalize(ray_end - ray_start));
+		//return Ray(ray_start, ray_end - ray_start);
+	}
+
+	// screen pos to world pos
+	// *NOTE: need to enable depth test
+	Vector3 Camera::unProjectMouse() const {
+		if (NULL == MOON_SceneCamera) {
+			std::cout << "camera failed! failed to un-project mouse" << std::endl;
+		} else {
+			GLfloat winZ;
+			Vector3 screenPos(MOON_MousePos.x, MOON_WndSize.y - MOON_MousePos.y - 1, 0.0f);
+
+			//glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+			glReadPixels(screenPos.x, screenPos.y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &winZ);
+			//glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			screenPos.z = winZ;
+
+			Vector4 viewport = Vector4(0.0f, 0.0f, MOON_WndSize.x, MOON_WndSize.y);
+			Vector3 worldPos = Matrix4x4::UnProject(screenPos, MOON_CurrentCamera->view, MOON_CurrentCamera->projection, viewport);
+
+			return worldPos;
+		}
 	}
 }

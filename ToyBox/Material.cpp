@@ -19,12 +19,12 @@ namespace MOON {
 
 	MoonMtl::MoonMtl() : Ns(0.0f), Ni(0.0f), d(0.0f), illum(0) {
 		Kd.setValue(0.8, 0.8, 0.8);
-		shader = SceneManager::ShaderManager::CreateShader("SimplePhong", "SimplePhong.vs", "SimplePhong.fs");
+		shader = MOON_ShaderManager::CreateShader("SimplePhong", "SimplePhong.vs", "SimplePhong.fs");
 	}
 
 	MoonMtl::MoonMtl(const std::string &name) : Ns(0.0f), Ni(0.0f), d(0.0f), illum(0), Material(name) {
 		Kd.setValue(0.8, 0.8, 0.8);
-		shader = SceneManager::ShaderManager::CreateShader("SimplePhong", "SimplePhong.vs", "SimplePhong.fs");
+		shader = MOON_ShaderManager::CreateShader("SimplePhong", "SimplePhong.vs", "SimplePhong.fs");
 	}
 
 	// TODO

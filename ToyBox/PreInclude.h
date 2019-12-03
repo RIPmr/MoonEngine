@@ -1,22 +1,4 @@
 #pragma once
-#define MOON_WndSize SceneManager::SCR_SIZE
-#define MOON_OutputSize Renderer::OUTPUT_SIZE
-#define MOON_OutputTexID Renderer::outputTexID
-#define MOON_CountObject SceneManager::GetObjectNum()
-#define MOON_SceneCamera SceneManager::CameraManager::sceneCamera
-#define MOON_CurrentCamera SceneManager::CameraManager::currentCamera
-#define MOON_MousePos SceneManager::InputManager::mousePos
-#define MOON_Clock SceneManager::Clock
-
-#define MOON_ObjectList SceneManager::objectList
-#define MOON_LightManager SceneManager::LightManager
-#define MOON_MaterialManager SceneManager::MaterialManager
-#define MOON_ShaderManager SceneManager::ShaderManager
-#define MOON_TextureManager SceneManager::TextureManager
-#define MOON_ModelManager SceneManager::ModelManager
-#define MOON_CameraManager SceneManager::CameraManager
-#define MOON_InputManager SceneManager::InputManager
-
 #define STB_IMAGE_IMPLEMENTATION
 #define HAVE_STRUCT_TIMESPEC
 #pragma comment(lib, "pthreadVC2.lib")
@@ -62,13 +44,17 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-void DrawGround(const float &space, const int &gridCnt, const Shader* groundShader);
 Vector3 unProjectMouse();
+void MOON_GenerateGround(const float &space, const int &gridCnt);
+void MOON_DrawGround(const Shader* groundShader);
 void MOON_InputProcessor(GLFWwindow *window);
 void MOON_UpdateClock();
 void MOON_DrawMainUI();
 void MOON_InitEngine();
 void MOON_CleanUp();
+
+// global parameters
+std::vector<float> grid;
 
 // init main ui
 bool MainUI::show_control_window = true;
@@ -94,6 +80,7 @@ bool MainUI::show_codeEditor = false;
 Texture* MainUI::icon = NULL;
 Texture* MainUI::logo = NULL;
 ImGuiIO* MainUI::io;
+ImGuiStyle* MainUI::style;
 
 // init math tool
 unsigned long long MoonMath::seed = 1;

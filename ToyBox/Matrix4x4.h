@@ -327,6 +327,7 @@ namespace MOON {
 		}
 
 		static Vector3 UnProject(const Vector3 &win, const Matrix4x4 &model, const Matrix4x4 &proj, Vector4 const &viewport) {
+			/// (AB)^-1 = B^-1A^-1
 			Matrix4x4 Inverse = (proj * model).inverse();
 
 			Vector4 tmp(win);

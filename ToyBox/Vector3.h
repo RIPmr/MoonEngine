@@ -45,6 +45,10 @@ namespace MOON {
 		inline float dot(const Vector3 &v) const { return x * v.x + y * v.y + z * v.z; }
 		inline float magnitude() const { return sqrtf(dot(*this)); }
 		inline float MagSquared() const { return dot(*this); }
+		inline static float Distance(const Vector3 &v1, const Vector3 &v2) {
+			float dist = sqrt((v1.x - v2.x) * (v1.x - v2.x) + (v1.y - v2.y) * (v1.y - v2.y) + (v1.z - v2.z) * (v1.z - v2.z));
+			return dist;
+		}
 
 		/*
 		Cross Product
@@ -67,8 +71,7 @@ namespace MOON {
 		}
 
 		inline float distance(const Vector3 &v) const {
-			float dist;
-			dist = sqrt((this->x - v.x) * (this->x - v.x) + (this->y - v.y) * (this->y - v.y) + (this->z - v.z) * (this->z - v.z));
+			float dist = sqrt((this->x - v.x) * (this->x - v.x) + (this->y - v.y) * (this->y - v.y) + (this->z - v.z) * (this->z - v.z));
 			return dist;
 		}
 

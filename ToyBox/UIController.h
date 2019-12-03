@@ -9,6 +9,7 @@
 #include <string>
 
 #include "Texture.h"
+#include "Gizmo.h"
 #include "CodeEditor.h"
 #include "StackWindow.h"
 #include "AssetLoader.h"
@@ -24,6 +25,7 @@ namespace MOON {
 
 		// ImGui IO
 		static ImGuiIO* io;
+		static ImGuiStyle* style;
 
 		// bool for wnds
 		static bool show_control_window;
@@ -54,6 +56,30 @@ namespace MOON {
 
 		static void CleanUp() {
 			nodeEditor.CleanUp();
+		}
+
+		// style event
+		static void SetButtonClicked() {
+			style->Colors[ImGuiCol_Button] = ImVec4(1.000f, 1.000f, 1.000f, 0.250f);
+		}
+
+		static void ResetButtonColor() {
+			style->Colors[ImGuiCol_Button] = ImVec4(1.000f, 1.000f, 1.000f, 0.000f);
+		}
+
+		static void SwitchButton(const char* ON_Label, const char* OFF_Label, const bool& switcher, void(*ON_Execute)(), void(*OFF_Execute)()) {
+			if (switcher) {
+				if (ImGui::Button(ON_Label, ImVec2(22, 22))) (*ON_Execute)();
+			} else {
+				SetButtonClicked();
+				if (ImGui::Button(OFF_Label, ImVec2(22, 22))) (*OFF_Execute)();
+				ResetButtonColor();
+			}
+		}
+		static void RatioButton(const char* label, const bool& switcher, void(*executer)()) {
+			if (switcher) SetButtonClicked();
+			if (ImGui::Button(label, ImVec2(22, 22))) (*executer)();
+			if (switcher) ResetButtonColor();
 		}
 
 		// window definition
@@ -620,13 +646,8 @@ namespace MOON {
 		}
 
 		static void RibbonBar() {
-			//ImGui::PushStyleVar(ImGuiStyleVar_IndentSpacing, 0.1f);
-
-			ImGui::Begin("Ribbon", &MainUI::show_ribbon, 
-						 ImGuiWindowFlags_NoDecoration | 
-						 ImGuiWindowFlags_NoMove |
-						 ImGuiWindowFlags_NoScrollWithMouse
-						);
+			ImGui::Begin("Ribbon", &MainUI::show_ribbon, ImGuiWindowFlags_NoDecoration | 
+						 ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollWithMouse );
 
 			ImGui::Button(ICON_FA_FILE, ImVec2(22, 22)); ImGui::SameLine();
 			ImGui::Button(ICON_FA_FLOPPY_O, ImVec2(22, 22)); ImGui::SameLine();
@@ -634,15 +655,27 @@ namespace MOON {
 
 			ImGui::Text(u8"|"); ImGui::SameLine();
 
-			ImGui::Button(ICON_FA_LINK, ImVec2(22, 22)); ImGui::SameLine();
+			RatioButton(ICON_FA_LINK, Gizmo::gizmoMode == GizmoMode::link,
+				[]() { Gizmo::gizmoMode = GizmoMode::link; }); ImGui::SameLine();
 			ImGui::Button(ICON_FA_CHAIN_BROKEN, ImVec2(22, 22)); ImGui::SameLine();
 
 			ImGui::Text(u8"|"); ImGui::SameLine();
 
-			ImGui::Button(ICON_FA_MOUSE_POINTER, ImVec2(22, 22)); ImGui::SameLine();
-			ImGui::Button(ICON_FA_ARROWS, ImVec2(22, 22)); ImGui::SameLine();
-			ImGui::Button(ICON_FA_REFRESH, ImVec2(22, 22)); ImGui::SameLine();
-			ImGui::Button(ICON_FA_EXPAND, ImVec2(22, 22)); ImGui::SameLine();
+			SwitchButton(ICON_FA_TOGGLE_OFF, ICON_FA_TOGGLE_ON, Gizmo::manipCoord == CoordSys::WORLD,
+						[]() { Gizmo::manipCoord = CoordSys::LOCAL; },
+						[]() { Gizmo::manipCoord = CoordSys::WORLD; });
+			ImGui::SameLine();
+
+			ImGui::Text(u8"|"); ImGui::SameLine();
+
+			RatioButton(ICON_FA_MOUSE_POINTER, Gizmo::gizmoMode == GizmoMode::none,
+				[]() { Gizmo::gizmoMode = GizmoMode::none; }); ImGui::SameLine();
+			RatioButton(ICON_FA_ARROWS, Gizmo::gizmoMode == GizmoMode::translate,
+				[]() { Gizmo::gizmoMode = GizmoMode::translate; }); ImGui::SameLine();
+			RatioButton(ICON_FA_REFRESH, Gizmo::gizmoMode == GizmoMode::rotate,
+				[]() { Gizmo::gizmoMode = GizmoMode::rotate; }); ImGui::SameLine();
+			RatioButton(ICON_FA_EXPAND, Gizmo::gizmoMode == GizmoMode::scale,
+				[]() { Gizmo::gizmoMode = GizmoMode::scale; }); ImGui::SameLine();
 
 			//ImGui::Text(u8"|"); ImGui::SameLine();
 			//ImGui::Button(ICON_FA_DELICIOUS, ImVec2(22, 22)); ImGui::SameLine();
@@ -683,7 +716,6 @@ namespace MOON {
 
 			ImGui::Separator();
 
-			//ImGui::PopStyleVar();
 			ImGui::End();
 		}
 

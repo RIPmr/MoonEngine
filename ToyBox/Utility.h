@@ -1,11 +1,13 @@
 #pragma once
 #include <glad/glad.h> 
-//#include <GLFW/glfw3.h>
+#include <GLFW/glfw3.h>
 #include <string>
 #include <iostream>
 
 #include "stb_image.h"
-#include "Renderer.h"
+#include "Vector3.h"
+#include "Vector4.h"
+#include "Color.h"
 
 namespace MOON {
 	inline void string_replace(std::string &strBig, const std::string &strsrc, const std::string &strdst) {
@@ -98,4 +100,7 @@ namespace MOON {
 
 		return true;
 	}
+
+	void DebugLine(const Vector3 &start, const Vector3 &end, const Vector4 &color = Color::WHITE());
+
 }

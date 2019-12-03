@@ -145,6 +145,7 @@
     <ClCompile Include="opengl\src\glad.c" />
     <ClCompile Include="Quaternion.cpp" />
     <ClCompile Include="Renderer.cpp" />
+    <ClCompile Include="Utility.cpp" />
     <ClCompile Include="Vector2.cpp" />
     <ClCompile Include="Vector3.cpp" />
     <ClCompile Include="Vector4.cpp" />
@@ -204,9 +205,12 @@
     <None Include="SimplePhong.vs" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="Resources\Icon_fullSize.jpg" />
     <Image Include="Resources\Icon.jpg" />
+    <Image Include="Resources\Icon_fullSize.png" />
     <Image Include="Resources\logo.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="Resources\fontawesome-webfont.ttf" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

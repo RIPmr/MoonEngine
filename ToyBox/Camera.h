@@ -85,19 +85,20 @@ namespace MOON {
 			updateCameraVectors();
 		}
 
+		void InitRenderCamera();
 		void UpdateMatrix();
-
 		// Returns the view matrix calculated using Euler Angles and the LookAt Matrix
-		Matrix4x4 GetViewMatrix();
-		Matrix4x4 GetProjectionMatrix();
+		Matrix4x4 GetViewMatrix() const;
+		Matrix4x4 GetProjectionMatrix() const;
+
+		Ray GetRay(float s, float t) const;
+		Ray GetMouseRay() const;
+		Vector3 unProjectMouse() const;
 
 		void PanCamera(Vector2 mouseOffset);
 		void ZoomCamera(Vector2 &mouseOffset);
 		void RotateCamera(Vector2 mouseOffset, bool constrainPitch = true);
 		void PushCamera(Vector2 &mouseScrollOffset);
-		Ray GetRay(float s, float t);
-
-		void InitRenderCamera();
 
 	private:
 		// Calculates the front vector from the Camera's (updated) Euler Angles

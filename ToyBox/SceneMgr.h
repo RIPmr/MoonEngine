@@ -399,9 +399,13 @@ namespace MOON {
 
 		static void DrawGizmos() {
 			ObjectBase* first = InputManager::GetFirstSelected();
-			if (!first) return;
-			if (!GetType(first)._Equal("Model")) return;
-			Gizmo::Draw(ShaderManager::lineShader, &dynamic_cast<Model*>(first)->transform);
+			if (!first) return; if (!GetType(first)._Equal("Model")) return;
+
+			Gizmo::Manipulate(CameraManager::sceneCamera->GetMouseRay(),
+							  &dynamic_cast<Model*>(first)->transform,
+							  ShaderManager::lineShader,
+							  InputManager::mouse_left_hold,
+							  MOON_CurrentCamera->zFar);
 		}
 
 		static void Init() {
@@ -484,7 +488,7 @@ namespace MOON {
 			}
 
 			static void CreateDefaultMats() {
-				defaultMat = SceneManager::MaterialManager::CreateMaterial("MoonMtl", "default");
+				defaultMat = MaterialManager::CreateMaterial("MoonMtl", "default");
 			}
 
 			static Material* CreateMaterial(const std::string &type, const std::string &name) {

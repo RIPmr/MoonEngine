@@ -39,13 +39,13 @@ namespace MOON {
 		shader->use();
 
 		shader->setMat4("model", model);
-		shader->setMat4("view", SceneManager::CameraManager::currentCamera->view);
-		shader->setMat4("projection", SceneManager::CameraManager::currentCamera->projection);
+		shader->setMat4("view", MOON_CameraManager::currentCamera->view);
+		shader->setMat4("projection", MOON_CameraManager::currentCamera->projection);
 
 		shader->setVec3("lightColor", Vector3(1.0, 1.0, 1.0));
 		shader->setVec3("objectColor", dynamic_cast<MoonMtl*>(material)->Kd);
-		shader->setVec3("lightPos", SceneManager::CameraManager::currentCamera->transform.position);
-		shader->setVec3("viewPos", SceneManager::CameraManager::currentCamera->transform.position);
+		shader->setVec3("lightPos", MOON_CameraManager::currentCamera->transform.position);
+		shader->setVec3("viewPos", MOON_CameraManager::currentCamera->transform.position);
 
 		// draw mesh
 		glBindVertexArray(VAO);

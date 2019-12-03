@@ -123,6 +123,9 @@
     <ClCompile Include="MShader.cpp">
       <Filter>SourceFiles\Implementation</Filter>
     </ClCompile>
+    <ClCompile Include="Utility.cpp">
+      <Filter>SourceFiles\Implementation</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Vector3.h">
@@ -283,8 +286,13 @@
     <Image Include="Resources\logo.png">
       <Filter>Resources\Images</Filter>
     </Image>
-    <Image Include="Resources\Icon_fullSize.jpg">
+    <Image Include="Resources\Icon_fullSize.png">
       <Filter>Resources\Images</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="Resources\fontawesome-webfont.ttf">
+      <Filter>Resources\Fonts</Filter>
+    </Font>
   </ItemGroup>
 </Project>

@@ -13,6 +13,8 @@
 #include "ObjectBase.h"
 #include "MShader.h"
 #include "Color.h"
+#include "Utility.h"
+#include "Ray.h"
 
 namespace MOON {
 	class Gizmo {
@@ -26,10 +28,11 @@ namespace MOON {
 		static std::vector<float> circle;
 		static std::vector<float> translate;
 
-
-		inline static void Manipulate(GizmoMode mode, Transform& transform, const Matrix4x4& camera_matrix);
-
 		inline static void DrawPrototype(const Shader* shader, const Matrix4x4& mat, const Vector4& color) {
+			if (gizmoMode == GizmoMode::none) return;
+			// TODO : link line
+			if (gizmoMode == GizmoMode::link) return;
+
 			// get data
 			std::vector<float> &data = (gizmoMode == GizmoMode::rotate ? circle : translate);
 			int drawSize = (gizmoMode == GizmoMode::rotate ? data.size() / 3 : 2);
@@ -63,27 +66,68 @@ namespace MOON {
 			glDeleteBuffers(1, &VBO);
 		}
 
-		inline static void Draw(const Shader* shader, const void* transform) {
-			Transform* trans = (Transform*)transform;
-			Matrix4x4  model;
+		// TODO
+		inline static void Translate() {
 
-			// Y-Axis
-			if (manipCoord == CoordSys::LOCAL) model = Matrix4x4::Rotate(model, trans->rotation);
-			DrawPrototype(shader, Matrix4x4::Translate(model, trans->position), Color::GREEN());
+		}
+		inline static void Rotate() {
 
-			// X-Axis
-			if (manipCoord == CoordSys::LOCAL) model = Matrix4x4::Rotate(Matrix4x4::identity(), trans->rotation * Quaternion(0, 0, 90.0f));
-			else model = Matrix4x4::Rotate(Matrix4x4::identity(), Quaternion(0, 0, 90.0f));
-			DrawPrototype(shader, Matrix4x4::Translate(model, trans->position), Color::RED());
+		}
+		inline static void Scale() {
 
-			// Z-Axis
-			if (manipCoord == CoordSys::LOCAL) model = Matrix4x4::Rotate(Matrix4x4::identity(), trans->rotation * Quaternion(90.0f, 0, 0));
-			else model = Matrix4x4::Rotate(Matrix4x4::identity(), Quaternion(90.0f, 0, 0));
-			DrawPrototype(shader, Matrix4x4::Translate(model, trans->position), Color::BLUE());
+		}
 
-			// disable anti-aliasing
-			glDisable(GL_LINE_SMOOTH);
-			glDisable(GL_BLEND);
+		inline static void Manipulate(const Ray& ray, void* transform, const Shader* shader, const bool& mousePressed, const float maxCamRayLength = 10000.0f, float threshold = 0.1f) {
+			Matrix4x4 model;
+			Transform *trans = (Transform*)transform;
+			Vector3   deltaVec;
+			float	  scrDist = Vector3::Distance(ray.pos, trans->position) / 10.0f;
+			float	  lineDist;
+
+			static bool	   xActive, yActive, zActive;
+			static Vector3 cRayPoint, cNewAxisPoint;
+			static Vector3 cAxisPoint_X, cAxisPoint_Y, cAxisPoint_Z;
+			threshold *= scrDist;
+
+			// Y-Axis -----------------------------------------------------------------------
+			Ray axis; axis.pos = trans->position;
+			if (manipCoord == CoordSys::LOCAL) axis.dir = trans->up();
+			else axis.dir = Vector3::WORLD(Direction::UP);
+			
+			if (manipCoord == CoordSys::LOCAL) model = Matrix4x4::Rotate(Matrix4x4::ScaleMat(scrDist), trans->rotation);
+			lineDist = MoonMath::closestDistanceBetweenLines(ray, axis, cRayPoint, cNewAxisPoint, maxCamRayLength, scrDist);
+			xActive = mousePressed ? xActive : lineDist < threshold;
+			DrawPrototype(shader, Matrix4x4::Translate(Matrix4x4::ScaleMat(scrDist), trans->position), isActive ?  (xActive ? Color::YELLOW() : Color::GREEN()) : Color::Gray());
+			// get delta vector
+			if (isActive && xActive) deltaVec += cNewAxisPoint - cAxisPoint_X;
+			cAxisPoint_X.setValue(cNewAxisPoint);
+
+			// X-Axis -----------------------------------------------------------------------
+			if (manipCoord == CoordSys::LOCAL) axis.dir = trans->left();
+			else axis.dir = Vector3::WORLD(Direction::LEFT);
+
+			if (manipCoord == CoordSys::LOCAL) model = Matrix4x4::Rotate(Matrix4x4::ScaleMat(scrDist), trans->rotation * Quaternion(0, 0, -90.0f));
+			else model = Matrix4x4::Rotate(Matrix4x4::ScaleMat(scrDist), Quaternion(0, 0, -90.0f));
+			lineDist = MoonMath::closestDistanceBetweenLines(ray, axis, cRayPoint, cNewAxisPoint, maxCamRayLength, scrDist);
+			DebugLine(cRayPoint, cNewAxisPoint);
+			yActive = mousePressed ? yActive : lineDist < threshold;
+			DrawPrototype(shader, Matrix4x4::Translate(model, trans->position), isActive ? (yActive ? Color::YELLOW() : Color::RED()) : Color::Gray());
+			if (isActive && yActive) deltaVec += cNewAxisPoint - cAxisPoint_Y;
+			cAxisPoint_Y.setValue(cNewAxisPoint);
+
+			// Z-Axis -----------------------------------------------------------------------
+			if (manipCoord == CoordSys::LOCAL) axis.dir = trans->forward();
+			else axis.dir = Vector3::WORLD(Direction::FORWARD);
+
+			if (manipCoord == CoordSys::LOCAL) model = Matrix4x4::Rotate(Matrix4x4::ScaleMat(scrDist), trans->rotation * Quaternion(90.0f, 0, 0));
+			else model = Matrix4x4::Rotate(Matrix4x4::ScaleMat(scrDist), Quaternion(90.0f, 0, 0));
+			lineDist = MoonMath::closestDistanceBetweenLines(ray, axis, cRayPoint, cNewAxisPoint, maxCamRayLength, scrDist);
+			zActive = mousePressed ? zActive : lineDist < threshold;
+			DrawPrototype(shader, Matrix4x4::Translate(model, trans->position), isActive ? (zActive ? Color::YELLOW() : Color::BLUE()) : Color::Gray());
+			if (isActive && zActive) deltaVec += cNewAxisPoint - cAxisPoint_Z;
+			cAxisPoint_Z.setValue(cNewAxisPoint);
+
+			if (isActive && mousePressed) trans->set(&(trans->position + deltaVec));
 		}
 		
 		inline static void RecalcCircle(float m_Theta = 12.0f, bool close = true) {
@@ -101,6 +145,7 @@ namespace MOON {
 
 			if (close) { circle.push_back(circle[0]); circle.push_back(circle[1]); circle.push_back(circle[2]); }
 		}
+
 		inline static void RecalcTranslate() {
 			translate.clear();
 

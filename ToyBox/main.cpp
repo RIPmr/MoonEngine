@@ -31,11 +31,11 @@ int main() {
 	//Model* teapot = MOON_ModelManager::LoadModel("Resources/teapot.obj");
 	Model* boxes = MOON_ModelManager::LoadModel("Resources/box_stack.obj");
 	//teapot->transform.Scale(Vector3(0.1f, 0.1f, 0.1f));
-	//boxes->transform.Translate(Vector3(0.0f, 1.0f, 0.0f));
+	boxes->transform.Translate(Vector3(0.0f, 1.0f, 0.0f));
 
 	std::cout << "done." << std::endl;
 
-	// render loop
+	// main loop  --------------------------------------------------------------------------
 	while (!glfwWindowShouldClose(window)) {
 		// per-frame time logic
 		MOON_UpdateClock();
@@ -59,9 +59,19 @@ int main() {
 		MOON_ModelManager::DrawModels();
 
 		// drawing Gizmos
-		DrawGround(1.0, 5, MOON_ShaderManager::lineShader);
+		/// enable color blend and anti-aliasing
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glEnable(GL_BLEND);
+		glEnable(GL_LINE_SMOOTH);
+		glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+
+		MOON_DrawGround(MOON_ShaderManager::lineShader);
 		glDisable(GL_DEPTH_TEST);
 		SceneManager::DrawGizmos();
+
+		/// disable anti-aliasing
+		glDisable(GL_LINE_SMOOTH);
+		glDisable(GL_BLEND);
 
 		// process user input
 		MOON_InputManager::isHoverUI = MainUI::io->WantCaptureMouse;
@@ -76,7 +86,7 @@ int main() {
 		glfwPollEvents();
 	}
 
-	// Cleanup
+	// Cleanup  ----------------------------------------------------------------------------
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
@@ -129,6 +139,7 @@ GLFWwindow* InitWnd() {
 
 	// add fonts
 	MainUI::io = &ImGui::GetIO();
+	MainUI::style = &ImGui::GetStyle();
 	//MainUI::io->Fonts->AddFontDefault();
 
 	// add simplified Chinese
@@ -157,7 +168,7 @@ GLFWwindow* InitWnd() {
 	return window;
 }
 
-// glfw callbacks
+// glfw callbacks --------------------------------------------------------------------------
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 	// make sure the viewport matches the new window dimensions; note that width and 
 	// height will be significantly larger than specified on retina displays.
@@ -185,7 +196,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
 	MOON_InputManager::mouseScrollOffset.setValue(xoffset, yoffset);
 }
 
-// moon: clean up, input processor and other draw commands
+// moon callbacks --------------------------------------------------------------------------
 void MOON_CleanUp() {
 	MOON_LightManager::Clear();
 	MOON_MaterialManager::Clear();
@@ -199,46 +210,14 @@ void MOON_CleanUp() {
 	AssetLoader::CleanUp();
 }
 
-Vector3 unProjectMouse() {
-	if (NULL == MOON_SceneCamera) {
-		std::cout << "camera failed! failed to un-project mouse" << std::endl;
-	} else {
-		GLfloat winZ;
-		Vector3 screenPos(MOON_MousePos.x, MOON_WndSize.y - MOON_MousePos.y - 1, 0.0f);
-
-		//glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-		glReadPixels(screenPos.x, screenPos.y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &winZ);
-		//glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		screenPos.z = winZ;
-
-		Vector4 viewport = Vector4(0.0f, 0.0f, MOON_WndSize.x, MOON_WndSize.y);
-		Vector3 worldPos = Matrix4x4::UnProject(screenPos, MOON_CurrentCamera->view, MOON_CurrentCamera->projection, viewport);
-
-		return worldPos;
-	}
-}
-
 void MOON_UpdateClock() {
 	float currentFrame = glfwGetTime();
 	MOON_Clock::deltaTime = currentFrame - MOON_Clock::lastFrame;
 	MOON_Clock::lastFrame = currentFrame;
 }
 
-// TODO
-void DebugLine(const Vector3 &start, const Vector3 &end, const Vector4 &color = Vector4::ONE()) {
-
-}
-
-void DrawGround(const float &space, const int &gridCnt, const Shader* groundShader) {
-	std::vector<float> grid;
-
-	// configure shader
-	groundShader->use();
-	groundShader->setVec4("lineColor", grdLineColor);
-	groundShader->setMat4("model", Matrix4x4());
-	groundShader->setMat4("view", MOON_CurrentCamera->view);
-	groundShader->setMat4("projection", MOON_CurrentCamera->projection);
-
+void MOON_GenerateGround(const float &space, const int &gridCnt) {
+	grid.clear();
 	// generate grid points
 	for (int i = -gridCnt; i <= gridCnt; i++) {
 		grid.push_back(i * space);
@@ -257,13 +236,16 @@ void DrawGround(const float &space, const int &gridCnt, const Shader* groundShad
 		grid.push_back(0.0);
 		grid.push_back(i * space);
 	}
+}
 
-	// enable color blend and anti-aliasing
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_BLEND);
-	glEnable(GL_LINE_SMOOTH);
-	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-
+void MOON_DrawGround(const Shader* groundShader) {
+	// configure shader
+	groundShader->use();
+	groundShader->setVec4("lineColor", grdLineColor);
+	groundShader->setMat4("model", Matrix4x4());
+	groundShader->setMat4("view", MOON_CurrentCamera->view);
+	groundShader->setMat4("projection", MOON_CurrentCamera->projection);
+	
 	// vertex array object
 	unsigned int VAO;
 	glGenVertexArrays(1, &VAO);
@@ -282,7 +264,7 @@ void DrawGround(const float &space, const int &gridCnt, const Shader* groundShad
 	glEnableVertexAttribArray(0);
 	// unbind buffers
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glDrawArrays(GL_LINES, 0, (gridCnt << 3) + 4);
+	glDrawArrays(GL_LINES, 0, grid.size() / 3);
 	glBindVertexArray(0);
 	// delete buffer object
 	glDeleteVertexArrays(1, &VAO);
@@ -407,4 +389,5 @@ void MOON_InitEngine() {
 	std::cout << "- Dir Tree Created." << std::endl;
 	SceneManager::Init();
 	std::cout << "- Scene Manager Initialized." << std::endl;
+	MOON_GenerateGround(1.0, 5);
 }

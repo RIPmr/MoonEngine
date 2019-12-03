@@ -253,7 +253,7 @@ namespace MOON {
 			std::cout << "searching material: " << matname << std::endl;
 			// Find corresponding material name in loaded materials
 			// when found copy material variables into mesh material
-			Material* searchMat = SceneManager::MaterialManager::GetItem(matname);
+			Material* searchMat = MOON_MaterialManager::GetItem(matname);
 			if (searchMat != NULL) {
 				std::cout << "material founded: " << searchMat->name << std::endl;
 				LoadedMeshes[i]->material = searchMat;
@@ -264,7 +264,7 @@ namespace MOON {
 		if (LoadedMeshes.empty() && LoadedVertices.empty() && LoadedIndices.empty()) return false;
 		else {
 			for (auto &mesh : LoadedMeshes) {
-				if (!mesh->material) mesh->material = SceneManager::MaterialManager::defaultMat;
+				if (!mesh->material) mesh->material = MOON_MaterialManager::defaultMat;
 #ifdef MOON_DEBUG_MODE
 				std::cout << "\r- " << mesh->name << "| vertices > " << mesh->vertices.size()
 					<< "| triangles > " << (mesh->indices.size() / 3)
@@ -512,7 +512,7 @@ namespace MOON {
 			if (firstToken(curline) == "newmtl") {
 				std::string matName = "none";
 				if (curline.size() > 7) matName = tail(curline);
-				tempMaterial = SceneManager::MaterialManager::CreateMaterial("MoonMtl", matName);
+				tempMaterial = MOON_MaterialManager::CreateMaterial("MoonMtl", matName);
 			}
 			// Ambient Color
 			if (firstToken(curline) == "Ka") {
@@ -600,12 +600,12 @@ namespace MOON {
 
 	Texture* OBJLoader::LoadTexture(const TexType &type, const std::string &path) {
 		// if find corresponding texture in loaded textures
-		Texture* searchTex = SceneManager::TextureManager::GetItem(GetPathOrURLShortName(path));
+		Texture* searchTex = MOON_TextureManager::GetItem(GetPathOrURLShortName(path));
 		if (searchTex != NULL) return searchTex;
 
 		// else load that new texture
 		GLuint texID = (GLuint)MOON_UNSPECIFIEDID;
-		Texture* newTex = SceneManager::TextureManager::LoadTexture(path);
+		Texture* newTex = MOON_TextureManager::LoadTexture(path);
 
 		return newTex;
 	}

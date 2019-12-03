@@ -7,11 +7,15 @@
 namespace MOON {
 	class Color {
 	public:
+		// based on : https://www.sioe.cn/yingyong/yanse-rgb-16/
 		static Vector4 RED() { return Vector4(1.0, 0.0, 0.0, 1.0); }
 		static Vector4 BLUE() { return Vector4(0.0, 0.0, 1.0, 1.0); }
 		static Vector4 GREEN() { return Vector4(0.0, 1.0, 0.0, 1.0); }
 		static Vector4 WHITE() { return Vector4(1.0, 1.0, 1.0, 1.0); }
 		static Vector4 BLACK() { return Vector4(0.0, 0.0, 0.0, 1.0); }
+		static Vector4 YELLOW() { return Vector4(1.0, 1.0, 0.0, 1.0); }
+		static Vector4 ORANGE() { return Vector4(1.0, 0.647, 0.0, 1.0); }
+		static Vector4 Gray() { return Vector4(0.439, 0.502, 0.565, 1.0); }
 
 		inline static float GrayScaleVal(const Vector4 &color) { return (color.x + color.y + color.z) / 3.0f; }
 		inline static Vector4 GrayScaleColor(const Vector4 &color) {
