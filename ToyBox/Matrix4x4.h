@@ -384,6 +384,9 @@ namespace MOON {
 		static Matrix4x4 Rotate(const Matrix4x4 &model, const Quaternion &q) {
 			return Matrix4x4(q) * model;
 		}
+		static Matrix4x4 Rotate(const Matrix4x4 &model, Quaternion(*f)()) {
+			return Matrix4x4((*f)()) * model;
+		}
 
 		static Matrix4x4 ScaleMat(const Vector3 &factor) {
 			Matrix4x4 result(factor.x, 0, 0, 0,

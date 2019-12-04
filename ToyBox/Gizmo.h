@@ -21,9 +21,98 @@ namespace MOON {
 	public:
 		static bool isActive;
 
-		static CoordSys manipCoord;
-		static GizmoPos gizmoPos;
+		static CoordSys  manipCoord;
+		static GizmoPos  gizmoPos;
 		static GizmoMode gizmoMode;
+
+		// Set parameters
+		inline static void SetMode(const GizmoMode& mode) { gizmoMode = mode; }
+		inline static void SetPivot(const GizmoPos& pos) { gizmoPos = pos; }
+		inline static void SetCoordSys(const CoordSys& coord) { manipCoord = coord; }
+		inline static void SetThreshold(const float& newThreshold) { threshold = newThreshold; }
+		inline static void RecalcCircle(float m_Theta = 12.0f, bool close = true) {
+			m_Theta *= Deg2Rad;
+			if (m_Theta < 0.0001f)m_Theta = 0.0001f;
+			float m_Radius = 1.0f;
+
+			circle.clear();
+			for (float theta = 0; theta < 2 * PI; theta += m_Theta) {
+				float x = m_Radius * cos(theta);
+				float z = m_Radius * sin(theta);
+				if (abs(theta - 2 * PI) < 0.01f) continue;
+				circle.push_back(x); circle.push_back(0); circle.push_back(z);
+			}
+
+			if (close) { circle.push_back(circle[0]); circle.push_back(circle[1]); circle.push_back(circle[2]); }
+		}
+		inline static void RecalcTranslate() {
+			translate.clear();
+
+			translate.push_back(0); translate.push_back(0); translate.push_back(0);
+			translate.push_back(0); translate.push_back(1); translate.push_back(0);
+		}
+
+		// Gizmos
+		inline static Vector3 Translate(const Shader* shader, const Ray& ray, const Direction& dir,
+										Transform *trans, Vector3& cAxisPoint_O, bool& xActive, 
+										float maxCamRayLength, const bool &mousePressed) {
+			float		scrDist = Vector3::Distance(ray.pos, trans->position) / 10.0f;
+			Vector3		cRayPoint, cAxisPoint, deltaVec;
+			Matrix4x4	model;
+
+			// Axis -------------------------------------------------------------------------
+			Ray axis; axis.pos = trans->position;			
+
+			if (manipCoord == CoordSys::LOCAL) {
+				axis.dir = trans->GetLocalAxis(dir);
+				model = Matrix4x4::Rotate(Matrix4x4::ScaleMat(scrDist), trans->rotation * RotAxisByDir(dir));
+			} else {
+				axis.dir = Vector3::WORLD(dir);
+				model = Matrix4x4::Rotate(Matrix4x4::ScaleMat(scrDist), RotAxisByDir(dir));
+			} axis.pos = axis.PointAtParameter(-maxCamRayLength);
+
+			// calculate closest dist
+			bool lineDist = MoonMath::closestDistanceBetweenLines(ray, axis, cRayPoint, cAxisPoint, maxCamRayLength, maxCamRayLength * 2) < threshold * scrDist;
+			Vector3 axisProjection = cAxisPoint - trans->position;
+			xActive = mousePressed ? xActive : lineDist && (axisProjection.magnitude() <= scrDist) && Vector3::Angle(axisProjection, axis.dir) < 1.0f;
+			
+			// draw gizmo
+			DrawPrototype(shader, Matrix4x4::Translate(model, trans->position), isActive ? (xActive ? Color::YELLOW() : ColorByDir(dir)) : Color::Gray());
+			
+			// get delta vector
+			if (isActive && xActive) deltaVec += Vector3::Projection(cAxisPoint - cAxisPoint_O, axis.dir);
+			cAxisPoint_O.setValue(cAxisPoint);
+
+			return deltaVec;
+		}
+		inline static void Rotate() {
+
+		}
+		inline static void Scale() {
+
+		}
+
+		inline static void Manipulate(const Ray& ray, void* transform, const Shader* shader, const bool& mousePressed, const float maxCamRayLength = 10000.0f) {
+			static Vector3 cAxisPoint_X, cAxisPoint_Y, cAxisPoint_Z;
+			static bool	   xActive, yActive, zActive;
+
+			Transform	   *trans = (Transform*)transform;
+			Vector3		   deltaEuler;
+			Vector3		   deltaVec;
+
+			switch (gizmoMode) {
+				case GizmoMode::translate:  deltaVec += Translate(shader, ray, Direction::UP, trans, cAxisPoint_Y, yActive, maxCamRayLength, mousePressed);
+											deltaVec += Translate(shader, ray, Direction::LEFT, trans, cAxisPoint_X, xActive, maxCamRayLength, mousePressed);
+											deltaVec += Translate(shader, ray, Direction::FORWARD, trans, cAxisPoint_Z, zActive, maxCamRayLength, mousePressed);
+											break;
+				case GizmoMode::rotate	 :  
+			}
+
+			if (isActive && mousePressed) trans->Translate(deltaVec);
+		}
+
+	private:
+		static float threshold;
 
 		static std::vector<float> circle;
 		static std::vector<float> translate;
@@ -66,91 +155,19 @@ namespace MOON {
 			glDeleteBuffers(1, &VBO);
 		}
 
-		// TODO
-		inline static void Translate() {
-
-		}
-		inline static void Rotate() {
-
-		}
-		inline static void Scale() {
-
-		}
-
-		inline static void Manipulate(const Ray& ray, void* transform, const Shader* shader, const bool& mousePressed, const float maxCamRayLength = 10000.0f, float threshold = 0.1f) {
-			Matrix4x4 model;
-			Transform *trans = (Transform*)transform;
-			Vector3   deltaVec;
-			float	  scrDist = Vector3::Distance(ray.pos, trans->position) / 10.0f;
-			float	  lineDist;
-
-			static bool	   xActive, yActive, zActive;
-			static Vector3 cRayPoint, cNewAxisPoint;
-			static Vector3 cAxisPoint_X, cAxisPoint_Y, cAxisPoint_Z;
-			threshold *= scrDist;
-
-			// Y-Axis -----------------------------------------------------------------------
-			Ray axis; axis.pos = trans->position;
-			if (manipCoord == CoordSys::LOCAL) axis.dir = trans->up();
-			else axis.dir = Vector3::WORLD(Direction::UP);
-			
-			if (manipCoord == CoordSys::LOCAL) model = Matrix4x4::Rotate(Matrix4x4::ScaleMat(scrDist), trans->rotation);
-			lineDist = MoonMath::closestDistanceBetweenLines(ray, axis, cRayPoint, cNewAxisPoint, maxCamRayLength, scrDist);
-			xActive = mousePressed ? xActive : lineDist < threshold;
-			DrawPrototype(shader, Matrix4x4::Translate(Matrix4x4::ScaleMat(scrDist), trans->position), isActive ?  (xActive ? Color::YELLOW() : Color::GREEN()) : Color::Gray());
-			// get delta vector
-			if (isActive && xActive) deltaVec += cNewAxisPoint - cAxisPoint_X;
-			cAxisPoint_X.setValue(cNewAxisPoint);
-
-			// X-Axis -----------------------------------------------------------------------
-			if (manipCoord == CoordSys::LOCAL) axis.dir = trans->left();
-			else axis.dir = Vector3::WORLD(Direction::LEFT);
-
-			if (manipCoord == CoordSys::LOCAL) model = Matrix4x4::Rotate(Matrix4x4::ScaleMat(scrDist), trans->rotation * Quaternion(0, 0, -90.0f));
-			else model = Matrix4x4::Rotate(Matrix4x4::ScaleMat(scrDist), Quaternion(0, 0, -90.0f));
-			lineDist = MoonMath::closestDistanceBetweenLines(ray, axis, cRayPoint, cNewAxisPoint, maxCamRayLength, scrDist);
-			DebugLine(cRayPoint, cNewAxisPoint);
-			yActive = mousePressed ? yActive : lineDist < threshold;
-			DrawPrototype(shader, Matrix4x4::Translate(model, trans->position), isActive ? (yActive ? Color::YELLOW() : Color::RED()) : Color::Gray());
-			if (isActive && yActive) deltaVec += cNewAxisPoint - cAxisPoint_Y;
-			cAxisPoint_Y.setValue(cNewAxisPoint);
-
-			// Z-Axis -----------------------------------------------------------------------
-			if (manipCoord == CoordSys::LOCAL) axis.dir = trans->forward();
-			else axis.dir = Vector3::WORLD(Direction::FORWARD);
-
-			if (manipCoord == CoordSys::LOCAL) model = Matrix4x4::Rotate(Matrix4x4::ScaleMat(scrDist), trans->rotation * Quaternion(90.0f, 0, 0));
-			else model = Matrix4x4::Rotate(Matrix4x4::ScaleMat(scrDist), Quaternion(90.0f, 0, 0));
-			lineDist = MoonMath::closestDistanceBetweenLines(ray, axis, cRayPoint, cNewAxisPoint, maxCamRayLength, scrDist);
-			zActive = mousePressed ? zActive : lineDist < threshold;
-			DrawPrototype(shader, Matrix4x4::Translate(model, trans->position), isActive ? (zActive ? Color::YELLOW() : Color::BLUE()) : Color::Gray());
-			if (isActive && zActive) deltaVec += cNewAxisPoint - cAxisPoint_Z;
-			cAxisPoint_Z.setValue(cNewAxisPoint);
-
-			if (isActive && mousePressed) trans->set(&(trans->position + deltaVec));
-		}
-		
-		inline static void RecalcCircle(float m_Theta = 12.0f, bool close = true) {
-			m_Theta *= Deg2Rad;
-			if (m_Theta < 0.0001f)m_Theta = 0.0001f;
-			float m_Radius = 1.0f;
-
-			circle.clear();
-			for (float theta = 0; theta < 2 * PI; theta += m_Theta) {
-				float x = m_Radius * cos(theta);
-				float z = m_Radius * sin(theta);
-				if (abs(theta - 2 * PI) < 0.01f) continue;
-				circle.push_back(x); circle.push_back(0); circle.push_back(z);
+		inline static Quaternion RotAxisByDir(const Direction& dir) {
+			switch (dir) {
+			case Direction::UP: return Quaternion::identity();
+			case Direction::LEFT: return Quaternion(0, 0, -90.0f);
+			case Direction::FORWARD: return Quaternion(90.0f, 0, 0);
 			}
-
-			if (close) { circle.push_back(circle[0]); circle.push_back(circle[1]); circle.push_back(circle[2]); }
 		}
-
-		inline static void RecalcTranslate() {
-			translate.clear();
-
-			translate.push_back(0); translate.push_back(0); translate.push_back(0);
-			translate.push_back(0); translate.push_back(1); translate.push_back(0);
+		inline static Vector4 ColorByDir(const Direction& dir) {
+			switch (dir) {
+			case Direction::UP: return Color::GREEN();
+			case Direction::LEFT: return Color::RED();
+			case Direction::FORWARD: return Color::BLUE();
+			}
 		}
 	};
 }

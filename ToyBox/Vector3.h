@@ -45,6 +45,9 @@ namespace MOON {
 		inline float dot(const Vector3 &v) const { return x * v.x + y * v.y + z * v.z; }
 		inline float magnitude() const { return sqrtf(dot(*this)); }
 		inline float MagSquared() const { return dot(*this); }
+		inline static float ProjectionMag(const Vector3 &from, const Vector3 &to) {
+			return from.dot(to) / to.magnitude();
+		}
 		inline static float Distance(const Vector3 &v1, const Vector3 &v2) {
 			float dist = sqrt((v1.x - v2.x) * (v1.x - v2.x) + (v1.y - v2.y) * (v1.y - v2.y) + (v1.z - v2.z) * (v1.z - v2.z));
 			return dist;
@@ -93,18 +96,16 @@ namespace MOON {
 		static Vector3 ZERO();
 
 		inline static Vector3 WORLD(const Direction &direction) {
-			if (direction == Direction::UP) {
-				return Vector3(0, 1, 0);
-			} else if (direction == Direction::DOWN) {
-				return Vector3(0, -1, 0);
-			} else if (direction == Direction::LEFT) {
-				return Vector3(1, 0, 0);
-			} else if (direction == Direction::RIGHT) {
-				return Vector3(-1, 0, 0);
-			} else if (direction == Direction::FORWARD) {
-				return Vector3(0, 0, 1);
-			} else if (direction == Direction::BACKWARD) {
-				return Vector3(0, 0, -1);
+			switch (direction) {
+				case Direction::UP:			return Vector3(0, 1, 0);
+				case Direction::LEFT:		return Vector3(1, 0, 0);
+				case Direction::FORWARD:	return Vector3(0, 0, 1);
+
+				case Direction::DOWN:		return Vector3(0, -1, 0);
+				case Direction::RIGHT:		return Vector3(-1, 0, 0);
+				case Direction::BACKWARD:	return Vector3(0, 0, -1);
+
+				default:					return Vector3::ZERO();
 			}
 		}
 	};

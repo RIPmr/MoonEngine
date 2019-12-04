@@ -9,6 +9,7 @@ namespace MOON {
 		Vector3 dir;
 
 		Ray() {}
+		Ray(const Ray &r) : pos(r.pos), dir(r.dir) {}
 		Ray(const Vector3 &position, const Vector3 &direction) {
 			pos = position;
 			dir = direction;

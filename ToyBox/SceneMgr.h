@@ -405,7 +405,7 @@ namespace MOON {
 							  &dynamic_cast<Model*>(first)->transform,
 							  ShaderManager::lineShader,
 							  InputManager::mouse_left_hold,
-							  MOON_CurrentCamera->zFar);
+							  MOON_CurrentCamera->zFar * 10.0f);
 		}
 
 		static void Init() {

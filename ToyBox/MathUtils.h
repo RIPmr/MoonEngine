@@ -189,10 +189,8 @@ namespace MOON {
 		}
 		// Given two lines defined by (a0,a1,b0,b1)
 		// Return the closest points on each segment and their distance
-		inline static float closestDistanceBetweenLines(const Vector3 &a0, const Vector3 &a1, const Vector3 &b0, const Vector3 &b1, Vector3 &p0, Vector3 &p1) {
+		inline static float closestDistanceBetweenLines(const Vector3 &a0, const Vector3 &a1, const Vector3 &b0, const Vector3 &b1, Vector3 &Line1Closest, Vector3 &Line2Closest) {
 			// Based on https://stackoverflow.com/questions/2824478/shortest-distance-between-two-line-segments
-			Vector3& Line1Closest = p0;
-			Vector3& Line2Closest = p1;
 			float Distance;
 
 			// Calculate denomitator

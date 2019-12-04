@@ -139,4 +139,5 @@ GizmoMode Gizmo::gizmoMode = GizmoMode::none;
 std::vector<float> Gizmo::circle;
 std::vector<float> Gizmo::translate;
 bool Gizmo::isActive = true;
+float Gizmo::threshold = 0.1f;
 

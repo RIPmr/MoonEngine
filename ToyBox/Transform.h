@@ -123,6 +123,18 @@ namespace MOON {
 		inline Vector3 up() const {
 			return Vector3(transformMat.x[0][1], transformMat.x[1][1], transformMat.x[2][1]);
 		}
-		inline Vector2 GetLocalAxis(const Direction &direction) const;
+		inline Vector3 GetLocalAxis(const Direction &direction) const {
+			switch (direction) {
+				case Direction::UP:			return up();
+				case Direction::LEFT:		return left();
+				case Direction::FORWARD:	return forward();
+
+				case Direction::DOWN:		return -up();
+				case Direction::RIGHT:		return -left();
+				case Direction::BACKWARD:	return -forward();
+
+				default:					return Vector3::ZERO();
+			}
+		}
 	};
 }
