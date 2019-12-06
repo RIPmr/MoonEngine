@@ -115,13 +115,13 @@ namespace MOON {
 		}
 
 		inline Vector3 forward() const {
-			return Vector3(transformMat.x[0][2], transformMat.x[1][2], transformMat.x[2][2]);
+			return Vector3::Normalize(Vector3(transformMat.x[0][2], transformMat.x[1][2], transformMat.x[2][2]));
 		}
 		inline Vector3 left() const {
-			return Vector3(transformMat.x[0][0], transformMat.x[1][0], transformMat.x[2][0]);
+			return Vector3::Normalize(Vector3(transformMat.x[0][0], transformMat.x[1][0], transformMat.x[2][0]));
 		}
 		inline Vector3 up() const {
-			return Vector3(transformMat.x[0][1], transformMat.x[1][1], transformMat.x[2][1]);
+			return Vector3::Normalize(Vector3(transformMat.x[0][1], transformMat.x[1][1], transformMat.x[2][1]));
 		}
 		inline Vector3 GetLocalAxis(const Direction &direction) const {
 			switch (direction) {
@@ -135,6 +135,12 @@ namespace MOON {
 
 				default:					return Vector3::ZERO();
 			}
+		}
+		inline int AxisSign(const Direction &dir) const {
+			if (dir == Direction::UP && scale.y < 0) return -1;
+			else if (dir == Direction::LEFT && scale.x < 0)  return - 1;
+			else if (dir == Direction::FORWARD && scale.z < 0)  return - 1;
+			return 1;
 		}
 	};
 }

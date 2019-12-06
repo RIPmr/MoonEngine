@@ -34,14 +34,14 @@ namespace MOON {
 		static void ListItems() {
 			if (itemMap.size() < 1) return;
 
-			std::vector<unsigned int> &sel = MOON_InputManager::selected;
+			//std::vector<unsigned int> &sel = MOON_InputManager::selected;
 			auto iter = itemMap.begin();
 			for (int i = 0; i < itemMap.size(); i++, iter++) {
 				if (ImGui::Selectable((SceneManager::GetTypeIcon(iter->second) + 
 									   "  " + iter->first).c_str(),
 									   MOON_InputManager::selection[iter->second->ID], 
-									   ImGuiSelectableFlags_SpanAllColumns)) {
-					if (!MainUI::io->KeyCtrl) {
+									   ImGuiSelectableFlags_SpanAllColumns))
+					/*if (!MainUI::io->KeyCtrl) {
 						sel.clear();
 						memset(MOON_InputManager::selection, 0, SceneManager::GetObjectNum() * sizeof(bool));
 					}
@@ -54,8 +54,8 @@ namespace MOON {
 								it = sel.erase(it);
 								return;
 							}
-					}
-				}
+					}*/
+					MOON_InputManager::Select(iter->second->ID);
 			}
 		}
 
@@ -285,6 +285,7 @@ namespace MOON {
 		static float aspect;
 
 		static bool showbbox;
+		static bool wireMode;
 
 		// all objects
 		static std::vector<ObjectBase*> objectList;
@@ -401,11 +402,7 @@ namespace MOON {
 			ObjectBase* first = InputManager::GetFirstSelected();
 			if (!first) return; if (!GetType(first)._Equal("Model")) return;
 
-			Gizmo::Manipulate(CameraManager::sceneCamera->GetMouseRay(),
-							  &dynamic_cast<Model*>(first)->transform,
-							  ShaderManager::lineShader,
-							  InputManager::mouse_left_hold,
-							  MOON_CurrentCamera->zFar * 10.0f);
+			Gizmo::Manipulate(&dynamic_cast<Model*>(first)->transform, MOON_CurrentCamera->zFar);
 		}
 
 		static void Init() {
@@ -443,8 +440,13 @@ namespace MOON {
 			static bool mouse_left_hold;
 			static bool mouse_middle_hold;
 			static bool mouse_right_hold;
+			static bool left_ctrl_hold;
+			static bool left_shift_hold;
+			static bool right_ctrl_hold;
+			static bool right_shift_hold;
 
 			// selection
+			static unsigned int hoverID;
 			static bool* selection;
 			static std::vector<unsigned int> selected;
 
@@ -468,6 +470,39 @@ namespace MOON {
 					CameraManager::sizeFlag = false;
 					ShaderManager::sizeFlag = false;
 				}
+			}
+
+			static void Select(const unsigned int ID) {
+				if (!MOON_InputManager::left_ctrl_hold && 
+					!MOON_InputManager::right_ctrl_hold) {
+					MOON_InputManager::selected.clear();
+					memset(MOON_InputManager::selection, 0, SceneManager::GetObjectNum() * sizeof(bool));
+				}
+
+				if (MOON_InputManager::selection[ID] ^= 1) MOON_InputManager::selected.push_back(ID);
+				else {
+					auto end = MOON_InputManager::selected.end();
+					for (auto it = MOON_InputManager::selected.begin(); it != end; it++)
+						if (*it == ID) {
+							it = MOON_InputManager::selected.erase(it);
+							return;
+						}
+				}
+			}
+
+			static unsigned int GetIDFromLUT(const Vector2& screenPos) {
+				Vector4 col;
+
+				//glBindFramebuffer(GL_READ_FRAMEBUFFER, TextureManager::IDLUT->fbo);
+				glReadBuffer(GL_COLOR_ATTACHMENT0);
+				glReadPixels(screenPos.x, MOON_WndSize.y - screenPos.y - 1, 1, 1, 
+							 GL_RGBA, GL_FLOAT, &col[0]);
+				glReadBuffer(GL_NONE);
+				//glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+
+				hoverID = Color::IDDecoder(col);
+				//std::cout << hoverID << std::endl;
+				return hoverID;
 			}
 
 			static void Clear() {
@@ -504,11 +539,17 @@ namespace MOON {
 
 		struct ShaderManager : ObjectManager<Shader> {
 			static Shader* lineShader;
+			static Shader* outlineShader;
+			static Shader* screenBufferShader;
 
 			static void LoadDefaultShaders() {
-				lineShader = new Shader("ConstColor", "ConstColor.vs", "ConstColor.fs");
-				AddItem(lineShader);
 				//AddItem(new Shader("SimplePhong", "SimplePhong.vs", "SimplePhong.fs"));
+				lineShader = new Shader("ConstColor", "ConstColor.vs", "ConstColor.fs");
+				outlineShader = new Shader("Outline", "Outline.vs", "Outline.fs");
+				screenBufferShader = new Shader("ScreenBuffer", "ScreenBuffer.vs", "ScreenBuffer.fs");
+				AddItem(lineShader);
+				AddItem(outlineShader);
+				AddItem(screenBufferShader);
 			}
 
 			static Shader* CreateShader(const std::string &name, const char *vs, const char *fs) {
@@ -523,7 +564,6 @@ namespace MOON {
 			static bool Clear() {
 				auto end = itemMap.end();
 				for (auto itr = itemMap.begin(); itr != end; ) {
-					glDeleteShader(itr->second->ID);
 					delete itr->second;
 					itr = itemMap.erase(itr);
 				}
@@ -532,6 +572,21 @@ namespace MOON {
 		};
 
 		struct TextureManager : ObjectManager<Texture> {
+			static Texture* SHADOWMAP;
+			static FrameBuffer* IDLUT;
+
+			// create buffers
+			// TODO
+			static void CreateShadowMap() {
+
+			}
+
+			static void CreateIDLUT() {
+				// create IDLUT
+				IDLUT = new FrameBuffer(MOON_WndSize.x, MOON_WndSize.y, "IDLUT", MOON_AUTOID);
+				AddItem(IDLUT);
+			}
+
 			// load resources
 			static void LoadImagesForUI() {
 				AddItem(new Texture("./Resources/Icon.jpg", "moon_icon"));
@@ -552,7 +607,6 @@ namespace MOON {
 			static bool Clear() {
 				auto end = itemMap.end();
 				for (auto itr = itemMap.begin(); itr != end; ) {
-					glDeleteTextures(1, &itr->second->ID);
 					delete itr->second;
 					itr = itemMap.erase(itr);
 				}
@@ -581,11 +635,38 @@ namespace MOON {
 				return hitAnything;
 			}
 
+			static void DrawIDLUT() {
+				// encode id to color
+				for (auto &obj : itemMap) {
+					if (obj.second->visible) {
+						ShaderManager::lineShader->use();
+						ShaderManager::lineShader->setVec4("lineColor", Color::IDEncoder(obj.second->ID));
+
+						obj.second->Draw(ShaderManager::lineShader);
+					}
+				}
+			}
+
 			static void DrawModels() {
+				/*glEnable(GL_STENCIL_TEST);
+				glStencilFunc(GL_ALWAYS, 1, 0xFF);
+				glStencilMask(0xFF);*/
+
 				for (auto &obj : itemMap) {
 					if (obj.second->visible)
 						obj.second->Draw();
 				}
+
+				//glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+				//glStencilMask(0x00);
+				////glDisable(GL_DEPTH_TEST);
+				//for (auto &obj : itemMap) {
+				//	if (obj.second->visible)
+				//		obj.second->Draw(ShaderManager::lineShader);
+				//}
+				//glStencilMask(0xFF);
+				////glEnable(GL_DEPTH_TEST);
+				//glDisable(GL_STENCIL_TEST);
 			}
 
 			static Model* CreateModel() {

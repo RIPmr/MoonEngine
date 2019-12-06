@@ -21,7 +21,7 @@ namespace MOON {
 	class MainUI {
 	public:
 		// image resources
-		static Texture *icon, *logo;
+		static Texture *icon, *logo, *logoFull;
 
 		// ImGui IO
 		static ImGuiIO* io;
@@ -80,6 +80,35 @@ namespace MOON {
 			if (switcher) SetButtonClicked();
 			if (ImGui::Button(label, ImVec2(22, 22))) (*executer)();
 			if (switcher) ResetButtonColor();
+		}
+
+		// Right click popup wnd
+		static void QuadMenu() {
+			if (!MOON_InputManager::isHoverUI && ImGui::IsMouseDown(1)) {
+				ImGui::OpenPopup("QuadMenu");
+			}
+
+			if (ImGui::BeginPopup("QuadMenu")) {
+				if (ImGui::BeginMenu("CoordSys")) {
+					if (ImGui::MenuItem("World"))  Gizmo::manipCoord = CoordSys::WORLD;
+					if (ImGui::MenuItem("Local"))  Gizmo::manipCoord = CoordSys::LOCAL;
+					if (ImGui::MenuItem("Parent")) Gizmo::manipCoord = CoordSys::PARENT;
+					if (ImGui::MenuItem("Screen")) Gizmo::manipCoord = CoordSys::SCREEN;
+					ImGui::EndMenu();
+				}
+				if (ImGui::BeginMenu("GizmoPos")) {
+					if (ImGui::MenuItem("Pivot"))  Gizmo::gizmoPos = GizmoPos::pivot;
+					if (ImGui::MenuItem("Center"))  Gizmo::gizmoPos = GizmoPos::center;
+					ImGui::EndMenu();
+				}
+
+				ImGui::Separator();
+				if (ImGui::MenuItem("Delete")) {}
+				if (ImGui::MenuItem("Copy")) {}
+				if (ImGui::MenuItem("Paste")) {}
+				
+				ImGui::EndPopup();
+			}
 		}
 
 		// window definition

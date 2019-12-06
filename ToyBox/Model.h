@@ -36,9 +36,10 @@ namespace MOON {
 			meshList.clear();
 		}
 
-		void Draw() {
+		void Draw(Shader* overrideShader = NULL) {
 			for (int i = 0; i < meshList.size(); i++) {
-				meshList[i]->Draw(meshList[i]->material->shader, transform.modelMat);
+				meshList[i]->Draw(overrideShader == NULL ? meshList[i]->material->shader : 
+							      overrideShader, transform.modelMat);
 			}
 			if (transform.changeFlag) {
 				UpdateWorldBBox();

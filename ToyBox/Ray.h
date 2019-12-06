@@ -15,6 +15,11 @@ namespace MOON {
 			dir = direction;
 		}
 
+		friend std::ostream& operator<<(std::ostream &os, const Ray &r) {
+			os << "pos: " << r.pos << ", dir: " << r.dir;
+			return os;
+		}
+
 		inline Vector3 PointAtParameter(float dist) const {
 			return pos + dist * dir;
 		}

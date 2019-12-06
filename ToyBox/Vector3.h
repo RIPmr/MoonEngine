@@ -52,6 +52,10 @@ namespace MOON {
 			float dist = sqrt((v1.x - v2.x) * (v1.x - v2.x) + (v1.y - v2.y) * (v1.y - v2.y) + (v1.z - v2.z) * (v1.z - v2.z));
 			return dist;
 		}
+		inline static float FastDistance(const Vector3 &v1, const Vector3 &v2) {
+			float dist = (v1.x - v2.x) * (v1.x - v2.x) + (v1.y - v2.y) * (v1.y - v2.y) + (v1.z - v2.z) * (v1.z - v2.z);
+			return dist;
+		}
 
 		/*
 		Cross Product
@@ -78,6 +82,11 @@ namespace MOON {
 			return dist;
 		}
 
+		inline float fastDistance(const Vector3 &v) const {
+			float dist = (this->x - v.x) * (this->x - v.x) + (this->y - v.y) * (this->y - v.y) + (this->z - v.z) * (this->z - v.z);
+			return dist;
+		}
+
 		inline void setValue(float _x, float _y, float _z) { x = _x; y = _y; z = _z; }
 		inline void setValue(const Vector3 &v) { x = v.x; y = v.y; z = v.z; }
 
@@ -94,6 +103,10 @@ namespace MOON {
 		static Vector3 Projection(const Vector3 &a, const Vector3 &b);
 		static Vector3 ONE();
 		static Vector3 ZERO();
+
+		inline static int DirectionSign(const Vector3 &a, const Vector3 &b) {
+			return Vector3::Normalize(a).dot(Vector3::Normalize(b));
+		}
 
 		inline static Vector3 WORLD(const Direction &direction) {
 			switch (direction) {

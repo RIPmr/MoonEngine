@@ -95,11 +95,23 @@ namespace MOON {
 		UpdateMatrix();
 	}
 
+	Vector3 Camera::WorldToScreenPos(const Vector3& worldPos) const {
+		Matrix4x4 view_proj_inverse = projection * view;
+		return view_proj_inverse.multVec(worldPos);
+	}
+
 	// screen pos to world ray
 	Ray Camera::GetMouseRay() const {
-		// gives mouse pixel in NDC coordinates [-1, 1]
-		Vector2 n(MOON_MousePos.x / MOON_WndSize.x * 2 - 1, 
-				 (MOON_WndSize.y - MOON_MousePos.y - 1) / MOON_WndSize.y * 2 - 1);
+		Vector2 n(MOON_MousePos.x / MOON_WndSize.x * 2 - 1, (MOON_WndSize.y - MOON_MousePos.y - 1) / MOON_WndSize.y * 2 - 1);
+
+		Matrix4x4 view_proj_inverse = (projection * view).inverse();
+		Vector3 ray_end = view_proj_inverse.multVec(Vector3(n.x, n.y, 1.f));
+
+		return Ray(transform.position, Vector3::Normalize(ray_end - view_proj_inverse.multVec(Vector3(n.x, n.y, 0.f))));
+	}
+
+	Ray Camera::GetMouseRayAccurate() const {
+		Vector2 n = MOON_MousePosNormalized;
 
 		Vector3 ray_start, ray_end;
 		Matrix4x4 view_proj_inverse = (projection * view).inverse();
@@ -108,7 +120,6 @@ namespace MOON {
 		ray_end = view_proj_inverse.multVec(Vector3(n.x, n.y, 1.f));
 
 		return Ray(ray_start, Vector3::Normalize(ray_end - ray_start));
-		//return Ray(ray_start, ray_end - ray_start);
 	}
 
 	// screen pos to world pos

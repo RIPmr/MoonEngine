@@ -104,9 +104,10 @@ namespace MOON {
 	}
 
 	float Vector3::Angle(const Vector3 &a, const Vector3 &b) {
-		float angle = a.dot(b);
-		angle /= (a.magnitude() * b.magnitude());
-		return angle = acosf(angle);
+		//float angle = a.dot(b);
+		//angle /= (a.magnitude() * b.magnitude());
+		//return angle = acosf(angle);
+		return acosf(Vector3::Normalize(a).dot(Vector3::Normalize(b)));
 	}
 
 	Vector3 Vector3::Projection(const Vector3 &a, const Vector3 &b) {

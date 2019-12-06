@@ -26,7 +26,9 @@ namespace MOON {
 			this->fragmentPath = fragmentPath;
 			Compile_And_Link(vertexPath, fragmentPath);
 		}
-		~Shader() override {}
+		~Shader() override {
+			glDeleteShader(localID);
+		}
 
 		// activate the shader
 		// ------------------------------------------------------------------------

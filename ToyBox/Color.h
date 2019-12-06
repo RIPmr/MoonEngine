@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <iostream>
 
 #include "Vector4.h"
 #include "MathUtils.h"
@@ -33,17 +34,20 @@ namespace MOON {
 			/// black (0, 0, 0, 0) is backgroundColor
 			/// so object ID is start from 1
 			std::vector<int> data = MoonMath::TENtoNBase(ID, 256);
-			
+
 			// reverse order
-			return Vector4(data[0], data[1], data[2], 255 - data[3]);
+			return Vector4(data[0], data.size() > 1 ? data[1] : 0, 
+						   data.size() > 2 ? data[2] : 0, 
+						   255 - (data.size() > 3 ? data[3] : 0)) / 255.0f;
 		}
 		// convert object color to object ID
-		inline static unsigned int IDDecoder(const Vector4 &Color) {
+		inline static unsigned int IDDecoder(Vector4 Color) {
 			if (Color == Vector4::ZERO()) {
 				std::cout << "ERROR: ID can not be 0!" << std::endl;
 				return 0;
 			}
 
+			Color *= 255;
 			return (255 - Color[3]) * 256 * 256 * 256 + Color[2] * 256 * 256 + Color[1] * 256 + Color[0];
 		}
 	};

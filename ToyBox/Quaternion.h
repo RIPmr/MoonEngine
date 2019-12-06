@@ -69,5 +69,11 @@ namespace MOON {
 
 		void normalize();
 		void UpdateEulerAngle();
+
+		inline static Quaternion Rotate(const Vector3 &axis, float angle) {
+			angle /= 2.0f;
+			float sint = sinf(angle);
+			return Quaternion(axis.x * sint, axis.y * sint, axis.z * sint, cosf(angle));
+		}
 	};
 }

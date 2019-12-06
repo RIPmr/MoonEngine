@@ -8,6 +8,7 @@ namespace MOON {
 	#define MOON_SceneCamera SceneManager::CameraManager::sceneCamera
 	#define MOON_CurrentCamera SceneManager::CameraManager::currentCamera
 	#define MOON_MousePos SceneManager::InputManager::mousePos
+	#define MOON_MousePosNormalized NormalizedMousePos()
 	#define MOON_Clock SceneManager::Clock
 
 	#define MOON_ObjectList SceneManager::objectList

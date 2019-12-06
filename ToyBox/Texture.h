@@ -9,6 +9,8 @@ namespace MOON {
 		oneD,
 		twoD,
 		threeD,
+		fbo,
+		procedural,
 		Cube,
 		HDRI
 	};
@@ -46,7 +48,9 @@ namespace MOON {
 
 		}
 		
-		~Texture() override {}
+		~Texture() override {
+			if (localID > 0) glDeleteTextures(1, &localID);
+		}
 
 		void ListProperties() override {
 			// list name
@@ -69,6 +73,50 @@ namespace MOON {
 			ImGui::Unindent(centering);
 
 			ImGui::Spacing();
+		}
+	};
+
+	class FrameBuffer : public Texture {
+	public:
+		unsigned int rbo;
+		unsigned int fbo;
+
+		FrameBuffer(const int &_width, const int &_height, const std::string &_name, const unsigned int &_ID = MOON_AUTOID, const TexType &_type = TexType::defaultType, const TexFormat &_format = TexFormat::twoD) :
+			Texture(_width, _height, _name, _ID, TexType::defaultType, TexFormat::twoD) {
+			path = "FBO";
+			gammaCorrection = false;
+			CreateFrameBuffer();
+		}
+
+		~FrameBuffer() override {
+			if (localID > 0) glDeleteTextures(1, &localID);
+			if (rbo > 0) glGenRenderbuffers(1, &rbo);
+			if (fbo > 0) glGenFramebuffers(1, &fbo);
+		}
+
+	private:
+		void CreateFrameBuffer() {
+			// framebuffer configuration
+			glGenFramebuffers(1, &fbo);
+			glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+			// create a color attachment texture
+			glGenTextures(1, &localID);
+			glBindTexture(GL_TEXTURE_2D, localID);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, localID, 0);
+			// create a renderbuffer object for depth and stencil attachment (we won't be sampling these)
+			glGenRenderbuffers(1, &rbo);
+			glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+			// use a single renderbuffer object for both a depth AND stencil buffer.
+			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+			// now actually attach it
+			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+			// now that we actually created the framebuffer and added all attachments we want to check if it is actually complete now
+			if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+				std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		}
 	};
 }

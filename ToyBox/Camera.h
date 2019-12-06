@@ -33,9 +33,9 @@ namespace MOON {
 		float lens_radius;
 
 		// Euler angles
-		float Yaw;
-		float Pitch;
-		//float Roll;
+		float Yaw;	/// Æ«º½: Y-Axis of Euler angle
+		float Pitch;/// ¸©Ñö: X-Axis of Euler angle
+		float Roll;	/// ·­¹ö: Z-Axis of Euler angle
 
 		// Camera options
 		float fov;
@@ -92,8 +92,13 @@ namespace MOON {
 		Matrix4x4 GetProjectionMatrix() const;
 
 		Ray GetRay(float s, float t) const;
+		// rough way, treat camera position as start point of the ray
 		Ray GetMouseRay() const;
+		// accurate solution
+		Ray GetMouseRayAccurate() const;
 		Vector3 unProjectMouse() const;
+
+		Vector3 WorldToScreenPos(const Vector3& worldPos) const;
 
 		void PanCamera(Vector2 mouseOffset);
 		void ZoomCamera(Vector2 &mouseOffset);

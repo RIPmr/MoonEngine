@@ -44,7 +44,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-Vector3 unProjectMouse();
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void MOON_GenerateGround(const float &space, const int &gridCnt);
 void MOON_DrawGround(const Shader* groundShader);
 void MOON_InputProcessor(GLFWwindow *window);
@@ -79,6 +79,7 @@ bool MainUI::show_codeEditor = false;
 
 Texture* MainUI::icon = NULL;
 Texture* MainUI::logo = NULL;
+Texture* MainUI::logoFull = NULL;
 ImGuiIO* MainUI::io;
 ImGuiStyle* MainUI::style;
 
@@ -99,6 +100,7 @@ std::vector<ObjectBase*> SceneManager::matchedList;
 float SceneManager::Clock::deltaTime = 0;
 float SceneManager::Clock::lastFrame = 0;
 bool SceneManager::showbbox = false;
+bool SceneManager::wireMode = false;
 
 MaterialEditor MainUI::nodeEditor;
 
@@ -116,9 +118,15 @@ bool MOON_TextureManager::sizeFlag = true;
 bool MOON_ModelManager::sizeFlag = true;
 bool MOON_CameraManager::sizeFlag = true;
 bool* MOON_InputManager::selection = NULL;
+unsigned int MOON_InputManager::hoverID = 0;
 Shader* MOON_ShaderManager::lineShader = NULL;
+Shader* MOON_ShaderManager::outlineShader = NULL;
+Shader* MOON_ShaderManager::screenBufferShader = NULL;
 Material* MOON_MaterialManager::defaultMat = NULL;
 Sphere* MOON_MaterialManager::matBall = NULL;
+
+Texture* MOON_TextureManager::SHADOWMAP = NULL;
+FrameBuffer* MOON_TextureManager::IDLUT = NULL;
 
 Vector2 MOON_MousePos(-2.0f, -2.0f);
 Vector2 MOON_InputManager::mouseOffset = Vector2::ZERO();
@@ -129,6 +137,10 @@ int MOON_InputManager::mouseMods = 0;
 bool MOON_InputManager::mouse_left_hold = false;
 bool MOON_InputManager::mouse_middle_hold = false;
 bool MOON_InputManager::mouse_right_hold = false;
+bool MOON_InputManager::left_ctrl_hold = false;
+bool MOON_InputManager::left_shift_hold = false;
+bool MOON_InputManager::right_ctrl_hold = false;
+bool MOON_InputManager::right_shift_hold = false;
 bool MOON_InputManager::isHoverUI = false;
 std::vector<unsigned int> MOON_InputManager::selected;
 
@@ -139,5 +151,6 @@ GizmoMode Gizmo::gizmoMode = GizmoMode::none;
 std::vector<float> Gizmo::circle;
 std::vector<float> Gizmo::translate;
 bool Gizmo::isActive = true;
+bool Gizmo::hoverGizmo = false;
 float Gizmo::threshold = 0.1f;
 

@@ -116,7 +116,7 @@ namespace MOON {
 		}
 
 		// A test to see if P1 is on the same side as P2 of a line segment ab
-		inline static bool SameSide(Vector3 p1, Vector3 p2, Vector3 a, Vector3 b) {
+		inline static bool SameSide(const Vector3 &p1, const Vector3 &p2, const Vector3 &a, const Vector3 &b) {
 			Vector3 cp1 = Vector3::Cross(b - a, p1 - a);
 			Vector3 cp2 = Vector3::Cross(b - a, p2 - a);
 
@@ -127,7 +127,7 @@ namespace MOON {
 		}
 
 		// Generate a cross produect normal for a triangle
-		inline static Vector3 GenTriNormal(Vector3 t1, Vector3 t2, Vector3 t3) {
+		inline static Vector3 GenTriNormal(const Vector3 &t1, const Vector3 &t2, const Vector3 &t3) {
 			Vector3 u = t2 - t1;
 			Vector3 v = t3 - t1;
 
@@ -137,11 +137,11 @@ namespace MOON {
 		}
 
 		// Check to see if a Vector3 Point is within a 3 Vector3 Triangle
-		inline static bool IsInTriangle(Vector3 point, Vector3 tri1, Vector3 tri2, Vector3 tri3) {
+		inline static bool IsInTriangle(const Vector3 &point, const Vector3 &tri1, const Vector3 &tri2, const Vector3 &tri3) {
 			// Test to see if it is within an infinite prism that the triangle outlines.
 			bool within_tri_prisim = SameSide(point, tri1, tri2, tri3) &&
-				SameSide(point, tri2, tri1, tri3) &&
-				SameSide(point, tri3, tri1, tri2);
+									 SameSide(point, tri2, tri1, tri3) &&
+									 SameSide(point, tri3, tri1, tri2);
 
 			// If it isn't it will never be on the triangle
 			if (!within_tri_prisim) return false;
@@ -157,6 +157,7 @@ namespace MOON {
 			else return false;
 		}
 
+		// Rotate 2D point around origin point (0, 0)
 		inline static Vector2 RotateAround(const Vector2 &targetPoint, const Vector2 &rotCenter, const float theta) {
 			// discard y val
 			float cx = rotCenter.x, cy = rotCenter.y; // rotCenter
@@ -180,6 +181,62 @@ namespace MOON {
 			return Vector2(px, py);
 		}
 
+		// Rotate 3D point around given axis
+		// *NOTE: not tested yet!
+		static Vector3 RotateAround(const Vector3 &position, const Vector3 &center, const Vector3 &axis, const float &angle);
+
+		/// <summary>
+		/// 计算射线与平面的空间状态判断
+		/// 平面法线方向必须是射线起点所在的平面一侧方向
+		/// 返回等于0时,射线与平面平行,无交点
+		/// 返回大于0时,射线射向与平面相反的方向,无交点
+		/// </summary>
+		inline static float IsRayPlaneIntersect(const Ray &ray, Vector3 planeNormal, const Vector3 &planePoint, const bool cullBack = true) {
+			if (!cullBack) planeNormal *= Vector3::Dot(planePoint - ray.pos, planeNormal) > 0 ? -1 : 1;
+			return Vector3::Dot(ray.dir, planeNormal);
+		}
+
+		inline static Vector3 RayPlaneIntersect(const Ray &ray, const Vector3 &planeNormal, const Vector3 &planePoint) {
+			float d = Vector3::Dot(planePoint - ray.pos, planeNormal) / Vector3::Dot(ray.dir, planeNormal);
+			return ray.PointAtParameter(d);
+		}
+
+		/// <summary>
+		/// 计算空间线段与平面的交点
+		/// accuracy（容差）越小对于直线端点刚好为交点的情况求交越精确
+		/// </summary>
+		inline static bool LinePlaneIntersect(const Vector3 &pointA, const Vector3 &pointB, const Vector3 &planeNormal, const Vector3 &planePoint, Vector3 &intersect, const float &accuracy = 0.0001f) {
+			// first, treat the line as an ray
+			Vector3 direction = pointB - pointA;
+			int determine = Vector3::Dot(planePoint - pointA, planeNormal) > 0 ? -1 : 1;
+
+			// check for intersect
+			if (IsRayPlaneIntersect(Ray(pointA, direction), planeNormal * determine, planePoint) < 0) {
+				// calculate intersect point
+				intersect = RayPlaneIntersect(Ray(pointA, Vector3::Normalize(direction)), planeNormal * determine, planePoint);
+				// check if the intersect point is inside line
+				if ((intersect - pointA).magnitude() <= (direction.magnitude() + accuracy)) return true;
+			}
+
+			return false;
+		}
+
+		inline static bool RayDiskIntersect(const Ray& ray, const Vector3 &diskPoint, const Vector3 &diskNormal, const float &diskRadius, Vector3 &intersect, const float &accuracy = 0.0001f) {
+			int determine = Vector3::Dot(diskPoint - ray.pos, diskNormal) > 0 ? -1 : 1;
+
+			if (IsRayPlaneIntersect(Ray(ray.pos, ray.dir), diskNormal * determine, diskPoint) < 0) {
+				intersect = RayPlaneIntersect(Ray(ray.pos, Vector3::Normalize(ray.dir)), diskNormal * determine, diskPoint);
+				if ((intersect - diskPoint).magnitude() <= diskRadius + accuracy) return true;
+			}
+
+			return false;
+		}
+
+		inline static float PointLineDistance(const Vector3 &point, const Vector3 &linePoint1, const Vector3 &linePoint2) {
+			float fProj = Vector3::Dot(point - linePoint1, Vector3::Normalize(linePoint1 - linePoint2));
+			return std::sqrtf((point - linePoint1).magnitude() - fProj * fProj);
+		}
+
 		// ---------------------------------------------------------------------------------
 		inline static float Determinant(const Vector3 &a, const Vector3 &v1, const Vector3 &v2) {
 			return a[0] * (v1[1] * v2[2] - v1[2] * v2[1]) + a[1] * (v1[2] * v2[0] - v1[0] * v2[2]) + a[2] * (v1[0] * v2[1] - v1[1] * v2[0]);
@@ -189,111 +246,7 @@ namespace MOON {
 		}
 		// Given two lines defined by (a0,a1,b0,b1)
 		// Return the closest points on each segment and their distance
-		inline static float closestDistanceBetweenLines(const Vector3 &a0, const Vector3 &a1, const Vector3 &b0, const Vector3 &b1, Vector3 &Line1Closest, Vector3 &Line2Closest) {
-			// Based on https://stackoverflow.com/questions/2824478/shortest-distance-between-two-line-segments
-			float Distance;
-
-			// Calculate denomitator
-			auto A = a1 - a0;
-			auto B = b1 - b0;
-			float magA = A.magnitude();
-			float magB = B.magnitude();
-
-			auto _A = A / magA;
-			auto _B = B / magB;
-
-			auto cross = Vector3::Cross(_A, _B);
-			auto denom = cross.magnitude() * cross.magnitude();
-
-			// If lines are parallel (denom=0) test if lines overlap.
-			// If they don't overlap then there is a closest point solution.
-			// If they do overlap, there are infinite closest positions, but there is a closest distance
-			if (denom == 0) {
-				auto d0 = Vector3::Dot(_A, (b0 - a0));
-
-				// Overlap only possible with clamping
-				auto d1 = Vector3::Dot(_A, (b1 - a0));
-
-				// Is segment B before A?
-				if (d0 <= 0 && 0 >= d1) {
-					if (abs(d0) < abs(d1)) {
-						Line1Closest = a0;
-						Line2Closest = b0;
-						Distance = (a0 - b0).magnitude();
-
-						return Distance;
-					}
-					Line1Closest = a0;
-					Line2Closest = b1;
-					Distance = (a0 - b1).magnitude();
-
-					return Distance;
-				}
-				// Is segment B after A?
-				else if (d0 >= magA && magA <= d1) {
-					if (abs(d0) < abs(d1)) {
-						Line1Closest = a1;
-						Line2Closest = b0;
-						Distance = (a1 - b0).magnitude();
-
-						return Distance;
-					}
-					Line1Closest = a1;
-					Line2Closest = b1;
-					Distance = (a1 - b1).magnitude();
-
-					return Distance;
-				}
-
-				// Segments overlap, return distance between parallel segments
-				Line1Closest = Vector3::ZERO();
-				Line2Closest = Vector3::ZERO();
-				Distance = (((d0 * _A) + a0) - b0).magnitude();
-				return Distance;
-			}
-
-
-			// Lines criss-cross: Calculate the projected closest points
-			auto t = (b0 - a0);
-			auto detA = Determinant(t, _B, cross);
-			auto detB = Determinant(t, _A, cross);
-
-			auto t0 = detA / denom;
-			auto t1 = detB / denom;
-
-			auto pA = a0 + (_A * t0); // Projected closest point on segment A
-			auto pB = b0 + (_B * t1); // Projected closest point on segment B
-
-
-			// Clamp projections
-			if (t0 < 0) pA = a0;
-			else if (t0 > magA) pA = a1;
-
-			if (t1 < 0) pB = b0;
-			else if (t1 > magB) pB = b1;
-
-			float dot;
-			// Clamp projection A
-			if (t0 < 0 || t0 > magA) {
-				dot = Vector3::Dot(_B, (pA - b0));
-				if (dot < 0) dot = 0;
-				else if (dot > magB) dot = magB;
-				pB = b0 + (_B * dot);
-			}
-			// Clamp projection B
-			if (t1 < 0 || t1 > magB) {
-				dot = Vector3::Dot(_A, (pB - a0));
-				if (dot < 0) dot = 0;
-				else if (dot > magA) dot = magA;
-				pA = a0 + (_A * dot);
-			}
-
-			Line1Closest = pA;
-			Line2Closest = pB;
-			Distance = (pA - pB).magnitude();
-
-			return Distance;
-		}
+		static float closestDistanceBetweenLines(const Vector3 &a0, const Vector3 &a1, const Vector3 &b0, const Vector3 &b1, Vector3 &Line1Closest, Vector3 &Line2Closest);
 
 	};
 }

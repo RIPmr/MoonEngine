@@ -3,11 +3,10 @@
 #include "Matrix4x4.h"
 
 namespace MOON {
-	// Not tested yet
 	Quaternion::Quaternion(const Matrix4x4 &mat) {
-		float m11 = mat.x[1][1], m12 = mat.x[2][1], m13 = mat.x[3][1];
-		float m21 = mat.x[1][2], m22 = mat.x[2][2], m23 = mat.x[3][2];
-		float m31 = mat.x[1][3], m32 = mat.x[2][3], m33 = mat.x[3][3];
+		float m11 = mat.x[0][0], m12 = mat.x[1][0], m13 = mat.x[2][0];
+		float m21 = mat.x[0][1], m22 = mat.x[1][1], m23 = mat.x[2][1];
+		float m31 = mat.x[0][2], m32 = mat.x[1][2], m33 = mat.x[2][2];
 
 
 		//探测四元数中最大的项 

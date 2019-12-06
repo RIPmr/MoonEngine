@@ -103,4 +103,6 @@ namespace MOON {
 
 	void DebugLine(const Vector3 &start, const Vector3 &end, const Vector4 &color = Color::WHITE());
 
+	Vector2 NormalizedMousePos();
+
 }

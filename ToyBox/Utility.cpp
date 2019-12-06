@@ -40,4 +40,9 @@ namespace MOON {
 		glDeleteBuffers(1, &VBO);
 	}
 
+	// gives mouse pixel in NDC coordinates [-1, 1]
+	Vector2 NormalizedMousePos() {
+		return Vector2(MOON_MousePos.x / MOON_WndSize.x * 2 - 1, (MOON_WndSize.y - MOON_MousePos.y - 1) / MOON_WndSize.y * 2 - 1);
+	}
+
 }

@@ -45,6 +45,7 @@ namespace MOON {
 
 
 		// 另两个输入向量z轴为0，返回三维交叉积向量的z值（结果向量沿Z轴向上）
+		// *openGL中为y轴
 		inline float cross(const Vector2 &v) const {
 			return (x * v.y - y * v.x);
 		}
@@ -60,12 +61,26 @@ namespace MOON {
 			return dist;
 		}
 
-		inline void setValue(float _x, float _y) { x = _x; y = _y; }
+		inline void setValue(const float& _x, const float& _y) { x = _x; y = _y; }
+		inline void setValue(const Vector2& v) { x = v.x; y = v.y; }
 
+		static Vector2 ONE();
+		static Vector2 ZERO();
 		static Vector2 Normalize(const Vector2 &v);
 		static float Cross(const Vector2 &v1, const Vector2 &v2);
 		static float Dot(const Vector2 &v1, const Vector2 &v2);
-		static Vector2 ONE();
-		static Vector2 ZERO();
+
+		inline static int DirectionSign(const Vector2 &a, const Vector2 &b) {
+			return a.cross(b) > 0 ? 1 : -1;
+		}
+
+		// angle : [0, 180]
+		inline static float Angle(const Vector2 &v1, const Vector2 &v2) {
+			return std::acosf(Vector2::Normalize(v1).dot(Vector2::Normalize(v2)));
+		}
+		// angle : [-180, 180]
+		inline static float AngleSigned(const Vector2 &v1, const Vector2 &v2) {
+			return (v1.cross(v2) > 0 ? 1 : -1) * Angle(v1, v2);
+		}
 	};
 }

@@ -126,6 +126,12 @@
     <ClCompile Include="Utility.cpp">
       <Filter>SourceFiles\Implementation</Filter>
     </ClCompile>
+    <ClCompile Include="MathUtils.cpp">
+      <Filter>SourceFiles\Implementation</Filter>
+    </ClCompile>
+    <ClCompile Include="Gizmo.cpp">
+      <Filter>SourceFiles\Implementation</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Vector3.h">
@@ -218,9 +224,6 @@
     <ClInclude Include="Helper.h">
       <Filter>HeadFiles\Class</Filter>
     </ClInclude>
-    <ClInclude Include="TextureMgr.h">
-      <Filter>HeadFiles\Component</Filter>
-    </ClInclude>
     <ClInclude Include="OBJMgr.h">
       <Filter>HeadFiles\Component</Filter>
     </ClInclude>
@@ -277,6 +280,18 @@
     </None>
     <None Include="SimplePhong.fs">
       <Filter>Shaders\FS</Filter>
+    </None>
+    <None Include="Outline.fs">
+      <Filter>Shaders\FS</Filter>
+    </None>
+    <None Include="Outline.vs">
+      <Filter>Shaders\VS</Filter>
+    </None>
+    <None Include="ScreenBuffer.fs">
+      <Filter>Shaders\FS</Filter>
+    </None>
+    <None Include="ScreenBuffer.vs">
+      <Filter>Shaders\VS</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 #include <vector>
 #include <iostream>
+#include <cmath>
 
 #include "MoonEnums.h"
 #include "Transform.h"
@@ -19,6 +20,7 @@
 namespace MOON {
 	class Gizmo {
 	public:
+		static bool hoverGizmo;
 		static bool isActive;
 
 		static CoordSys  manipCoord;
@@ -53,63 +55,13 @@ namespace MOON {
 		}
 
 		// Gizmos
-		inline static Vector3 Translate(const Shader* shader, const Ray& ray, const Direction& dir,
-										Transform *trans, Vector3& cAxisPoint_O, bool& xActive, 
-										float maxCamRayLength, const bool &mousePressed) {
-			float		scrDist = Vector3::Distance(ray.pos, trans->position) / 10.0f;
-			Vector3		cRayPoint, cAxisPoint, deltaVec;
-			Matrix4x4	model;
+		static Vector3 Translate(const Ray& ray, const Direction& dir, Transform *trans, Vector3& cAxisPoint_O, bool& xActive, float maxCamRayLength);
+		static Quaternion Rotate(const Ray& ray, const Direction& dir, Matrix4x4& model, Transform *trans, Vector3& cAxisPoint_O, bool& xActive);
+		static Vector3 Scale(const Ray& ray, const Direction& dir, Transform *trans, Vector3& cAxisPoint_O, bool& xActive, float maxCamRayLength);
+		// screen space version
+		static Quaternion Rotate_SS(const Ray& ray, const Direction& dir, Matrix4x4& model, Transform *trans, Vector3& cAxisPoint_O, Vector2& screenPos_O, bool& xActive);
 
-			// Axis -------------------------------------------------------------------------
-			Ray axis; axis.pos = trans->position;			
-
-			if (manipCoord == CoordSys::LOCAL) {
-				axis.dir = trans->GetLocalAxis(dir);
-				model = Matrix4x4::Rotate(Matrix4x4::ScaleMat(scrDist), trans->rotation * RotAxisByDir(dir));
-			} else {
-				axis.dir = Vector3::WORLD(dir);
-				model = Matrix4x4::Rotate(Matrix4x4::ScaleMat(scrDist), RotAxisByDir(dir));
-			} axis.pos = axis.PointAtParameter(-maxCamRayLength);
-
-			// calculate closest dist
-			bool lineDist = MoonMath::closestDistanceBetweenLines(ray, axis, cRayPoint, cAxisPoint, maxCamRayLength, maxCamRayLength * 2) < threshold * scrDist;
-			Vector3 axisProjection = cAxisPoint - trans->position;
-			xActive = mousePressed ? xActive : lineDist && (axisProjection.magnitude() <= scrDist) && Vector3::Angle(axisProjection, axis.dir) < 1.0f;
-			
-			// draw gizmo
-			DrawPrototype(shader, Matrix4x4::Translate(model, trans->position), isActive ? (xActive ? Color::YELLOW() : ColorByDir(dir)) : Color::Gray());
-			
-			// get delta vector
-			if (isActive && xActive) deltaVec += Vector3::Projection(cAxisPoint - cAxisPoint_O, axis.dir);
-			cAxisPoint_O.setValue(cAxisPoint);
-
-			return deltaVec;
-		}
-		inline static void Rotate() {
-
-		}
-		inline static void Scale() {
-
-		}
-
-		inline static void Manipulate(const Ray& ray, void* transform, const Shader* shader, const bool& mousePressed, const float maxCamRayLength = 10000.0f) {
-			static Vector3 cAxisPoint_X, cAxisPoint_Y, cAxisPoint_Z;
-			static bool	   xActive, yActive, zActive;
-
-			Transform	   *trans = (Transform*)transform;
-			Vector3		   deltaEuler;
-			Vector3		   deltaVec;
-
-			switch (gizmoMode) {
-				case GizmoMode::translate:  deltaVec += Translate(shader, ray, Direction::UP, trans, cAxisPoint_Y, yActive, maxCamRayLength, mousePressed);
-											deltaVec += Translate(shader, ray, Direction::LEFT, trans, cAxisPoint_X, xActive, maxCamRayLength, mousePressed);
-											deltaVec += Translate(shader, ray, Direction::FORWARD, trans, cAxisPoint_Z, zActive, maxCamRayLength, mousePressed);
-											break;
-				case GizmoMode::rotate	 :  
-			}
-
-			if (isActive && mousePressed) trans->Translate(deltaVec);
-		}
+		static void Manipulate(void* transform, const float maxCamRayLength = 10000.0f);
 
 	private:
 		static float threshold;
@@ -117,56 +69,24 @@ namespace MOON {
 		static std::vector<float> circle;
 		static std::vector<float> translate;
 
-		inline static void DrawPrototype(const Shader* shader, const Matrix4x4& mat, const Vector4& color) {
-			if (gizmoMode == GizmoMode::none) return;
-			// TODO : link line
-			if (gizmoMode == GizmoMode::link) return;
-
-			// get data
-			std::vector<float> &data = (gizmoMode == GizmoMode::rotate ? circle : translate);
-			int drawSize = (gizmoMode == GizmoMode::rotate ? data.size() / 3 : 2);
-
-			// configure shader
-			shader->setVec4("lineColor", color);
-			shader->setMat4("model", mat);
-
-			// vertex array object
-			unsigned int VAO;
-			glGenVertexArrays(1, &VAO);
-			// vertex buffer object
-			unsigned int VBO;
-			glGenBuffers(1, &VBO);
-			// bind buffers
-			glBindVertexArray(VAO);
-			glBindBuffer(GL_ARRAY_BUFFER, VBO);
-			// line width
-			glLineWidth(1.0);
-			// copy data
-			glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(float), &data[0], GL_STATIC_DRAW);
-			// vertex data format
-			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
-			glEnableVertexAttribArray(0);
-			// unbind buffers
-			glBindBuffer(GL_ARRAY_BUFFER, 0);
-			glDrawArrays(GL_LINE_STRIP, 0, drawSize);
-			glBindVertexArray(0);
-			// delete buffer object
-			glDeleteVertexArrays(1, &VAO);
-			glDeleteBuffers(1, &VBO);
-		}
+		static void DrawPrototype(const Matrix4x4& mat, const Vector4& color);
 
 		inline static Quaternion RotAxisByDir(const Direction& dir) {
 			switch (dir) {
-			case Direction::UP: return Quaternion::identity();
-			case Direction::LEFT: return Quaternion(0, 0, -90.0f);
-			case Direction::FORWARD: return Quaternion(90.0f, 0, 0);
+				case Direction::UP:		return Quaternion::identity();
+				case Direction::LEFT:	return Quaternion(0, 0, -90.0f);
+				case Direction::FORWARD:return Quaternion(90.0f, 0, 0);
 			}
 		}
-		inline static Vector4 ColorByDir(const Direction& dir) {
+		
+		inline static Vector4 ColorByDir(const Direction& dir, const bool& disable, const bool& active) {
+			if (disable) return Color::Gray();
+			else if (active) return Color::YELLOW();
+
 			switch (dir) {
-			case Direction::UP: return Color::GREEN();
-			case Direction::LEFT: return Color::RED();
-			case Direction::FORWARD: return Color::BLUE();
+				case Direction::UP:		return Color::GREEN();
+				case Direction::LEFT:	return Color::RED();
+				case Direction::FORWARD:return Color::BLUE();
 			}
 		}
 	};
