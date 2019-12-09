@@ -12,12 +12,8 @@ namespace MOON {
 		float radius;
 		Material *mat;
 
-		Sphere(const Vector3 &pos, float r) : pos(pos), radius(r), mat(NULL) {};
+		Sphere(const Vector3 &pos, float r) : pos(pos), radius(r) {};
 		Sphere(const Vector3 &pos, float r, Material *mat) : pos(pos), radius(r), mat(mat) {};
-
-		~Sphere() {
-			//if (mat) delete mat;
-		}
 
 		inline bool Hit(const Ray &r, HitRecord &rec) const {
 			Vector3 oc = r.pos - this->pos;

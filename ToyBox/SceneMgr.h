@@ -4,7 +4,6 @@
 #include <string>
 
 #include "Gizmo.h"
-#include "Debugger.h"
 #include "Vector2.h"
 #include "Camera.h"
 #include "Model.h"
@@ -287,10 +286,8 @@ namespace MOON {
 
 		static bool showbbox;
 		static bool wireMode;
-		static bool exitFlag;
 
 		// all objects
-		static std::vector<MObject*>	treeList;
 		static std::vector<ObjectBase*> objectList;
 		static std::vector<ObjectBase*> matchedList;
 
@@ -345,8 +342,7 @@ namespace MOON {
 		static std::string GetTypeIcon(T* item) {
 			std::string typeIcon;
 			if (typeid(*item) == typeid(Shader)) typeIcon = ICON_FA_FILE_CODE_O;
-			else if (typeid(*item) == typeid(Texture)) typeIcon = ICON_FA_FILE_IMAGE_O;
-			else if (typeid(*item) == typeid(FrameBuffer)) typeIcon = ICON_FA_PICTURE_O;
+			else if (typeid(*item) == typeid(Texture)) typeIcon = ICON_FA_PICTURE_O;
 			else if (typeid(*item) == typeid(MoonMtl) ||
 					 typeid(*item) == typeid(LightMtl) ||
 					 typeid(*item) == typeid(Lambertian) ||
@@ -358,7 +354,6 @@ namespace MOON {
 					 typeid(*item) == typeid(MoonLight) ||
 					 typeid(*item) == typeid(DomeLight)) typeIcon = ICON_FA_LIGHTBULB_O;
 			else if (typeid(*item) == typeid(Model)) typeIcon = ICON_FA_CUBE;
-			else if (typeid(*item) == typeid(Shape)) typeIcon = ICON_FA_SQUARE_O;
 			else if (typeid(*item) == typeid(Camera)) typeIcon = ICON_FA_VIDEO_CAMERA;
 			else typeIcon = ICON_FA_QUESTION;
 			return typeIcon;
@@ -399,6 +394,7 @@ namespace MOON {
 
 		static void Clear() {
 			delete CameraManager::sceneCamera;
+			delete MaterialManager::matBall;
 			objectList.clear();
 		}
 
@@ -414,6 +410,8 @@ namespace MOON {
 			std::cout << "- Images For UI Loaded." << std::endl;
 			ShaderManager::LoadDefaultShaders();
 			std::cout << "- Default Shaders Loaded." << std::endl;
+			MaterialManager::PrepareMatBall();
+			std::cout << "- Material Ball Created." << std::endl;
 			MaterialManager::CreateDefaultMats();
 			std::cout << "- Default Materials Created." << std::endl;
 			CameraManager::LoadSceneCamera();
@@ -518,6 +516,11 @@ namespace MOON {
 
 		struct MaterialManager : ObjectManager<Material> {
 			static Material* defaultMat;
+			static Sphere* matBall;
+
+			static void PrepareMatBall() {
+				matBall = new Sphere(Vector3::ZERO(), 1.0f);
+			}
 
 			static void CreateDefaultMats() {
 				defaultMat = MaterialManager::CreateMaterial("MoonMtl", "default");
@@ -650,10 +653,8 @@ namespace MOON {
 				glStencilMask(0xFF);*/
 
 				for (auto &obj : itemMap) {
-					if (obj.second->visible) {
+					if (obj.second->visible)
 						obj.second->Draw();
-						if (SceneManager::showbbox) DEBUG::DrawBBox(obj.second);
-					}
 				}
 
 				//glStencilFunc(GL_NOTEQUAL, 1, 0xFF);

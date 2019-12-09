@@ -43,8 +43,9 @@ namespace MOON {
 		}
 		// for procedural texture
 		Texture(const int &_width, const int &_height, const std::string &_name, const unsigned int &_ID = MOON_AUTOID, const TexType &_type = TexType::defaultType, const TexFormat &_format = TexFormat::twoD) :
-			format(_format), type(_type), path("[PROCEDURAL]"), ObjectBase(_name, _ID), width(_width), height(_height), gammaCorrection(false) {
+			format(_format), type(_type), path("PROCEDURAL"), ObjectBase(_name, _ID), width(_width), height(_height), gammaCorrection(false) {
 			// TODO: create a new texture and get an unique localID
+
 		}
 		
 		~Texture() override {
@@ -82,7 +83,7 @@ namespace MOON {
 
 		FrameBuffer(const int &_width, const int &_height, const std::string &_name, const unsigned int &_ID = MOON_AUTOID, const TexType &_type = TexType::defaultType, const TexFormat &_format = TexFormat::twoD) :
 			Texture(_width, _height, _name, _ID, TexType::defaultType, TexFormat::twoD) {
-			path = "[FBO]";
+			path = "FBO";
 			gammaCorrection = false;
 			CreateFrameBuffer();
 		}

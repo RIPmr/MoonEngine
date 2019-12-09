@@ -9,18 +9,13 @@
 namespace MOON {
 	void Material::GeneratePreview() {
 		if (preview == NULL)
-			preview = new Texture(Material::PREVSIZE.x, Material::PREVSIZE.y,
-				"preview_for_" + name, MOON_UNSPECIFIEDID);
+			preview = new Texture(124, 124, "preview_for_" + name, MOON_UNSPECIFIEDID);
 
-		if (Renderer::PrepareMatPrevRendering(preview)) {
-			pthread_t renderThread;
-			int ret = pthread_create(&renderThread, NULL, Renderer::renderingMatPreview, this);
-			if (!ret) {
-				prevNeedUpdate = false;
-				std::cout << "renderer thread created!" << std::endl;
-			} else std::cout << "renderer thread error! pthread_create error: error_code=" << ret << std::endl;
-		}
-	}
+		/*pthread_t renderThread;
+		int ret = pthread_create(&renderThread, NULL, Renderer::renderingMatPreview, preview);
+		if (!ret) std::cout << "renderer thread created!" << std::endl;
+		else std::cout << "renderer thread error! pthread_create error: error_code=" << ret << std::endl;
+	*/}
 
 	MoonMtl::MoonMtl() : Ns(0.0f), Ni(0.0f), d(0.0f), illum(0) {
 		Kd.setValue(0.8, 0.8, 0.8);

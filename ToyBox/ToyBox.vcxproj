@@ -127,7 +127,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
-    <ClCompile Include="Debugger.cpp" />
     <ClCompile Include="Gizmo.cpp" />
     <ClCompile Include="imgui\imgui.cpp" />
     <ClCompile Include="imgui\imgui_demo.cpp" />
@@ -146,7 +145,6 @@
     <ClCompile Include="OBJExporter.cpp" />
     <ClCompile Include="OBJLoader.cpp" />
     <ClCompile Include="opengl\src\glad.c" />
-    <ClCompile Include="PipelineMgr.cpp" />
     <ClCompile Include="Quaternion.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Utility.cpp" />
@@ -159,13 +157,10 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CodeEditor.h" />
     <ClInclude Include="Color.h" />
-    <ClInclude Include="Debugger.h" />
-    <ClInclude Include="FlowMenu.h" />
     <ClInclude Include="FuzzyMatch.h" />
     <ClInclude Include="Gizmo.h" />
     <ClInclude Include="Helper.h" />
     <ClInclude Include="Hitable.h" />
-    <ClInclude Include="HotkeyMgr.h" />
     <ClInclude Include="IconsFontAwesome4.h" />
     <ClInclude Include="imgui\ImNodes.h" />
     <ClInclude Include="imgui\ImNodesEz.h" />
@@ -183,7 +178,6 @@
     <ClInclude Include="OperatorBase.h" />
     <ClInclude Include="OperatorLoader.h" />
     <ClInclude Include="OP_MeshEditor.h" />
-    <ClInclude Include="PipelineMgr.h" />
     <ClInclude Include="PMapGen.h" />
     <ClInclude Include="PreInclude.h" />
     <ClInclude Include="AssetLoader.h" />

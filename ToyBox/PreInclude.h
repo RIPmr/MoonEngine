@@ -1,20 +1,3 @@
-/*	   ___           ___           ___           ___
-*	  /\__\         /\  \         /\  \         /\__\
-*  	 /::|  |       /::\  \       /::\  \       /::|  |
-*   /:|:|  |      /:/\:\  \     /:/\:\  \     /:|:|  |
-*  /:/|:|__|__   /:/  \:\  \   /:/  \:\  \   /:/|:|  |__
-* /:/ |::::\__\ /:/__/ \:\__\ /:/__/ \:\__\ /:/ |:| /\__\
-* \/__/~~/:/  / \:\  \ /:/  / \:\  \ /:/  / \/__|:|/:/  /
-*	    /:/  /   \:\  /:/  /   \:\  /:/  /      |:/:/  /
-*	   /:/  /     \:\/:/  /     \:\/:/  /       |::/  /
-*	  /:/  /       \::/  /       \::/  /        /:/  /
-*	  \/__/         \/__/         \/__/         \/__/
-*
-* @author	HZT
-* @date		2019-12-06
-* @version	0.0.2
-*/
-
 #pragma once
 #define STB_IMAGE_IMPLEMENTATION
 #define HAVE_STRUCT_TIMESPEC
@@ -31,9 +14,7 @@
 #include <map>
 
 #include "AssetLoader.h"
-#include "PipelineMgr.h"
 #include "MoonEnums.h"
-#include "Debugger.h"
 #include "Gizmo.h"
 #include "SceneMgr.h"
 #include "Vector2.h"
@@ -59,11 +40,11 @@ using namespace MOON;
 
 // function declaration
 GLFWwindow* InitWnd();
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void MOON_GenerateGround(const float &space, const int &gridCnt);
 void MOON_DrawGround(const Shader* groundShader);
 void MOON_InputProcessor(GLFWwindow *window);
@@ -75,116 +56,101 @@ void MOON_CleanUp();
 // global parameters
 std::vector<float> grid;
 
-// init Pipe Mgr
-float PipelineManager::quadVertices[24] = {
-	// positions   // texCoords
-	-1.0f,  1.0f,  0.0f, 1.0f,
-	-1.0f, -1.0f,  0.0f, 0.0f,
-	 1.0f, -1.0f,  1.0f, 0.0f,
-	-1.0f,  1.0f,  0.0f, 1.0f,
-	 1.0f, -1.0f,  1.0f, 0.0f,
-	 1.0f,  1.0f,  1.0f, 1.0f
-};
-ShadingMode PipelineManager::mode			= ShadingMode::FORWARD_SHADING;
-unsigned int PipelineManager::quadVAO		= MOON_UNSPECIFIEDID;
-unsigned int PipelineManager::quadVBO		= MOON_UNSPECIFIEDID;
+// init main ui
+bool MainUI::show_control_window = true;
+bool MainUI::show_explorer_window = true;
+bool MainUI::show_scene_window = false;
 
-// init Main UI
-bool MainUI::show_control_window			= true;
-bool MainUI::show_explorer_window			= true;
-bool MainUI::show_scene_window				= false;
+bool MainUI::show_demo_window = false;
+bool MainUI::show_VFB_window = false;
+bool MainUI::show_preference_window = false;
+bool MainUI::show_about_window = false;
 
-bool MainUI::show_demo_window				= false;
-bool MainUI::show_VFB_window				= false;
-bool MainUI::show_preference_window			= false;
-bool MainUI::show_about_window				= false;
+bool MainUI::show_inspector_window = true;
+bool MainUI::show_project_window = true;
+bool MainUI::show_console_window = true;
+bool MainUI::show_create_window = true;
+bool MainUI::show_enviroment_editor = false;
 
-bool MainUI::show_inspector_window			= true;
-bool MainUI::show_project_window			= true;
-bool MainUI::show_console_window			= true;
-bool MainUI::show_create_window				= true;
-bool MainUI::show_enviroment_editor			= false;
+bool MainUI::show_ribbon = true;
+bool MainUI::show_timeline = false;
+bool MainUI::show_material_editor = false;
+bool MainUI::show_codeEditor = false;
 
-bool MainUI::show_ribbon					= true;
-bool MainUI::show_timeline					= false;
-bool MainUI::show_material_editor			= false;
-bool MainUI::show_codeEditor				= false;
-
-Texture* MainUI::icon						= MOON_UNSPECIFIEDID;
-Texture* MainUI::logo						= MOON_UNSPECIFIEDID;
-Texture* MainUI::logoFull					= MOON_UNSPECIFIEDID;
-ImGuiIO* MainUI::io							= MOON_UNSPECIFIEDID;
+Texture* MainUI::icon = NULL;
+Texture* MainUI::logo = NULL;
+Texture* MainUI::logoFull = NULL;
+ImGuiIO* MainUI::io;
 ImGuiStyle* MainUI::style;
 
-// init Math Tool
-unsigned long long MoonMath::seed			= 1;
-// init Dir Tree
-DirNode* AssetLoader::DirTree				= MOON_UNSPECIFIEDID;
-// init Others
-Camera Renderer::matCamera					= Camera("matCamera", Vector3(0, 0, 4));
-Vector2 Material::PREVSIZE					= Vector2(124, 124);
-// init Scene Manager
-Camera* MOON_SceneCamera					= MOON_UNSPECIFIEDID;
-Camera* MOON_CurrentCamera					= MOON_UNSPECIFIEDID;
-float Camera::MouseSensitivity				= 0.025f;
-int SceneManager::delID						= MOON_AUTOID;
-unsigned int SceneManager::objectCounter	= 1;
-float SceneManager::Clock::deltaTime		= MOON_UNSPECIFIEDID;
-float SceneManager::Clock::lastFrame		= MOON_UNSPECIFIEDID;
-bool SceneManager::showbbox					= false;
-bool SceneManager::wireMode					= false;
-bool SceneManager::exitFlag					= false;
+// init math tool
+unsigned long long MoonMath::seed = 1;
 
-MaterialEditor								MainUI::nodeEditor;
-std::vector<ObjectBase*>					SceneManager::objectList;
-std::vector<ObjectBase*>					SceneManager::matchedList;
+// init dir tree
+DirNode* AssetLoader::DirTree = NULL;
 
-// init Containers
-std::multimap<std::string, Light*>			MOON_LightManager::itemMap;
-std::multimap<std::string, Material*>		MOON_MaterialManager::itemMap;
-std::multimap<std::string, Shader*>			MOON_ShaderManager::itemMap;
-std::multimap<std::string, Texture*>		MOON_TextureManager::itemMap;
-std::multimap<std::string, Model*>			MOON_ModelManager::itemMap;
-std::multimap<std::string, Camera*>			MOON_CameraManager::itemMap;
+// init scene manager
+Camera* MOON_SceneCamera = NULL;
+Camera* MOON_CurrentCamera = NULL;
+float Camera::MouseSensitivity = 0.025f;
+int SceneManager::delID = -1;
+unsigned int SceneManager::objectCounter = 1;
+std::vector<ObjectBase*> SceneManager::objectList;
+std::vector<ObjectBase*> SceneManager::matchedList;
+float SceneManager::Clock::deltaTime = 0;
+float SceneManager::Clock::lastFrame = 0;
+bool SceneManager::showbbox = false;
+bool SceneManager::wireMode = false;
 
-// init Managers
-bool MOON_LightManager::sizeFlag				= true;
-bool MOON_MaterialManager::sizeFlag				= true;
-bool MOON_ShaderManager::sizeFlag				= true;
-bool MOON_TextureManager::sizeFlag				= true;
-bool MOON_ModelManager::sizeFlag				= true;
-bool MOON_CameraManager::sizeFlag				= true;
-bool* MOON_InputManager::selection				= MOON_UNSPECIFIEDID;
-unsigned int MOON_InputManager::hoverID			= MOON_UNSPECIFIEDID;
-Shader* MOON_ShaderManager::lineShader			= MOON_UNSPECIFIEDID;
-Shader* MOON_ShaderManager::outlineShader		= MOON_UNSPECIFIEDID;
-Shader* MOON_ShaderManager::screenBufferShader	= MOON_UNSPECIFIEDID;
-Material* MOON_MaterialManager::defaultMat		= MOON_UNSPECIFIEDID;
-Texture* MOON_TextureManager::SHADOWMAP			= MOON_UNSPECIFIEDID;
-FrameBuffer* MOON_TextureManager::IDLUT			= MOON_UNSPECIFIEDID;
+MaterialEditor MainUI::nodeEditor;
 
-Vector2 MOON_MousePos							= Vector2(-2.0f, -2.0f);
-Vector2 MOON_InputManager::mouseOffset			= Vector2::ZERO();
-Vector2 MOON_InputManager::mouseScrollOffset	= Vector2::ZERO();
-int MOON_InputManager::mouseButton				= MOON_UNSPECIFIEDID;
-int MOON_InputManager::mouseAction				= MOON_UNSPECIFIEDID;
-int MOON_InputManager::mouseMods				= MOON_UNSPECIFIEDID;
-bool MOON_InputManager::mouse_left_hold			= false;
-bool MOON_InputManager::mouse_middle_hold		= false;
-bool MOON_InputManager::mouse_right_hold		= false;
-bool MOON_InputManager::left_ctrl_hold			= false;
-bool MOON_InputManager::left_shift_hold			= false;
-bool MOON_InputManager::right_ctrl_hold			= false;
-bool MOON_InputManager::right_shift_hold		= false;
-bool MOON_InputManager::isHoverUI				= false;
-std::vector<unsigned int>						  MOON_InputManager::selected;
+std::multimap<std::string, Light*> MOON_LightManager::itemMap;
+std::multimap<std::string, Material*> MOON_MaterialManager::itemMap;
+std::multimap<std::string, Shader*> MOON_ShaderManager::itemMap;
+std::multimap<std::string, Texture*> MOON_TextureManager::itemMap;
+std::multimap<std::string, Model*> MOON_ModelManager::itemMap;
+std::multimap<std::string, Camera*> MOON_CameraManager::itemMap;
+
+bool MOON_LightManager::sizeFlag = true;
+bool MOON_MaterialManager::sizeFlag = true;
+bool MOON_ShaderManager::sizeFlag = true;
+bool MOON_TextureManager::sizeFlag = true;
+bool MOON_ModelManager::sizeFlag = true;
+bool MOON_CameraManager::sizeFlag = true;
+bool* MOON_InputManager::selection = NULL;
+unsigned int MOON_InputManager::hoverID = 0;
+Shader* MOON_ShaderManager::lineShader = NULL;
+Shader* MOON_ShaderManager::outlineShader = NULL;
+Shader* MOON_ShaderManager::screenBufferShader = NULL;
+Material* MOON_MaterialManager::defaultMat = NULL;
+Sphere* MOON_MaterialManager::matBall = NULL;
+
+Texture* MOON_TextureManager::SHADOWMAP = NULL;
+FrameBuffer* MOON_TextureManager::IDLUT = NULL;
+
+Vector2 MOON_MousePos(-2.0f, -2.0f);
+Vector2 MOON_InputManager::mouseOffset = Vector2::ZERO();
+Vector2 MOON_InputManager::mouseScrollOffset = Vector2::ZERO();
+int MOON_InputManager::mouseButton = 0;
+int MOON_InputManager::mouseAction = 0;
+int MOON_InputManager::mouseMods = 0;
+bool MOON_InputManager::mouse_left_hold = false;
+bool MOON_InputManager::mouse_middle_hold = false;
+bool MOON_InputManager::mouse_right_hold = false;
+bool MOON_InputManager::left_ctrl_hold = false;
+bool MOON_InputManager::left_shift_hold = false;
+bool MOON_InputManager::right_ctrl_hold = false;
+bool MOON_InputManager::right_shift_hold = false;
+bool MOON_InputManager::isHoverUI = false;
+std::vector<unsigned int> MOON_InputManager::selected;
 
 // init Gizmo
-CoordSys Gizmo::manipCoord						= CoordSys::LOCAL;
-GizmoPos Gizmo::gizmoPos						= GizmoPos::pivot;
-GizmoMode Gizmo::gizmoMode						= GizmoMode::none;
-std::vector<float>								  Gizmo::circle;
-std::vector<float>								  Gizmo::translate;
-bool Gizmo::isActive							= true;
-bool Gizmo::hoverGizmo							= false;
-float Gizmo::threshold							= 0.1f;
+CoordSys Gizmo::manipCoord = CoordSys::LOCAL;
+GizmoPos Gizmo::gizmoPos = GizmoPos::pivot;
+GizmoMode Gizmo::gizmoMode = GizmoMode::none;
+std::vector<float> Gizmo::circle;
+std::vector<float> Gizmo::translate;
+bool Gizmo::isActive = true;
+bool Gizmo::hoverGizmo = false;
+float Gizmo::threshold = 0.1f;
+
