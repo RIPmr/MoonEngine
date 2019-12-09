@@ -20,6 +20,11 @@ namespace MOON {
 	#define MOON_CameraManager SceneManager::CameraManager
 	#define MOON_InputManager SceneManager::InputManager
 
+	enum ShadingMode {
+		FORWARD_SHADING,
+		DEFERRED_SHADING
+	};
+
 	enum Direction {
 		FORWARD,
 		BACKWARD,

@@ -1,9 +1,8 @@
 ﻿#include "PreInclude.h"
-
 //#define MOON_DEBUG_MODE
 
 // global settings ------------------------------------------------
-const char *title = "MoonEngine - v0.018 WIP";
+const char *title = "MoonEngine - v0.02 WIP";
 
 Vector2 MOON_WndSize = Vector2(1600, 900);
 float SceneManager::aspect = MOON_WndSize.x / MOON_WndSize.y;
@@ -17,20 +16,6 @@ unsigned int Renderer::samplingRate = 5;
 unsigned int Renderer::maxReflectionDepth = 5;
 // ----------------------------------------------------------------
 
-// temp data --------------------------------------------------------------------------------
-// vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
-float quadVertices[] = {
-	// positions   // texCoords
-	-1.0f,  1.0f,  0.0f, 1.0f,
-	-1.0f, -1.0f,  0.0f, 0.0f,
-	 1.0f, -1.0f,  1.0f, 0.0f,
-
-	-1.0f,  1.0f,  0.0f, 1.0f,
-	 1.0f, -1.0f,  1.0f, 0.0f,
-	 1.0f,  1.0f,  1.0f, 1.0f
-};
-// ------------------------------------------------------------------------------------------
-
 int main() {
 	std::cout << "starting moon engine... ..." << std::endl;
 
@@ -42,21 +27,9 @@ int main() {
 	MOON_InitEngine();
 
 	// test objects ------------------------------------------------------------------------
-	// screen quad VAO
-	/*unsigned int quadVAO, quadVBO;
-	glGenVertexArrays(1, &quadVAO);
-	glGenBuffers(1, &quadVBO);
-	glBindVertexArray(quadVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-	*/
-	Model* teapot = MOON_ModelManager::LoadModel("Resources/teapot.obj");
+	//Model* teapot = MOON_ModelManager::LoadModel("Resources/teapot.obj");
 	Model* boxes = MOON_ModelManager::LoadModel("Resources/box_stack.obj");
-	teapot->transform.Scale(Vector3(0.1f, 0.1f, 0.1f));
+	//teapot->transform.Scale(Vector3(0.1f, 0.1f, 0.1f));
 	boxes->transform.Translate(Vector3(0.0f, 1.0f, 0.0f));
 	// -------------------------------------------------------------------------------------
 
@@ -75,8 +48,7 @@ int main() {
 		if (SceneManager::wireMode) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		else glPolygonMode(GL_FRONT, GL_FILL);
 
-		// clear background in framebuffer
-		/// bind to framebuffer and draw scene as we normally would to color texture 
+		// clear background of framebuffer
 		glBindFramebuffer(GL_FRAMEBUFFER, MOON_TextureManager::IDLUT->fbo);
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -89,22 +61,16 @@ int main() {
 		// UI controller
 		MOON_DrawMainUI();
 
-		// drawing ID LUT ----------------------------------------------------------
+		// drawing ID LUT ---------------------------------------------------------
 		MOON_ModelManager::DrawIDLUT();
 		MOON_InputManager::GetIDFromLUT(MOON_MousePos);
 		if (!MainUI::io->WantCaptureMouse && MainUI::io->MouseClicked[0] && !Gizmo::hoverGizmo)
 			MOON_InputManager::Select(MOON_InputManager::hoverID);
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-		// clear background in scene
+		// clear background of scene
 		glClearColor(clearColor.x, clearColor.y, clearColor.z, clearColor.w);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		/*glDisable(GL_DEPTH_TEST);
-		MOON_ShaderManager::screenBufferShader->use();
-		glBindVertexArray(quadVAO);
-		glBindTexture(GL_TEXTURE_2D, MOON_TextureManager::IDLUT->localID);
-		glDrawArrays(GL_TRIANGLES, 0, 6);*/
 
 		// rendering objects -------------------------------------------------------
 		MOON_ModelManager::DrawModels();
