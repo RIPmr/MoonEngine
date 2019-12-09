@@ -1,9 +1,32 @@
+#include <vector>
+
 #include "Debugger.h"
 #include "SceneMgr.h"
+#include "Model.h"
 
 namespace MOON {
 
-	void DEBUG::DebugLine(const Vector3 &start, const Vector3 &end, const Vector4 &color) {
+	void DEBUG::DrawBBox(const Model* object, const Vector4 &color, const float &lineWidth) {
+		std::vector<Vector3> corners;
+		
+		object->bbox_world.GetCorners(&corners);
+		DebugLine(corners[0], corners[1], color, lineWidth);
+		DebugLine(corners[1], corners[2], color, lineWidth);
+		DebugLine(corners[2], corners[3], color, lineWidth);
+		DebugLine(corners[3], corners[0], color, lineWidth);
+
+		DebugLine(corners[4], corners[5], color, lineWidth);
+		DebugLine(corners[5], corners[6], color, lineWidth);
+		DebugLine(corners[6], corners[7], color, lineWidth);
+		DebugLine(corners[7], corners[4], color, lineWidth);
+
+		DebugLine(corners[0], corners[6], color, lineWidth);
+		DebugLine(corners[5], corners[3], color, lineWidth);
+		DebugLine(corners[2], corners[4], color, lineWidth);
+		DebugLine(corners[7], corners[1], color, lineWidth);
+	}
+
+	void DEBUG::DebugLine(const Vector3 &start, const Vector3 &end, const Vector4 &color, const float &lineWidth) {
 		// configure shader
 		MOON_ShaderManager::lineShader->use();
 		MOON_ShaderManager::lineShader->setVec4("lineColor", color);
@@ -25,7 +48,7 @@ namespace MOON {
 		glBindVertexArray(VAO);
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
 		// line width
-		glLineWidth(1.0);
+		glLineWidth(lineWidth);
 		// copy data
 		glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(float), &data[0], GL_STATIC_DRAW);
 		// vertex data format

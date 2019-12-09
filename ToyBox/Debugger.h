@@ -12,10 +12,13 @@
 
 namespace MOON {
 
+	extern class Model;
 	class DEBUG {
 	public:
-		static void DebugLine(const Vector3 &start, const Vector3 &end, const Vector4 &color = Color::WHITE());
+		static void DebugLine(const Vector3 &start, const Vector3 &end, const Vector4 &color = Color::WHITE(), const float &lineWidth = 1.0f);
 		
+		static void DrawBBox(const Model* object, const Vector4 &color = Color::WHITE(), const float &lineWidth = 1.0f);
+
 		inline static void Separator(unsigned int cnt) {
 			std::cout << std::endl;
 			while (cnt--) std::cout << "-";

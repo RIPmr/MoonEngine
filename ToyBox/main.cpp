@@ -369,6 +369,9 @@ void MOON_InputProcessor(GLFWwindow *window) {
 	// reset offset -------------------------------------------------------------------
 	MOON_InputManager::mouseOffset.setValue(0.0f, 0.0f);
 	MOON_InputManager::mouseScrollOffset.setValue(0.0f, 0.0f);
+
+	// exit ---------------------------------------------------------------------------
+	if (SceneManager::exitFlag) glfwSetWindowShouldClose(window, true);
 }
 
 void MOON_DrawMainUI() {

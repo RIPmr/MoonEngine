@@ -7,6 +7,8 @@
 #include <string.h>
 #include <algorithm>
 #include <string>
+#include <shlobj.h>
+#include <commDlg.h>
 
 #include "Texture.h"
 #include "Gizmo.h"
@@ -50,6 +52,8 @@ namespace MOON {
 
 		static bool show_curve_editor;
 		static bool show_operator_editor;
+
+		static bool show_profiler;
 
 		// class-like wnds
 		static MaterialEditor nodeEditor;
@@ -752,34 +756,83 @@ namespace MOON {
 		
 		}
 
-		static void OperatorEditor() {
+		static void OperatorExplorer() {
 			
 		}
 
 	private:
+		static std::string OpenFile() {
+			TCHAR szBuffer[MAX_PATH] = { 0 };
+			BROWSEINFO bi;
+			ZeroMemory(&bi, sizeof(BROWSEINFO));
+			bi.hwndOwner = NULL;
+			bi.pszDisplayName = szBuffer;
+			bi.lpszTitle = "Select model file:";
+			bi.ulFlags = BIF_BROWSEINCLUDEFILES;
+			LPITEMIDLIST idl = SHBrowseForFolder(&bi);
+			if (NULL == idl) return NULL;
+			SHGetPathFromIDList(idl, szBuffer);
+			return szBuffer;
+		}
+		
+		static std::string OpenFolder() {
+			TCHAR szBuffer[MAX_PATH] = { 0 };
+			BROWSEINFO bi;
+			ZeroMemory(&bi, sizeof(BROWSEINFO));
+			bi.hwndOwner = NULL;
+			bi.pszDisplayName = szBuffer;
+			bi.lpszTitle = "Select export folder:";
+			bi.ulFlags = BIF_RETURNFSANCESTORS;
+			LPITEMIDLIST idl = SHBrowseForFolder(&bi);
+			if (NULL == idl) return NULL;
+			SHGetPathFromIDList(idl, szBuffer);
+			return szBuffer;
+		}
+
 		static void ShowFileMenu() {
-			ImGui::MenuItem("(dummy menu)", NULL, false, false);
+			//ImGui::MenuItem("(dummy menu)", NULL, false, false);
 			if (ImGui::MenuItem("New")) {}
 			if (ImGui::MenuItem("Open", "Ctrl+O")) {}
 			if (ImGui::BeginMenu("Open Recent")) {
-				ImGui::MenuItem("fish_hat.c");
-				ImGui::MenuItem("fish_hat.inl");
-				ImGui::MenuItem("fish_hat.h");
-				if (ImGui::BeginMenu("More..")) {
-					ImGui::MenuItem("Hello");
-					ImGui::MenuItem("Sailor");
-					if (ImGui::BeginMenu("Recurse..")) {
-						ShowFileMenu();
-						ImGui::EndMenu();
-					}
+				ImGui::MenuItem("test_1.moon");
+				ImGui::MenuItem("test_2.moon");
+				if (ImGui::BeginMenu("More...")) {
+					ImGui::MenuItem("test_3.moon");
+					ImGui::MenuItem("test_4.moon");
 					ImGui::EndMenu();
 				}
 				ImGui::EndMenu();
 			}
 			if (ImGui::MenuItem("Save", "Ctrl+S")) {}
-			if (ImGui::MenuItem("Save As..")) {}
+			if (ImGui::MenuItem("Save As...")) {}
+
 			ImGui::Separator();
-			if (ImGui::BeginMenu("Options")) {
+			if (ImGui::BeginMenu("Import")) {
+				if (ImGui::MenuItem("Model...")) {
+					std::cout << "Selected file: " << OpenFile() << std::endl;
+				}
+				if (ImGui::MenuItem("Scene...")) {
+					std::cout << "Selected file: " << OpenFile() << std::endl;
+				}
+				ImGui::EndMenu();
+			}
+
+			if (ImGui::BeginMenu("Export")) {
+				if (ImGui::MenuItem("Export All...")) {
+					std::cout << "Selected folder: " << OpenFolder() << std::endl;
+				}
+				if (ImGui::MenuItem("Export Selected...")) {
+					std::cout << "Selected folder: " << OpenFolder() << std::endl;
+				}
+				ImGui::EndMenu();
+			}
+
+			ImGui::Separator();
+			if (ImGui::MenuItem("Quit", "Alt+F4")) {
+				SceneManager::exitFlag = true;
+			}
+
+			/*if (ImGui::BeginMenu("Options")) {
 				static bool enabled = true;
 				ImGui::MenuItem("Enabled", "", &enabled);
 				ImGui::BeginChild("child", ImVec2(0, 60), true);
@@ -808,8 +861,7 @@ namespace MOON {
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("Disabled", false)) { IM_ASSERT(0); }
-			if (ImGui::MenuItem("Checked", NULL, true)) {}
-			if (ImGui::MenuItem("Quit", "Alt+F4")) {}
+			if (ImGui::MenuItem("Checked", NULL, true)) {}*/
 		}
 	};
 

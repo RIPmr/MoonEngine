@@ -21,11 +21,16 @@ namespace MOON {
 	extern class renderer;
 	class Material : public ObjectBase {
 	public:
+		static Vector2 PREVSIZE;
+
 		Shader* shader;
 		Texture* preview;
 
-		Material() : ObjectBase(MOON_AUTOID), preview(NULL) {}
-		Material(const std::string &name) : ObjectBase(name, MOON_AUTOID), preview(NULL) {}
+		// if any param is updated, set it true
+		bool prevNeedUpdate;
+
+		Material() : ObjectBase(MOON_AUTOID), preview(NULL), prevNeedUpdate(true) {}
+		Material(const std::string &name) : ObjectBase(name, MOON_AUTOID), preview(NULL), prevNeedUpdate(true) {}
 		//~Material() { delete shader; }
 		~Material() override {
 			if (preview != NULL) delete preview;
@@ -52,7 +57,7 @@ namespace MOON {
 
 		virtual void ListPreview() {
 			ImGui::Text("Preview: ");
-			GeneratePreview();
+			if (prevNeedUpdate) GeneratePreview();
 
 			float centering = (ImGui::GetContentRegionAvailWidth() - preview->width) / 2.0f;
 			ImGui::Indent(centering);

@@ -120,6 +120,9 @@ ImGuiStyle* MainUI::style;
 unsigned long long MoonMath::seed			= 1;
 // init Dir Tree
 DirNode* AssetLoader::DirTree				= MOON_UNSPECIFIEDID;
+// init Others
+Camera Renderer::matCamera					= Camera("matCamera", Vector3(0, 0, 4));
+Vector2 Material::PREVSIZE					= Vector2(124, 124);
 // init Scene Manager
 Camera* MOON_SceneCamera					= MOON_UNSPECIFIEDID;
 Camera* MOON_CurrentCamera					= MOON_UNSPECIFIEDID;
@@ -130,6 +133,7 @@ float SceneManager::Clock::deltaTime		= MOON_UNSPECIFIEDID;
 float SceneManager::Clock::lastFrame		= MOON_UNSPECIFIEDID;
 bool SceneManager::showbbox					= false;
 bool SceneManager::wireMode					= false;
+bool SceneManager::exitFlag					= false;
 
 MaterialEditor								MainUI::nodeEditor;
 std::vector<ObjectBase*>					SceneManager::objectList;
@@ -156,7 +160,6 @@ Shader* MOON_ShaderManager::lineShader			= MOON_UNSPECIFIEDID;
 Shader* MOON_ShaderManager::outlineShader		= MOON_UNSPECIFIEDID;
 Shader* MOON_ShaderManager::screenBufferShader	= MOON_UNSPECIFIEDID;
 Material* MOON_MaterialManager::defaultMat		= MOON_UNSPECIFIEDID;
-Sphere* MOON_MaterialManager::matBall			= MOON_UNSPECIFIEDID;
 Texture* MOON_TextureManager::SHADOWMAP			= MOON_UNSPECIFIEDID;
 FrameBuffer* MOON_TextureManager::IDLUT			= MOON_UNSPECIFIEDID;
 
