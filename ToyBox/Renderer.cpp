@@ -13,13 +13,14 @@ using namespace MOON;
 
 #define MAX_THREADSNUM 6
 
-Camera* Renderer::targetCamera = NULL;
-GLubyte* Renderer::outputImage = NULL;
-GLuint Renderer::outputTexID = -1;
+Camera* Renderer::targetCamera = MOON_UNSPECIFIEDID;
+GLubyte* Renderer::outputImage = MOON_UNSPECIFIEDID;
+GLuint Renderer::outputTexID = MOON_AUTOID;
 float Renderer::progress = 0;
 clock_t Renderer::start = -1;
 clock_t Renderer::end = -1;
 bool Renderer::isAbort = false;
+bool Renderer::prevInQueue = false;
 
 void Renderer::SetOutputSize(unsigned int width, unsigned int height) {
 	OUTPUT_SIZE.setValue(width, height);
@@ -31,7 +32,7 @@ bool Renderer::PrepareVFB() {
 	if (outputTexID != -1) free(outputImage);
 	// malloc space for new output image
 	outputImage = (GLubyte *)malloc(OUTPUT_SIZE.x * OUTPUT_SIZE.y * 3 * sizeof(GLubyte));
-	// initiallize new output image
+	// TODO: initiallize new output image
 
 	// load init blank image
 	bool ret = LoadTextureFromMemory(OUTPUT_SIZE, outputImage, outputTexID);
@@ -88,12 +89,33 @@ void* Renderer::renderingTestImage(void* args) {
 }
 
 // TODO
+bool Renderer::PrepareMatPrevRendering(Texture* target) {
+	if (prevInQueue) return false;
+	else prevInQueue = true;
+
+	start = end = -1;
+	matCamera.InitRenderCamera();
+	if (outputTexID != -1) {
+		free(matPrevImage);
+		glDeleteTextures(1, &outputTexID);
+	}
+	matPrevImage = (GLubyte *)malloc(Material::PREVSIZE.x * Material::PREVSIZE.y * 3 * sizeof(GLubyte));
+
+	// load init blank image
+	bool ret = LoadTextureFromMemory(Material::PREVSIZE, matPrevImage, target->localID);
+
+	return ret;
+}
 void* Renderer::renderingMatPreview(void* args) {
 	int currLine = 0;
-	int width = OUTPUT_SIZE.x;
-	int height = OUTPUT_SIZE.y;
-	Texture* prevTex = (Texture*)args;
+	int width = Material::PREVSIZE.x;
+	int height = Material::PREVSIZE.y;
+	Material* prevMat = (Material*)args;
 
+	// mat ball
+	Sphere matBall(Vector3(0, 0, 0), 0.5, prevMat);
+	Sphere ground(Vector3(0, -100.5, -1), 100, new Lambertian(Vector3(0.8, 0.8, 0.8)));
+	
 	// start rendering
 	std::cout << "rendering preview..." << std::endl;
 
@@ -109,7 +131,6 @@ void* Renderer::renderingMatPreview(void* args) {
 				float u = float(j + MoonMath::drand48()) / width;
 				float v = float(i + MoonMath::drand48()) / height;
 				Ray ray = targetCamera->GetRay(u, v);
-				Vector3 p = ray.PointAtParameter(2.0);
 				col += SamplingColor(ray, 0);
 			}
 			// -------------------------------------------
@@ -124,6 +145,11 @@ void* Renderer::renderingMatPreview(void* args) {
 	}
 
 	// finished
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Material::PREVSIZE.x, Material::PREVSIZE.y, 0,
+				 GL_RGB, GL_UNSIGNED_BYTE, &prevMat->preview->localID);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	prevInQueue = false;
+	delete ground.mat;
 	std::cout << "done." << std::endl;
 
 	return 0;
@@ -158,7 +184,7 @@ void* Renderer::rendering(void* args) {
 				float u = float(j + MoonMath::drand48()) / width;
 				float v = float(i + MoonMath::drand48()) / height;
 				Ray ray = targetCamera->GetRay(u, v);
-				Vector3 p = ray.PointAtParameter(2.0);
+				//Vector3 p = ray.PointAtParameter(2.0);
 				col += SamplingColor(ray, 0);
 
 				// break

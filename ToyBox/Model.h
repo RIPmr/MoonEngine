@@ -53,6 +53,7 @@ namespace MOON {
 			}
 		}
 
+		// Rough but fast
 		void UpdateWorldBBox() {
 			std::vector<Vector3> corner;
 			bbox.GetCorners(&corner);

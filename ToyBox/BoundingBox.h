@@ -32,7 +32,15 @@ namespace MOON {
 		Vector3& operator[](bool i) { return i == 0 ? min : max; }
 		const Vector3 operator[](bool i) const { return i == 0 ? min : max; }
 
-		inline void GetCorners(std::vector<Vector3>* vec) {
+		/*
+			  v7-----v4
+             /|      /|
+            v6-----v5 |
+            | v1----|v2
+            |/      |/
+            v0-----v3
+		*/
+		inline void GetCorners(std::vector<Vector3>* vec) const {
 			vec->push_back(min);
 			vec->push_back(Vector3(min.x, min.y, max.z));
 			vec->push_back(Vector3(max.x, min.y, max.z));

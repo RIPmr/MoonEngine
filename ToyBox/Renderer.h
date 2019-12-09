@@ -1,3 +1,13 @@
+/*
+*  _  _  _  _ ______    _  __    _  __ _  __ _
+* |_)|_||_)|_) |  |    |_)|_ |\|| \|_ |_)|_ |_)
+* | \| ||_)|_)_|_ |    | \|__| ||_/|__| \|__| \
+*
+* @author	HZT
+* @date		2019-12-06
+* @version	0.1.0
+*/
+
 #pragma once
 #include <map>
 #include <ctime>
@@ -7,6 +17,7 @@
 #include "Vector2.h"
 #include "Utility.h"
 #include "Hitable.h"
+#include "Texture.h"
 
 namespace MOON {
 	extern class Camera;
@@ -15,9 +26,11 @@ namespace MOON {
 		// global settings
 		static Vector2 OUTPUT_SIZE;
 		static float aspect;
+		static GLubyte *matPrevImage;
 		static GLubyte *outputImage;
 		static GLuint outputTexID;
 
+		static Camera  matCamera;
 		static Camera* targetCamera;
 
 		static unsigned int samplingRate;
@@ -27,6 +40,7 @@ namespace MOON {
 		static clock_t start, end;
 		static float progress;
 		static bool isAbort;
+		static bool prevInQueue;
 
 		// functions
 		static void* renderingMatPreview(void* args);
@@ -34,6 +48,7 @@ namespace MOON {
 		static void* rendering(void* args);
 		static bool PrepareVFB();
 		static bool PrepareRendering();
+		static bool PrepareMatPrevRendering(Texture* target);
 		static void SetOutputSize(unsigned int width, unsigned int height);
 
 	private:
