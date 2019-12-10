@@ -267,13 +267,15 @@ namespace MOON {
 
 			ImGui::Spacing();
 			if (ImGui::Button("Rendering")) {
-				if (Renderer::PrepareRendering()) {
-					MainUI::show_VFB_window = true;
+				if (!Renderer::prevInQueue) {
+					if (Renderer::PrepareRendering()) {
+						MainUI::show_VFB_window = true;
 
-					pthread_t renderThread;
-					int ret = pthread_create(&renderThread, NULL, Renderer::rendering, NULL);
-					if (!ret) std::cout << "renderer thread created!" << std::endl;
-					else std::cout << "renderer thread error! pthread_create error: error_code=" << ret << std::endl;
+						pthread_t renderThread;
+						int ret = pthread_create(&renderThread, NULL, Renderer::rendering, NULL);
+						if (!ret) std::cout << "renderer thread created!" << std::endl;
+						else std::cout << "renderer thread error! pthread_create error: error_code=" << ret << std::endl;
+					}
 				}
 			}
 
@@ -323,7 +325,7 @@ namespace MOON {
 				ImGui::Image((void*)(intptr_t)MOON_OutputTexID, ImVec2(region_sz * zoom, region_sz * zoom), uv0, uv1, ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.5f));
 				ImGui::EndTooltip();
 			}
-			if (Renderer::progress > 0) {
+			if (Renderer::progress > 0 && !Renderer::prevInQueue) {
 				if (ImGui::Button("Abort")) {
 					Renderer::isAbort = true;
 				}
@@ -430,7 +432,8 @@ namespace MOON {
 							  false, ImGuiWindowFlags_HorizontalScrollbar);
 			ImGui::Columns(2, "mycolumns", false);
 			ImGui::SetColumnWidth(-1, colWidth - 8);
-			MOON_InputManager::UpdateSelectionState();
+
+			MOON_InputManager::ResetSizeChangeState();
 			if (showModel) MOON_ModelManager::ListItems();
 			if (showMat) MOON_MaterialManager::ListItems();
 			if (showTex) MOON_TextureManager::ListItems();
@@ -486,22 +489,21 @@ namespace MOON {
 		static void InspectorWnd() {
 			ImGui::Begin(Icon_Name_To_ID(ICON_FA_SEARCH, " Inspector"), &MainUI::show_inspector_window);
 			// loop all selected objects and list their properties
-			for (auto &iter : MOON_InputManager::selected) {
-				bool checker = MOON_InputManager::selection[MOON_ObjectList[iter]->ID];
+			for (auto &iter : MOON_InputManager::selection) {
+				bool checker = MOON_ObjectList[iter]->selected;
 
-				if (ImGui::CollapsingHeader((SceneManager::GetTypeIcon(MOON_ObjectList[iter]) + 
-											 "  " + MOON_ObjectList[iter]->name).c_str(),
-											&MOON_InputManager::selection[MOON_ObjectList[iter]->ID], 
-											ImGuiTreeNodeFlags_DefaultOpen, MOON_ObjectList[iter]->ID)) {
+				if (ImGui::CollapsingHeader((SceneManager::GetTypeIcon(MOON_ObjectList[iter]) + "  " + 
+											 MOON_ObjectList[iter]->name).c_str(), &MOON_ObjectList[iter]->selected, 
+											 ImGuiTreeNodeFlags_DefaultOpen, MOON_ObjectList[iter]->ID)) {
 					MOON_ObjectList[iter]->ListProperties();
 				}
 
 				// remove ID in selection slot while click close button in the collapsing header
-				if (checker && !MOON_InputManager::selection[MOON_ObjectList[iter]->ID]) {
-					auto end = MOON_InputManager::selected.end();
-					for (auto it = MOON_InputManager::selected.begin(); it != end; it++)
+				if (checker && !MOON_ObjectList[iter]->selected) {
+					auto end = MOON_InputManager::selection.end();
+					for (auto it = MOON_InputManager::selection.begin(); it != end; it++)
 						if (*it == MOON_ObjectList[iter]->ID) {
-							it = MOON_InputManager::selected.erase(it);
+							it = MOON_InputManager::selection.erase(it);
 							break;
 						}
 				}

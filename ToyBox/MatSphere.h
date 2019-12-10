@@ -4,6 +4,7 @@
 #include "Vector3.h"
 
 #include <cmath>
+#include <iostream>
 
 namespace MOON {
 	class Sphere : public Hitable {
@@ -12,8 +13,8 @@ namespace MOON {
 		float radius;
 		Material *mat;
 
-		Sphere(const Vector3 &pos, float r) : pos(pos), radius(r), mat(NULL) {};
-		Sphere(const Vector3 &pos, float r, Material *mat) : pos(pos), radius(r), mat(mat) {};
+		Sphere(const Vector3 &pos, const float &r) : pos(pos), radius(r), mat(NULL) {};
+		Sphere(const Vector3 &pos, const float &r, Material *mat) : pos(pos), radius(r), mat(mat) {};
 
 		~Sphere() {
 			//if (mat) delete mat;
@@ -28,7 +29,8 @@ namespace MOON {
 
 			if (discriminant > 0) {
 				float temp = (-dis_b - sqrt(discriminant)) / dis_a;
-				if (temp < EPSILON && temp > rec.t) {
+				if (temp > EPSILON && temp < rec.t) {
+					//std::cout << temp << std::endl;
 					rec.t = temp;
 					rec.p = r.PointAtParameter(rec.t);
 					rec.normal = (rec.p - this->pos) / radius;
@@ -36,7 +38,7 @@ namespace MOON {
 					return true;
 				}
 				temp = (-dis_b + sqrt(discriminant)) / dis_a;
-				if (temp < EPSILON && temp > rec.t) {
+				if (temp > EPSILON && temp < rec.t) {
 					rec.t = temp;
 					rec.p = r.PointAtParameter(rec.t);
 					rec.normal = (rec.p - this->pos) / radius;

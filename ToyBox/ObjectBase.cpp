@@ -5,14 +5,14 @@
 #include "OperatorBase.h"
 
 namespace MOON {
-	ObjectBase::ObjectBase(const int &_id) : visible(true) {
+	ObjectBase::ObjectBase(const int &_id) : visible(true), selected(false) {
 		if (_id == MOON_AUTOID) {
 			ID = SceneManager::GenUniqueID();
 		} else ID = _id;
 		name = "Object_" + ID;
 	}
 
-	ObjectBase::ObjectBase(const std::string &_name, const int &_id) : name(_name), visible(true) {
+	ObjectBase::ObjectBase(const std::string &_name, const int &_id) : name(_name), visible(true), selected(false) {
 		if (_id == MOON_AUTOID) {
 			ID = SceneManager::GenUniqueID();
 		} else ID = _id;

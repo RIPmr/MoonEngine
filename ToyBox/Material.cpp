@@ -7,18 +7,47 @@
 #pragma comment(lib, "pthreadVC2.lib")
 
 namespace MOON {
+	Vector2 Material::PREVSIZE = Vector2(124, 124);
+
+	void Material::ListPreview() {
+		ImGui::Text("Preview: ");
+		if (prevNeedUpdate && !MOON_InputManager::mouse_left_hold) {
+			GeneratePreview();
+			UpdatePreview();
+		}
+
+		float centering = (ImGui::GetContentRegionAvailWidth() - preview->width) / 2.0f;
+		ImGui::Indent(centering);
+		ImGui::Image((void*)(intptr_t)preview->localID, ImVec2(preview->width, preview->height));
+		ImGui::Unindent(centering);
+	}
+
+	void Material::UpdatePreview() {
+		if (Renderer::progress) {
+			//glBindTexture(GL_TEXTURE_2D, preview->localID);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Material::PREVSIZE.x, Material::PREVSIZE.y, 0,
+				GL_RGB, GL_UNSIGNED_BYTE, Renderer::matPrevImage);
+		}
+		if (Renderer::progress < 0) {
+			Renderer::progress = 0;
+			Renderer::prevInQueue = false;
+			prevNeedUpdate = false;
+			glBindTexture(GL_TEXTURE_2D, 0);
+		}
+	}
+
 	void Material::GeneratePreview() {
-		if (preview == NULL)
-			preview = new Texture(Material::PREVSIZE.x, Material::PREVSIZE.y,
-				"preview_for_" + name, MOON_UNSPECIFIEDID);
+		if (preview == MOON_UNSPECIFIEDID)
+			preview = new Texture(Material::PREVSIZE.x, Material::PREVSIZE.y, "preview_for_" + name, MOON_UNSPECIFIEDID);
+
+		if (Renderer::prevInQueue) return;
+		else Renderer::prevInQueue = true;
 
 		if (Renderer::PrepareMatPrevRendering(preview)) {
-			pthread_t renderThread;
-			int ret = pthread_create(&renderThread, NULL, Renderer::renderingMatPreview, this);
-			if (!ret) {
-				prevNeedUpdate = false;
-				std::cout << "renderer thread created!" << std::endl;
-			} else std::cout << "renderer thread error! pthread_create error: error_code=" << ret << std::endl;
+			pthread_t prevThread;
+			int ret = pthread_create(&prevThread, NULL, Renderer::renderingMatPreview, this);
+			if (!ret) std::cout << "renderer thread created!" << std::endl;
+			else std::cout << "renderer thread error! pthread_create error: error_code=" << ret << std::endl;
 		}
 	}
 

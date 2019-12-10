@@ -59,24 +59,24 @@ namespace MOON {
 	}
 
 	// screen pos to world ray fast version (used in renderer)
-	Ray Camera::GetRay(float s, float t) const {
+	Ray Camera::GetRay(float s, float t, float aspect) const {
+		s = (s - 0.5f) / 2.0f * aspect + 0.5f;
 		Vector3 rd = lens_radius * MoonMath::RandomInUnitDisk();
 		Vector3 offset = Right * rd.x + Up * rd.y;
-		return Ray(transform.position + offset,
-			lower_left_corner + s * horizontal +
-			t * vertical - transform.position - offset);
+		return Ray(transform.position + offset, lower_left_corner + s * horizontal + t * vertical - transform.position - offset);
 	}
 
 	void Camera::InitRenderCamera() {
+		float aspect = 2.0f;
 		float theta = fov * Deg2Rad;
-		float half_height = tan(theta / Renderer::aspect);
-		float half_width = Renderer::aspect * half_height;
+		float half_height = tan(theta / aspect);
+		float half_width = aspect * half_height;
 
 		float focus_dist = Front.magnitude();
 		lower_left_corner = transform.position - focus_dist * (half_width * Right + half_height * Up - Front);
 
-		horizontal = Renderer::aspect * half_width * focus_dist * Right;
-		vertical = Renderer::aspect * half_height * focus_dist * Up;
+		horizontal = aspect * half_width * focus_dist * Right;
+		vertical = aspect * half_height * focus_dist * Up;
 	}
 
 	void Camera::updateCameraVectors() {

@@ -48,7 +48,7 @@ namespace MOON {
 		shader->setVec3("viewPos", MOON_CameraManager::currentCamera->transform.position);
 
 		shader->setBool("isHovered", parent->ID == MOON_InputManager::hoverID);
-		shader->setBool("isSelected", MOON_InputManager::selection[parent->ID]);
+		shader->setBool("isSelected", parent->selected);
 
 		// draw mesh
 		glBindVertexArray(VAO);

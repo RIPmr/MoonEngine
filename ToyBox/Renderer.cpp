@@ -13,8 +13,10 @@ using namespace MOON;
 
 #define MAX_THREADSNUM 6
 
+Camera Renderer::matCamera = Camera("matCamera", Vector3(0, 0, 4));
 Camera* Renderer::targetCamera = MOON_UNSPECIFIEDID;
 GLubyte* Renderer::outputImage = MOON_UNSPECIFIEDID;
+GLubyte* Renderer::matPrevImage = MOON_UNSPECIFIEDID;
 GLuint Renderer::outputTexID = MOON_AUTOID;
 float Renderer::progress = 0;
 clock_t Renderer::start = -1;
@@ -32,7 +34,7 @@ bool Renderer::PrepareVFB() {
 	if (outputTexID != -1) free(outputImage);
 	// malloc space for new output image
 	outputImage = (GLubyte *)malloc(OUTPUT_SIZE.x * OUTPUT_SIZE.y * 3 * sizeof(GLubyte));
-	// TODO: initiallize new output image
+	// TODO: initialize new output image
 
 	// load init blank image
 	bool ret = LoadTextureFromMemory(OUTPUT_SIZE, outputImage, outputTexID);
@@ -88,45 +90,39 @@ void* Renderer::renderingTestImage(void* args) {
 	return 0;
 }
 
-// TODO
-bool Renderer::PrepareMatPrevRendering(Texture* target) {
-	if (prevInQueue) return false;
-	else prevInQueue = true;
 
+bool Renderer::PrepareMatPrevRendering(Texture* target) {
 	start = end = -1;
+	matCamera.fov = 20.0f;
 	matCamera.InitRenderCamera();
-	if (outputTexID != -1) {
+	if (target->localID != -1) {
 		free(matPrevImage);
-		glDeleteTextures(1, &outputTexID);
+		glDeleteTextures(1, &target->localID);
 	}
 	matPrevImage = (GLubyte *)malloc(Material::PREVSIZE.x * Material::PREVSIZE.y * 3 * sizeof(GLubyte));
 
 	// load init blank image
-	bool ret = LoadTextureFromMemory(Material::PREVSIZE, matPrevImage, target->localID);
-
-	return ret;
+	return LoadTextureFromMemory(Material::PREVSIZE, matPrevImage, target->localID);
 }
-Vector3 Renderer::SamplingColor_Simple(const Ray &r, int depth) {
-	HitRecord rec;
-	if (MOON_ModelManager::Hit(r, rec)) {
+Vector3 Renderer::SamplingColor_Simple(const Ray &r, int depth, const Sphere* ball, const Sphere* ground) {
+	HitRecord recB, recG;
+	if (ball->Hit(r, recB) || ground->Hit(r, recG)) {
 		Ray scattered;
 		Vector3 attenuation;
+		HitRecord& rec = recB.t < recG.t ? recB : recG;
 		if (depth < maxReflectionDepth && rec.mat->scatter(r, rec, attenuation, scattered))
-			return attenuation * SamplingColor_Simple(scattered, depth + 1);
-		else
-			return Vector3::ZERO();
-	} else
-		return SimpleSky(r);
+			return attenuation * SamplingColor_Simple(scattered, depth + 1, ball, ground);
+		else return Vector3::ZERO();
+	} else return SimpleSky(r);
 }
 void* Renderer::renderingMatPreview(void* args) {
 	int currLine = 0;
 	int width = Material::PREVSIZE.x;
 	int height = Material::PREVSIZE.y;
-	Material* prevMat = (Material*)args;
 
 	// mat ball
-	Sphere matBall(Vector3(0, 0, 0), 0.5, prevMat);
-	Sphere ground(Vector3(0, -100.5, -1), 100, new Lambertian(Vector3(0.8, 0.8, 0.8)));
+	Sphere matBall(Vector3(0, 0, 0), 0.5, (Material*)args);
+	Sphere ground(Vector3(0, -100.5, 0), 100, new Lambertian(Vector3(0.8, 0.8, 0.8)));
 	
 	// start rendering
 	std::cout << "rendering preview..." << std::endl;
@@ -138,29 +134,27 @@ void* Renderer::renderingMatPreview(void* args) {
 
 			// MonteCarlo Sampling [BruteForce] ----------
 			Vector3 col = Vector3::ZERO();
-
-			for (int s = 0; s < samplingRate; s++) {
+			for (int s = 0; s < 20; s++) {
 				float u = float(j + MoonMath::drand48()) / width;
 				float v = float(i + MoonMath::drand48()) / height;
-				Ray ray = targetCamera->GetRay(u, v);
-				col += SamplingColor(ray, 0);
+				Ray ray = matCamera.GetRay(u, v, 1.0f);
+				col += SamplingColor_Simple(ray, 0, &matBall, &ground);
 			}
 			// -------------------------------------------
 
-			col /= float(samplingRate);
+			col /= 20.0f;
 			MoonMath::GammaCorrection(col);
 
-			outputImage[stp] = (GLubyte)(255.99 * col.x);
-			outputImage[stp + 1] = (GLubyte)(255.99 * col.y);
-			outputImage[stp + 2] = (GLubyte)(255.99 * col.z);
+			matPrevImage[stp] = (GLubyte)(255.99 * col.x);
+			matPrevImage[stp + 1] = (GLubyte)(255.99 * col.y);
+			matPrevImage[stp + 2] = (GLubyte)(255.99 * col.z);
 		}
+		currLine++;
+		progress = currLine / OUTPUT_SIZE.y;
 	}
 
 	// finished
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Material::PREVSIZE.x, Material::PREVSIZE.y, 0,
-				 GL_RGB, GL_UNSIGNED_BYTE, &prevMat->preview->localID);
-	glBindTexture(GL_TEXTURE_2D, 0);
-	prevInQueue = false;
+	progress = -1;
 	delete ground.mat;
 	std::cout << "done." << std::endl;
 
@@ -195,7 +189,7 @@ void* Renderer::rendering(void* args) {
 				if (isAbort) continue;
 				float u = float(j + MoonMath::drand48()) / width;
 				float v = float(i + MoonMath::drand48()) / height;
-				Ray ray = targetCamera->GetRay(u, v);
+				Ray ray = targetCamera->GetRay(u, v, aspect);
 				//Vector3 p = ray.PointAtParameter(2.0);
 				col += SamplingColor(ray, 0);
 
@@ -234,10 +228,8 @@ Vector3 Renderer::SamplingColor(const Ray &r, int depth) {
 		Vector3 attenuation;
 		if (depth < maxReflectionDepth && rec.mat->scatter(r, rec, attenuation, scattered))
 			return attenuation * SamplingColor(scattered, depth + 1);
-		else
-			return Vector3::ZERO();
-	} else 
-		return SimpleSky(r);
+		else return Vector3::ZERO();
+	} else return SimpleSky(r);
 }
 
 Vector3 Renderer::SimpleSky(const Ray &r) {

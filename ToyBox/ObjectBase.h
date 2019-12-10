@@ -25,8 +25,9 @@ namespace MOON {
 		unsigned int ID; // ID is unique for each object
 		std::string name;
 		bool visible;
+		bool selected;
 
-		ObjectBase() : name("Object"), ID(MOON_UNSPECIFIEDID), visible(true) {}
+		ObjectBase() : name("Object"), ID(MOON_UNSPECIFIEDID), visible(true), selected(false) {}
 		ObjectBase(const int &_id);
 		ObjectBase(const std::string &_name, const int &_id);
 		virtual ~ObjectBase() {}
@@ -38,7 +39,7 @@ namespace MOON {
 
 		bool equal(const ObjectBase* o2) {
 			// The parameters of typeid can be pointers, objects, common variables, etc
-			if (typeid(this) == typeid(o2) && this->ID == o2->ID) return true;
+			if (typeid(*this) == typeid(*o2) && this->ID == o2->ID) return true;
 			else return false;
 		}
 
@@ -48,7 +49,7 @@ namespace MOON {
 		}
 
 		static bool IsEqual(const ObjectBase *o1, const ObjectBase *o2) {
-			if (typeid(o1) == typeid(o2) && o1->ID == o2->ID) return true;
+			if (typeid(*o1) == typeid(*o2) && o1->ID == o2->ID) return true;
 			else return false;
 		}
 

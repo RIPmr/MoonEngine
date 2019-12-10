@@ -15,10 +15,12 @@ namespace MOON {
 		Material *mat;
 
 		HitRecord(): t(INFINITY) {}
+		HitRecord(const HitRecord& rec) : t(rec.t), p(rec.p), normal(rec.normal), uv(rec.uv), mat(rec.mat) {}
 	};
 
 	class Hitable {
 	public:
 		virtual bool Hit(const Ray &t, HitRecord &rec) const = 0;
 	};
+
 }

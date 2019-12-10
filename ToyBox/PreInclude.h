@@ -120,9 +120,6 @@ ImGuiStyle* MainUI::style;
 unsigned long long MoonMath::seed			= 1;
 // init Dir Tree
 DirNode* AssetLoader::DirTree				= MOON_UNSPECIFIEDID;
-// init Others
-Camera Renderer::matCamera					= Camera("matCamera", Vector3(0, 0, 4));
-Vector2 Material::PREVSIZE					= Vector2(124, 124);
 // init Scene Manager
 Camera* MOON_SceneCamera					= MOON_UNSPECIFIEDID;
 Camera* MOON_CurrentCamera					= MOON_UNSPECIFIEDID;
@@ -154,7 +151,6 @@ bool MOON_ShaderManager::sizeFlag				= true;
 bool MOON_TextureManager::sizeFlag				= true;
 bool MOON_ModelManager::sizeFlag				= true;
 bool MOON_CameraManager::sizeFlag				= true;
-bool* MOON_InputManager::selection				= MOON_UNSPECIFIEDID;
 unsigned int MOON_InputManager::hoverID			= MOON_UNSPECIFIEDID;
 Shader* MOON_ShaderManager::lineShader			= MOON_UNSPECIFIEDID;
 Shader* MOON_ShaderManager::outlineShader		= MOON_UNSPECIFIEDID;
@@ -177,7 +173,7 @@ bool MOON_InputManager::left_shift_hold			= false;
 bool MOON_InputManager::right_ctrl_hold			= false;
 bool MOON_InputManager::right_shift_hold		= false;
 bool MOON_InputManager::isHoverUI				= false;
-std::vector<unsigned int>						  MOON_InputManager::selected;
+std::vector<unsigned int>						  MOON_InputManager::selection;
 
 // init Gizmo
 CoordSys Gizmo::manipCoord						= CoordSys::LOCAL;

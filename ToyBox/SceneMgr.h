@@ -38,24 +38,9 @@ namespace MOON {
 			//std::vector<unsigned int> &sel = MOON_InputManager::selected;
 			auto iter = itemMap.begin();
 			for (int i = 0; i < itemMap.size(); i++, iter++) {
-				if (ImGui::Selectable((SceneManager::GetTypeIcon(iter->second) + 
-									   "  " + iter->first).c_str(),
-									   MOON_InputManager::selection[iter->second->ID], 
+				if (ImGui::Selectable((SceneManager::GetTypeIcon(iter->second) + "  " + 
+									   iter->first).c_str(), iter->second->selected, 
 									   ImGuiSelectableFlags_SpanAllColumns))
-					/*if (!MainUI::io->KeyCtrl) {
-						sel.clear();
-						memset(MOON_InputManager::selection, 0, SceneManager::GetObjectNum() * sizeof(bool));
-					}
-					if (MOON_InputManager::selection[iter->second->ID] ^= 1)
-						sel.push_back(iter->second->ID);
-					else {
-						auto end = sel.end();
-						for (auto it = sel.begin(); it != end; it++)
-							if (*it == iter->second->ID) {
-								it = sel.erase(it);
-								return;
-							}
-					}*/
 					MOON_InputManager::Select(iter->second->ID);
 			}
 		}
@@ -449,22 +434,17 @@ namespace MOON {
 
 			// selection
 			static unsigned int hoverID;
-			static bool* selection;
-			static std::vector<unsigned int> selected;
+			static std::vector<unsigned int> selection;
 
 			static ObjectBase* GetFirstSelected() {
-				if (selected.size() < 1) return NULL;
-				else return SceneManager::objectList[selected[0]];
+				if (selection.size() < 1) return NULL;
+				else return SceneManager::objectList[selection[0]];
 			}
 
-			static void UpdateSelectionState() {
-				if (ModelManager::sizeFlag || TextureManager::sizeFlag || LightManager::sizeFlag ||
-					MaterialManager::sizeFlag || CameraManager::sizeFlag || ShaderManager::sizeFlag) {
-
-					if(selection != NULL) free(selection);
-					selection = (bool*)malloc(GetObjectNum() * sizeof(bool));
-					memset(selection, 0, GetObjectNum() * sizeof(bool));
-
+			static void ResetSizeChangeState() {
+				if (ModelManager::sizeFlag  || TextureManager::sizeFlag  || 
+					LightManager::sizeFlag  || MaterialManager::sizeFlag || 
+					CameraManager::sizeFlag || ShaderManager::sizeFlag) {
 					ModelManager::sizeFlag = false;
 					TextureManager::sizeFlag = false;
 					LightManager::sizeFlag = false;
@@ -475,20 +455,22 @@ namespace MOON {
 			}
 
 			static void Select(const unsigned int ID) {
-				if (!MOON_InputManager::left_ctrl_hold && 
-					!MOON_InputManager::right_ctrl_hold) {
-					MOON_InputManager::selected.clear();
-					memset(MOON_InputManager::selection, 0, SceneManager::GetObjectNum() * sizeof(bool));
+				if (!MOON_InputManager::left_ctrl_hold && !MOON_InputManager::right_ctrl_hold) {
+					MOON_InputManager::selection.clear();
+					//memset(MOON_InputManager::selection, 0, SceneManager::GetObjectNum() * sizeof(bool));
+					for (ObjectBase *obj : MOON_ObjectList) obj->selected = false;
 				}
 
-				if (MOON_InputManager::selection[ID] ^= 1) MOON_InputManager::selected.push_back(ID);
-				else {
-					auto end = MOON_InputManager::selected.end();
-					for (auto it = MOON_InputManager::selected.begin(); it != end; it++)
-						if (*it == ID) {
-							it = MOON_InputManager::selected.erase(it);
-							return;
-						}
+				if (ID) {
+					if (MOON_ObjectList[ID]->selected ^= 1) MOON_InputManager::selection.push_back(ID);
+					else {
+						auto end = MOON_InputManager::selection.end();
+						for (auto it = MOON_InputManager::selection.begin(); it != end; it++)
+							if (*it == ID) {
+								it = MOON_InputManager::selection.erase(it);
+								return;
+							}
+					}
 				}
 			}
 
@@ -507,9 +489,7 @@ namespace MOON {
 				return hoverID;
 			}
 
-			static void Clear() {
-				if (selection != NULL) free(selection);
-			}
+			static void Clear() {}
 		};
 
 		struct LightManager : ObjectManager<Light> {

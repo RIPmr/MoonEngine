@@ -57,7 +57,7 @@ int main() {
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
-		
+
 		// UI controller
 		MOON_DrawMainUI();
 
@@ -260,16 +260,18 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 // moon callbacks --------------------------------------------------------------------------
 void MOON_CleanUp() {
+	std::cout << "Do Clean..." << std::endl;
+	MOON_InputManager::Clear();
 	MOON_LightManager::Clear();
 	MOON_MaterialManager::Clear();
 	MOON_ShaderManager::Clear();
 	MOON_TextureManager::Clear();
 	MOON_ModelManager::Clear();
 	MOON_CameraManager::Clear();
-	MOON_InputManager::Clear();
 	MainUI::CleanUp();
 	SceneManager::Clear();
 	AssetLoader::CleanUp();
+	std::cout << "Done." << std::endl;
 }
 
 void MOON_UpdateClock() {
@@ -375,14 +377,6 @@ void MOON_InputProcessor(GLFWwindow *window) {
 }
 
 void MOON_DrawMainUI() {
-	// update output image realtime while rendering
-	if (Renderer::progress != 0) {
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, MOON_OutputSize.x, MOON_OutputSize.y, 0, GL_RGB, GL_UNSIGNED_BYTE, Renderer::outputImage);
-		if (Renderer::progress < 0) {
-			Renderer::progress = 0;
-			glBindTexture(GL_TEXTURE_2D, 0);
-		}
-	}
 	MainUI::QuadMenu();
 	if (ImGui::BeginMainMenuBar())		MainUI::MainMenu();
 	if (MainUI::show_control_window)	MainUI::ControlPanel(MainUI::io, clearColor);
@@ -401,6 +395,15 @@ void MOON_DrawMainUI() {
 	if (MainUI::show_timeline)			MainUI::ShowTimeline();
 	if (MainUI::show_material_editor)	MainUI::MaterialEditorWnd();
 	if (MainUI::show_demo_window)		ImGui::ShowDemoWindow(&MainUI::show_demo_window);
+
+	// update output image realtime while rendering
+	if (Renderer::progress && !Renderer::prevInQueue) {
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, MOON_OutputSize.x, MOON_OutputSize.y, 0, GL_RGB, GL_UNSIGNED_BYTE, Renderer::outputImage);
+		if (Renderer::progress < 0) {
+			Renderer::progress = 0;
+			glBindTexture(GL_TEXTURE_2D, 0);
+		}
+	}
 }
 
 void MOON_InitEngine() {
@@ -411,4 +414,5 @@ void MOON_InitEngine() {
 	std::cout << "- Scene Manager Initialized." << std::endl;
 	MOON_GenerateGround(1.0, 5);
 	MOON_TextureManager::CreateIDLUT();
+	std::cout << "- IDLUT Created." << std::endl;
 }

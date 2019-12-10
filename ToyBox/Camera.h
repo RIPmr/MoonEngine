@@ -91,7 +91,7 @@ namespace MOON {
 		Matrix4x4 GetViewMatrix() const;
 		Matrix4x4 GetProjectionMatrix() const;
 
-		Ray GetRay(float s, float t) const;
+		Ray GetRay(float s, float t, float aspect) const;
 		// rough way, treat camera position as start point of the ray
 		Ray GetMouseRay() const;
 		// accurate solution
