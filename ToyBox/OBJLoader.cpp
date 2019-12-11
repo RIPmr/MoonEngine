@@ -62,6 +62,10 @@ namespace MOON {
 		return "";
 	}
 
+	void OBJLoader::LoadFile_Thread(Model* container) {
+		LoadFile(container->path, container->meshList, container->gammaCorrection);
+	}
+
 	bool OBJLoader::LoadFile(const std::string &Path, std::vector<Mesh*> &LoadedMeshes, bool gammaCorrection) {
 		// If the file is not an .obj file return false
 		if (Path.substr(Path.size() - 4, 4) != ".obj")

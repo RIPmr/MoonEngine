@@ -1,7 +1,9 @@
 #pragma once
 #include <vector>
 #include <string>
+#include <imgui.h>
 
+#include "StackWindow.h"
 #include "BoundingBox.h"
 #include "ObjectBase.h"
 #include "Transform.h"
@@ -10,6 +12,7 @@
 #include "OBJMgr.h"
 #include "Utility.h"
 #include "Hitable.h"
+#include "ThreadPool.h"
 
 namespace MOON {
 	class Model : public MObject, public Hitable {
@@ -66,6 +69,7 @@ namespace MOON {
 		void LoadModel(const std::string &path, const bool &gammaCorrection) {
 			OBJLoader loader;
 			loader.LoadFile(path, meshList, gammaCorrection);
+			//ThreadPool::CreateThread(&OBJLoader::LoadFile_Thread, &loader, this);
 
 			std::cout << "- OBJ file loaded, copying mesh list... ..." << std::endl;
 

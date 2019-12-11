@@ -30,6 +30,7 @@
 #include <random>
 #include <map>
 
+#include "ThreadPool.h"
 #include "AssetLoader.h"
 #include "PipelineMgr.h"
 #include "MoonEnums.h"
@@ -107,8 +108,10 @@ bool MainUI::show_enviroment_editor			= false;
 
 bool MainUI::show_ribbon					= true;
 bool MainUI::show_timeline					= false;
-bool MainUI::show_material_editor			= false;
+bool MainUI::show_profiler					= true;
 bool MainUI::show_codeEditor				= false;
+bool MainUI::show_render_setting	 		= false;
+bool MainUI::show_material_editor			= false;
 
 Texture* MainUI::icon						= MOON_UNSPECIFIEDID;
 Texture* MainUI::logo						= MOON_UNSPECIFIEDID;
@@ -116,6 +119,10 @@ Texture* MainUI::logoFull					= MOON_UNSPECIFIEDID;
 ImGuiIO* MainUI::io							= MOON_UNSPECIFIEDID;
 ImGuiStyle* MainUI::style;
 
+// init Thread Pool
+std::vector<std::thread*>					ThreadPool::pool;
+// init Node Editor
+MaterialEditor								MainUI::nodeEditor;
 // init Math Tool
 unsigned long long MoonMath::seed			= 1;
 // init Dir Tree
@@ -132,7 +139,6 @@ bool SceneManager::showbbox					= false;
 bool SceneManager::wireMode					= false;
 bool SceneManager::exitFlag					= false;
 
-MaterialEditor								MainUI::nodeEditor;
 std::vector<ObjectBase*>					SceneManager::objectList;
 std::vector<ObjectBase*>					SceneManager::matchedList;
 

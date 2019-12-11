@@ -44,9 +44,12 @@ namespace MOON {
 		static bool prevInQueue;
 
 		// functions
+		static void StartRendering();
+
 		static void* renderingMatPreview(void* args);
 		static void* renderingTestImage(void* args);
 		static void* rendering(void* args);
+
 		static bool PrepareVFB();
 		static bool PrepareRendering();
 		static bool PrepareMatPrevRendering(Texture* target);

@@ -9,6 +9,8 @@
 #include "Mesh.h"
 
 namespace MOON {
+	extern class Model;
+
 	// Get element at given index position
 	template <class T>
 	inline const T & getElement(const std::vector<T> &elements, std::string &index) {
@@ -30,12 +32,15 @@ namespace MOON {
 	class OBJLoader {
 	public:
 		bool gammaCorrection;
+		std::string info;
+		float progress;
 		std::vector<Vertex> LoadedVertices;
 		std::vector<unsigned int> LoadedIndices;
 
-		OBJLoader() = default;
+		OBJLoader() : info("Loading... ..."), gammaCorrection(false), progress(0) {}
 		~OBJLoader() = default;
 
+		void LoadFile_Thread(Model* container);
 		bool LoadFile(const std::string &Path, std::vector<Mesh*> &LoadedMeshes, bool gammaCorrection = false);
 
 	private:

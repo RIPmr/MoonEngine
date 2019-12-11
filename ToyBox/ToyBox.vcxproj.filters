@@ -281,6 +281,9 @@
     <ClInclude Include="FlowMenu.h">
       <Filter>HeadFiles\Component</Filter>
     </ClInclude>
+    <ClInclude Include="ThreadPool.h">
+      <Filter>HeadFiles\Component</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

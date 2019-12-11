@@ -31,7 +31,7 @@ namespace MOON {
 		if (ImGui::Button("Save")) {
 			RegistStackWnd("Information");
 		}
-		StackWnd("Information", "Overwrite existing shader files?", this, &Shader::SaveShaders);
+		QueryWnd("Information", "Overwrite existing shader files?", this, &Shader::SaveShaders);
 		ImGui::SameLine();
 		if (ImGui::Button("Revert")) { RevertCodes(); }
 		ImGui::Unindent(10.0f);

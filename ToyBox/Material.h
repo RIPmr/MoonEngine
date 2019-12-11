@@ -29,8 +29,8 @@ namespace MOON {
 		// if any param is updated, set it true
 		bool prevNeedUpdate;
 
-		Material() : ObjectBase(MOON_AUTOID), preview(NULL), prevNeedUpdate(true) {}
-		Material(const std::string &name) : ObjectBase(name, MOON_AUTOID), preview(NULL), prevNeedUpdate(true) {}
+		Material() : ObjectBase(MOON_AUTOID), preview(MOON_UNSPECIFIEDID), prevNeedUpdate(true) {}
+		Material(const std::string &name) : ObjectBase(name, MOON_AUTOID), preview(MOON_UNSPECIFIEDID), prevNeedUpdate(true) {}
 		//~Material() { delete shader; }
 		~Material() override {
 			if (preview != NULL) delete preview;

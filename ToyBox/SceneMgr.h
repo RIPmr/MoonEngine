@@ -59,14 +59,14 @@ namespace MOON {
 		}
 
 		static void PrintAllItems() {
-			if (itemMap.count() < 1) {
+			if (itemMap.size() < 1) {
 				std::cout << "none object of this type in the scene!" << std::endl;
 				return;
 			}
 			std::cout << " " << SceneManager::GetType(itemMap.begin()->second) << "s in the scene: " << std::endl;
 
 			auto end = itemMap.end();
-			std::cout << "-items(" << itemMap.count() << "):" << std << std::endl;
+			std::cout << "-items(" << itemMap.size() << "):" << std::endl;
 			for (auto it = itemMap.begin(); it != end; it++) {
 				std::cout << "- name: " << it->first; PrintID(it->second);
 			}
@@ -79,9 +79,10 @@ namespace MOON {
 
 			if (autoSizeFlag) {
 				std::cout << std::endl;
-				auto iter = itemMap.end(); iter--;
+				//auto iter = itemMap.end(); iter--;
 				std::cout << "------------------------------------------------ new " << SceneManager::GetType(item) << " added ------------------------------------------------" << std::endl;
-				std::cout << "- name: \'" << iter->first << "\' added."; PrintID(iter->second);
+				//std::cout << "- name: \'" << iter->first << "\' added."; PrintID(iter->second);
+				std::cout << "- name: \'" << item->name << "\' added."; PrintID(item);
 				sizeFlag = true;
 			}
 			return true;
@@ -282,6 +283,17 @@ namespace MOON {
 		static void SetWndSize(unsigned int width, unsigned int height) {
 			SCR_SIZE.setValue(width, height);
 			aspect = (float)width / height;
+		}
+
+		// TODO
+		static void PrintAllObject() {
+
+		}
+		static void PrintTreeList() {
+
+		}
+		static void PrintMatchedList() {
+
 		}
 
 		static void AddObject(ObjectBase* item) {
@@ -648,8 +660,11 @@ namespace MOON {
 				//glDisable(GL_STENCIL_TEST);
 			}
 
-			static Model* CreateModel() {
-			
+			static Model* CreateModel(const std::string &path, const std::string &name = "FILENAME") {
+				Model* newModel = new Model(path, name);
+				AddItem(newModel);
+
+				return newModel;
 			}
 
 			static Model* LoadModel(const std::string &path, const std::string &name = "FILENAME") {

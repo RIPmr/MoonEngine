@@ -46,7 +46,7 @@ int main() {
 		//glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
 		if (SceneManager::wireMode) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		else glPolygonMode(GL_FRONT, GL_FILL);
+		else glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 		// clear background of framebuffer
 		glBindFramebuffer(GL_FRAMEBUFFER, MOON_TextureManager::IDLUT->fbo);
@@ -261,16 +261,30 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 // moon callbacks --------------------------------------------------------------------------
 void MOON_CleanUp() {
 	std::cout << "Do Clean..." << std::endl;
+	std::cout << "Wait all thread exit..." << std::endl;
+	ThreadPool::WaitAllThreadExit();
+	ThreadPool::Clean();
+	std::cout << "All thread exit." << std::endl;
 	MOON_InputManager::Clear();
+	std::cout << "InputManager cleared." << std::endl;
 	MOON_LightManager::Clear();
+	std::cout << "LightManager cleared." << std::endl;
 	MOON_MaterialManager::Clear();
+	std::cout << "MaterialManager cleared." << std::endl;
 	MOON_ShaderManager::Clear();
+	std::cout << "ShaderManager cleared." << std::endl;
 	MOON_TextureManager::Clear();
+	std::cout << "TextureManager cleared." << std::endl;
 	MOON_ModelManager::Clear();
+	std::cout << "ModelManager cleared." << std::endl;
 	MOON_CameraManager::Clear();
+	std::cout << "CameraManager cleared." << std::endl;
 	MainUI::CleanUp();
+	std::cout << "MainUI cleared." << std::endl;
 	SceneManager::Clear();
+	std::cout << "SceneManager cleared." << std::endl;
 	AssetLoader::CleanUp();
+	std::cout << "Asset cleared." << std::endl;
 	std::cout << "Done." << std::endl;
 }
 
@@ -394,6 +408,8 @@ void MOON_DrawMainUI() {
 	if (MainUI::show_codeEditor)		MainUI::CodeEditor();
 	if (MainUI::show_timeline)			MainUI::ShowTimeline();
 	if (MainUI::show_material_editor)	MainUI::MaterialEditorWnd();
+	if (MainUI::show_render_setting)	MainUI::RenderSettingWnd();
+	if (MainUI::show_profiler)			MainUI::Profiler();
 	if (MainUI::show_demo_window)		ImGui::ShowDemoWindow(&MainUI::show_demo_window);
 
 	// update output image realtime while rendering

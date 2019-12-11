@@ -10,8 +10,10 @@
 #include <shlobj.h>
 #include <commDlg.h>
 
+#include "ThreadPool.h"
 #include "Texture.h"
 #include "Gizmo.h"
+#include "Utility.h"
 #include "CodeEditor.h"
 #include "StackWindow.h"
 #include "AssetLoader.h"
@@ -54,6 +56,7 @@ namespace MOON {
 		static bool show_operator_editor;
 
 		static bool show_profiler;
+		static bool show_render_setting;
 
 		// class-like wnds
 		static MaterialEditor nodeEditor;
@@ -164,8 +167,27 @@ namespace MOON {
 				if (ImGui::MenuItem("Enviroment", "8", MainUI::show_enviroment_editor)) {
 					MainUI::show_enviroment_editor = !MainUI::show_enviroment_editor;
 				}
-				if (ImGui::MenuItem("Render", "F9")) {}
-				if (ImGui::MenuItem("Settings", "F10")) {}
+				ImGui::Separator();
+				if (ImGui::MenuItem("VFB Window", NULL, MainUI::show_VFB_window)) {
+					MainUI::show_VFB_window = !MainUI::show_VFB_window;
+				}
+				if (ImGui::MenuItem("Render", "F9")) {
+					MainUI::show_VFB_window = true;
+					Renderer::StartRendering();
+				}
+				if (ImGui::MenuItem("Settings", "F10", MainUI::show_render_setting)) {
+					MainUI::show_render_setting = !MainUI::show_render_setting;
+				}
+				ImGui::EndMenu();
+			}
+			if (ImGui::BeginMenu("Script")) {
+				if (ImGui::MenuItem("Code Editor", NULL, MainUI::show_codeEditor)) {
+					MainUI::show_codeEditor = !MainUI::show_codeEditor;
+					if (MainUI::show_codeEditor) MainUI::show_console_window = true;
+				}
+				if (ImGui::MenuItem("Console Window", NULL, MainUI::show_console_window)) {
+					MainUI::show_console_window = !MainUI::show_console_window;
+				}
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("Utility")) {
@@ -177,12 +199,16 @@ namespace MOON {
 					if (ImGui::MenuItem("Default")) {}
 					if (ImGui::MenuItem("Modeling")) {}
 					if (ImGui::MenuItem("Animation")) {}
+					if (ImGui::MenuItem("Rendering")) {}
 					if (ImGui::MenuItem("FX")) {}
 					ImGui::EndMenu();
 				}
 				ImGui::Separator();
 				if (ImGui::MenuItem("Control Panel", NULL, MainUI::show_control_window)) {
 					MainUI::show_control_window = !MainUI::show_control_window;
+				}
+				if (ImGui::MenuItem("Profiler", NULL, MainUI::show_profiler)) {
+					MainUI::show_profiler = !MainUI::show_profiler;
 				}
 				if (ImGui::MenuItem("Explorer Window", NULL, MainUI::show_explorer_window)) {
 					MainUI::show_explorer_window = !MainUI::show_explorer_window;
@@ -198,17 +224,6 @@ namespace MOON {
 				}
 				if (ImGui::MenuItem("Material Editor", NULL, MainUI::show_material_editor)) {
 					MainUI::show_material_editor = !MainUI::show_material_editor;
-				}
-				ImGui::Separator();
-				if (ImGui::MenuItem("VFB Window", NULL, MainUI::show_VFB_window)) {
-					MainUI::show_VFB_window = !MainUI::show_VFB_window;
-				}
-				if (ImGui::MenuItem("Code Editor", NULL, MainUI::show_codeEditor)) {
-					MainUI::show_codeEditor = !MainUI::show_codeEditor;
-					if (MainUI::show_codeEditor) MainUI::show_console_window = true;
-				}
-				if (ImGui::MenuItem("Console Window", NULL, MainUI::show_console_window)) {
-					MainUI::show_console_window = !MainUI::show_console_window;
 				}
 				ImGui::Separator();
 				if (ImGui::MenuItem("Ribbon", NULL, MainUI::show_ribbon)) {
@@ -234,50 +249,73 @@ namespace MOON {
 		}
 
 		static void ControlPanel(const ImGuiIO *io, const Vector4 &clear_color) {
-			static int width = MOON_OutputSize.x, height = MOON_OutputSize.y;
-
 			ImGui::Begin(Icon_Name_To_ID(ICON_FA_COGS, " ControlPanel"));
+
+			ImGui::Text("WireMode:"); ImGui::SameLine(80.0f);
+			ImGui::Checkbox("WireMode", &SceneManager::wireMode, true);
+
+			ImGui::Text("Debug:"); ImGui::SameLine(80.0f);
+			ImGui::Checkbox("BBox", &SceneManager::showbbox, true);
+
+			ImGui::Spacing();
+
+			ImGui::Text("BColor:"); ImGui::SameLine(80.0f);
+			ImGui::ColorEdit3("", (float*)&clear_color);
+
+			ImGui::End();
+		}
+
+		static void RenderSettingWnd() {
+			ImGui::Begin(Icon_Name_To_ID(ICON_FA_COGS, " RendererSettings"), &MainUI::show_render_setting);
+
+			float availWidth = ImGui::GetContentRegionAvailWidth() / 2.4f;
+			static int width = MOON_OutputSize.x, height = MOON_OutputSize.y;
+			static int sr = Renderer::samplingRate;
+			static int rd = Renderer::maxReflectionDepth;
+			static bool depth = true, motion = false;
+
+			ImGui::Text("Output Size:");
+			ImGui::SetNextItemWidth(availWidth);
+			ImGui::InputInt("output_width", &width, 100, 1000, 0, true);
+			ImGui::SameLine();
+			ImGui::Text(u8"¡Á");
+			ImGui::SameLine();
+			ImGui::SetNextItemWidth(availWidth);
+			ImGui::InputInt("output_height", &height, 100, 1000, 0, true);
+
+			if (MOON_OutputSize.x != width || MOON_OutputSize.y != height) {
+				if (width < 1) width = 1; if (height < 1) height = 1;
+				Renderer::SetOutputSize(width, height);
+			}
+
+			ImGui::Text("Sampling Rate:");
+			if (ImGui::InputInt("samplint_rate", &sr, 1, 10, 0, true))
+				Renderer::samplingRate = sr;
+
+			ImGui::Text("Max Reflection Depth:");
+			if (ImGui::InputInt("ref_depth", &rd, 1, 5, 0, true))
+				Renderer::maxReflectionDepth = rd;
+
+			ImGui::Checkbox("Depth of field ", &depth);
+			ImGui::Checkbox("Motion blur ", &motion);
+
+			ImGui::Spacing();
+			if (ImGui::Button("Rendering")) {
+				MainUI::show_VFB_window = true;
+				Renderer::StartRendering();
+			}
+
+			ImGui::End();
+		}
+
+		static void Profiler() {
+			ImGui::Begin(Icon_Name_To_ID(ICON_FA_BAR_CHART, " Profiler"), &MainUI::show_profiler, ImGuiWindowFlags_NoResize);
 
 			ImGui::Text("[Statistics]");
 			ImGui::Text("FPS: %.1f (%.2f ms/frame)", ImGui::GetIO().Framerate, 1000.0f / ImGui::GetIO().Framerate);
 			ImGui::Text("Hover UI: %d", io->WantCaptureMouse);
 
 			ImGui::Separator();
-
-			ImGui::Text("[Settings]");
-			ImGui::Text("Debug:"); ImGui::SameLine();
-			ImGui::Checkbox("BBox", &SceneManager::showbbox, true);
-
-			ImGui::Spacing();
-
-			ImGui::Text("BColor:"); ImGui::SameLine();
-			ImGui::ColorEdit3("", (float*)&clear_color);
-
-			ImGui::Text("Output Size:");
-			ImGui::SetNextItemWidth(ImGui::GetWindowWidth() / 2.7);
-			ImGui::InputInt("output_width", &width, 100, 1000, 0, true); ImGui::SameLine();
-			ImGui::Text(u8"¡Á"); ImGui::SameLine();
-			ImGui::SetNextItemWidth(ImGui::GetWindowWidth() / 2.7);
-			ImGui::InputInt("output_height", &height, 100, 1000, 0, true);
-			if (MOON_OutputSize.x != width || MOON_OutputSize.y != height) {
-				if (width < 1) width = 1;
-				if (height < 1) height = 1;
-				Renderer::SetOutputSize(width, height);
-			}
-
-			ImGui::Spacing();
-			if (ImGui::Button("Rendering")) {
-				if (!Renderer::prevInQueue) {
-					if (Renderer::PrepareRendering()) {
-						MainUI::show_VFB_window = true;
-
-						pthread_t renderThread;
-						int ret = pthread_create(&renderThread, NULL, Renderer::rendering, NULL);
-						if (!ret) std::cout << "renderer thread created!" << std::endl;
-						else std::cout << "renderer thread error! pthread_create error: error_code=" << ret << std::endl;
-					}
-				}
-			}
 
 			ImGui::End();
 		}
@@ -552,7 +590,7 @@ namespace MOON {
 			if (ImGui::Button("Clear")) {
 				RegistStackWnd("Information");
 			}
-			StackWnd("Information", "Clear node editor?", &nodeEditor, &MaterialEditor::ClearEditor);
+			QueryWnd("Information", "Clear node editor?", &nodeEditor, &MaterialEditor::ClearEditor);
 			ImGui::SameLine();
 			ImGui::Text(u8"|"); ImGui::SameLine();
 			ImGui::Text("Material: %d", MOON_MaterialManager::CountItem());
@@ -742,8 +780,13 @@ namespace MOON {
 
 			ImGui::Text(u8"|"); ImGui::SameLine();
 
-			ImGui::Button(ICON_FA_CAMERA, ImVec2(22, 22)); ImGui::SameLine();
-			ImGui::Button(ICON_FA_LIST_ALT, ImVec2(22, 22)); ImGui::SameLine();
+			if (ImGui::Button(ICON_FA_CAMERA, ImVec2(22, 22))) {
+				MainUI::show_VFB_window = true;
+				Renderer::StartRendering();
+			} ImGui::SameLine();
+			if (ImGui::Button(ICON_FA_LIST_ALT, ImVec2(22, 22))) {
+				MainUI::show_render_setting = !MainUI::show_render_setting;
+			} ImGui::SameLine();
 
 			ImGui::Text(u8"|"); ImGui::SameLine();
 
@@ -811,7 +854,9 @@ namespace MOON {
 			ImGui::Separator();
 			if (ImGui::BeginMenu("Import")) {
 				if (ImGui::MenuItem("Model...")) {
-					std::cout << "Selected file: " << OpenFile() << std::endl;
+					std::string path = OpenFile();
+					std::cout << "Selected file: " << path << std::endl;
+					MOON_ModelManager::LoadModel(path);
 				}
 				if (ImGui::MenuItem("Scene...")) {
 					std::cout << "Selected file: " << OpenFile() << std::endl;

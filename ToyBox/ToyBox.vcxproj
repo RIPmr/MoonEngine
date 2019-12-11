@@ -195,6 +195,7 @@
     <ClInclude Include="ShapeBase.h" />
     <ClInclude Include="StackWindow.h" />
     <ClInclude Include="Texture.h" />
+    <ClInclude Include="ThreadPool.h" />
     <ClInclude Include="Transform.h" />
     <ClInclude Include="UIController.h" />
     <ClInclude Include="Utility.h" />

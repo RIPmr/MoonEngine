@@ -298,11 +298,12 @@ namespace MOON {
 				/// content renderer
 				[](MyNode* node, bool hideInNode) {
 					if (!hideInNode) {
-						if (outputData(0).id[0])
+						if (outputData(0).id[0]) {
+							node->title = MOON_ObjectList[outputData(0).id[0]]->name;
 							MOON_ObjectList[outputData(0).id[0]]->ListProperties();
-						else {
-							// TODO : Create a new mat
-
+						} else {
+							Material* newMat = MOON_MaterialManager::CreateMaterial("MoonMtl", "MoonMtl");
+							outputData(0).id[0] = newMat->ID;
 						}
 					}
 				}
