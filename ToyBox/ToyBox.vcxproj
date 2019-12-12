@@ -141,6 +141,7 @@
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="MathUtils.cpp" />
     <ClCompile Include="Mesh.cpp" />
+    <ClCompile Include="Model.cpp" />
     <ClCompile Include="MShader.cpp" />
     <ClCompile Include="ObjectBase.cpp" />
     <ClCompile Include="OBJExporter.cpp" />

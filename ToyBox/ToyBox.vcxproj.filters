@@ -138,6 +138,9 @@
     <ClCompile Include="PipelineMgr.cpp">
       <Filter>SourceFiles\Implementation</Filter>
     </ClCompile>
+    <ClCompile Include="Model.cpp">
+      <Filter>SourceFiles\Implementation</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Vector3.h">

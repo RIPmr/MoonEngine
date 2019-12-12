@@ -47,8 +47,9 @@ namespace MOON {
 		}
 
 		template<class T, class P>
-		inline static void CreateThread(void (T::*deleMethod)(P*), T* tasker, P* arg) {
+		inline static void CreateThread(void (T::*deleMethod)(P&), T* tasker, P& arg) {
 			std::thread* newThread = new std::thread(deleMethod, tasker, arg);
+			//newThread->detach();
 			pool.push_back(newThread);
 		}
 	};

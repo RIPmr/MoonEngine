@@ -51,6 +51,8 @@ namespace MOON {
 		shader->setBool("isSelected", parent->selected);
 
 		// draw mesh
+		if (!VAO) setupMesh();
+		//std::cout << VAO << std::endl;
 		glBindVertexArray(VAO);
 		glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);

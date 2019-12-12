@@ -16,6 +16,8 @@ unsigned int Renderer::samplingRate = 5;
 unsigned int Renderer::maxReflectionDepth = 5;
 // ----------------------------------------------------------------
 
+Model* boxes;
+
 int main() {
 	std::cout << "starting moon engine... ..." << std::endl;
 
@@ -27,8 +29,8 @@ int main() {
 	MOON_InitEngine();
 
 	// test objects ------------------------------------------------------------------------
-	//Model* teapot = MOON_ModelManager::LoadModel("Resources/teapot.obj");
-	Model* boxes = MOON_ModelManager::LoadModel("Resources/box_stack.obj");
+	//Model* teapot = MOON_ModelManager::LoadModel("Assets/Models/teapot.obj");
+	boxes = MOON_ModelManager::LoadModel("Assets/Models/box_stack.obj");
 	//teapot->transform.Scale(Vector3(0.1f, 0.1f, 0.1f));
 	boxes->transform.Translate(Vector3(0.0f, 1.0f, 0.0f));
 	// -------------------------------------------------------------------------------------
@@ -253,7 +255,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	if (key == GLFW_KEY_W) Gizmo::gizmoMode = GizmoMode::translate;
 	if (key == GLFW_KEY_E) Gizmo::gizmoMode = GizmoMode::rotate;
 	if (key == GLFW_KEY_R) Gizmo::gizmoMode = GizmoMode::scale;
-
+	
 	// Escape -------------------------------------------------------------------------
 	if (key == GLFW_KEY_ESCAPE) glfwSetWindowShouldClose(window, true);
 }

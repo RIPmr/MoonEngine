@@ -1,6 +1,7 @@
 #pragma once
 #include <imgui.h>
 #include <string>
+#include <iostream>
 
 #include "IconsFontAwesome4.h"
 #define Icon_Name_To_ID(x, y) (std::string(x) + y).c_str()
@@ -56,7 +57,9 @@ namespace MOON {
 			ImGui::SetWindowSize(ImVec2(200.0f, 80.0f));
 			ImGui::Text((*content).c_str());
 			ImGui::ProgressBar(*progress);
-			if (*progress >= 1.0f) ImGui::CloseCurrentPopup();
+			if (*progress >= 1.0f) {
+				ImGui::CloseCurrentPopup();
+			}
 			ImGui::EndPopup();
 		}
 	}

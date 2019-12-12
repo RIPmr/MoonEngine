@@ -31,22 +31,22 @@ namespace MOON {
 
 	class OBJLoader {
 	public:
-		bool gammaCorrection;
-		std::string info;
-		float progress;
-		std::vector<Vertex> LoadedVertices;
-		std::vector<unsigned int> LoadedIndices;
+		static bool gammaCorrection;
+		static float progress;
+		static std::string info;
+		static std::vector<Vertex> LoadedVertices;
+		static std::vector<unsigned int> LoadedIndices;
 
-		OBJLoader() : info("Loading... ..."), gammaCorrection(false), progress(0) {}
-		~OBJLoader() = default;
+		//OBJLoader() : info("Loading... ..."), gammaCorrection(false), progress(0) {}
+		//~OBJLoader() = default;
 
-		void GetInfo(std::string& info, float& progress);
-		void LoadFile(Model* container);
-		bool LoadFile(const std::string &Path, std::vector<Mesh*> &LoadedMeshes, bool gammaCorrection = false);
+		static void GetInfo(std::string& info, float& progress);
+		static void LoadFile(Model* container);
+		static bool LoadFile(const std::string &Path, std::vector<Mesh*> &LoadedMeshes, bool gammaCorrection = false);
 
 	private:
 		// Generate vertices from a list of positions, tcoords, normals and a face line
-		void GenVerticesFromRawOBJ(std::vector<Vertex>& oVerts,
+		static void GenVerticesFromRawOBJ(std::vector<Vertex>& oVerts,
 								   const std::vector<Vector3>& iPositions,
 								   const std::vector<Vector2>& iTCoords,
 								   const std::vector<Vector3>& iNormals,
@@ -54,12 +54,12 @@ namespace MOON {
 
 		// Triangulate a list of vertices into a face by printing
 		// inducies corresponding with triangles within it
-		void VertexTriangluation(std::vector<unsigned int>& oIndices,
-								 const std::vector<Vertex>& iVerts);
+		static void VertexTriangluation(std::vector<unsigned int>& oIndices,
+										const std::vector<Vertex>& iVerts);
 
 		// Load Materials from .mtl file
-		bool LoadMaterials(const std::string &path);
+		static bool LoadMaterials(const std::string &path);
 
-		Texture* LoadTexture(const TexType &type, const std::string &path);
+		static Texture* LoadTexture(const TexType &type, const std::string &path);
 	};
 }

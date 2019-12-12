@@ -227,7 +227,6 @@ namespace MOON {
 				for (auto itr = lower; itr != upper; ) {
 					if (itr->first == name) {
 						itr = itemMap.erase(itr);
-
 						sizeFlag = true;
 					} else itr++;
 				}
@@ -496,7 +495,7 @@ namespace MOON {
 				glReadBuffer(GL_NONE);
 				//glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 
-				hoverID = Color::IDDecoder(col);
+				hoverID = isHoverUI ? 0 : Color::IDDecoder(col);
 				//std::cout << hoverID << std::endl;
 				return hoverID;
 			}
@@ -669,7 +668,8 @@ namespace MOON {
 
 			static Model* LoadModel(const std::string &path, const std::string &name = "FILENAME") {
 				Model* newModel = new Model(path, name);
-				AddItem(newModel);
+				//ThreadPool::CreateThread(&Model::LoadModel, newModel, path);
+				//AddItem(newModel);
 
 				return newModel;
 			}

@@ -27,10 +27,12 @@ namespace MOON {
 		// for mesh in OBJ file
 		Model(const std::string &path, const std::string &name = "FILENAME", const int id = MOON_AUTOID, const bool gamma = false) :
 			path(path), gammaCorrection(gamma), MObject(id) {
-			LoadModel(path);
-
 			if (!name._Equal("FILENAME")) this->name = name;
 			else this->name = GetPathOrURLShortName(path);
+
+			OBJLoader::progress = 0;
+			ThreadPool::CreateThread(&Model::LoadModel, this, path);
+			//LoadModel(path);
 		}
 		~Model() override {
 			for (auto &iter : meshList) delete iter;
@@ -64,17 +66,7 @@ namespace MOON {
 			}
 		}
 
-		void LoadModel(const std::string& path) {
-			OBJLoader().LoadFile(path, meshList, gammaCorrection);
-			//ThreadPool::CreateThread(&OBJLoader::LoadFile, &loader, this);
-
-			std::cout << "- OBJ file loaded, copying mesh list... ..." << std::endl;
-			// transfer data in loader to model & building b-box
-			for (auto &iter : meshList) {
-				iter->parent = this;
-				bbox.join(iter->bbox);
-			}
-		}
+		void LoadModel(const std::string& path);
 
 		bool Hit(const Ray &r, HitRecord &rec) const {
 			HitRecord tempRec;

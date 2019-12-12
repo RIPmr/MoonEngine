@@ -119,6 +119,12 @@ Texture* MainUI::logoFull					= MOON_UNSPECIFIEDID;
 ImGuiIO* MainUI::io							= MOON_UNSPECIFIEDID;
 ImGuiStyle* MainUI::style;
 
+// init OBJ Loader
+std::string									OBJLoader::info;
+std::vector<Vertex>							OBJLoader::LoadedVertices;
+std::vector<unsigned int>					OBJLoader::LoadedIndices;
+bool OBJLoader::gammaCorrection				= false;
+float OBJLoader::progress					= 0;
 // init Thread Pool
 std::vector<std::thread*>					ThreadPool::pool;
 // init Node Editor

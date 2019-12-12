@@ -33,24 +33,30 @@ namespace MOON {
 
 		Mesh() {}
 		Mesh(const Mesh &mesh) : vertices(mesh.vertices), indices(mesh.indices), material(mesh.material), VAO(mesh.VAO), bbox(mesh.bbox) {}
-		Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices) : ObjectBase("Mesh", MOON_UNSPECIFIEDID) {
+		Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices) : ObjectBase("Mesh", MOON_UNSPECIFIEDID), VAO(0) {
 			this->vertices = vertices;
 			this->indices = indices;
 
 			// set the vertex buffers and its attribute pointers
-			setupMesh();
+			//setupMesh();
 			UpdateBBox();
 		}
-		Mesh(const std::string &name, std::vector<Vertex> vertices, std::vector<unsigned int> indices) : ObjectBase(name, MOON_UNSPECIFIEDID) {
+		Mesh(const std::string &name, std::vector<Vertex> vertices, std::vector<unsigned int> indices) : ObjectBase(name, MOON_UNSPECIFIEDID), VAO(0) {
 			this->vertices = vertices;
 			this->indices = indices;
 
 			// set the vertex buffers and its attribute pointers
-			setupMesh();
+			//setupMesh();
 			UpdateBBox();
 		}
 		//~Mesh() { delete material; }
-		~Mesh() override {}
+		~Mesh() override {
+			if (VAO) {
+				glDeleteBuffers(1, &EBO);
+				glDeleteBuffers(1, &VBO);
+				glDeleteVertexArrays(1, &VAO);
+			}
+		}
 
 		void UpdateBBox() {
 			for (auto &vert : vertices) {

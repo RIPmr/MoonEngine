@@ -142,13 +142,13 @@ namespace MOON {
 				ImGui::Separator();
 				if (ImGui::BeginMenu("Import")) {
 					if (ImGui::MenuItem("Model...")) {
-						//std::string path = OpenFile();
+						std::string path = OpenFile();
+						std::cout << "Selected file: " << path << std::endl;
+						MOON_ModelManager::LoadModel(path);
 						RegistStackWnd("Loading", StackWndType::PROGRESS);
-						//std::cout << "Selected file: " << path << std::endl;
-						//MOON_ModelManager::LoadModel(path);
 					}
 					if (ImGui::MenuItem("Scene...")) {
-						std::cout << "Selected file: " << OpenFile() << std::endl;
+						std::cout << "Selected file: " << OpenFolder() << std::endl;
 					}
 					ImGui::EndMenu();
 				}
@@ -171,9 +171,7 @@ namespace MOON {
 				ImGui::EndMenu();
 			}
 			{
-				static std::string content = "Load OBJ File...";
-				static float progress = 0.5f;
-				ProgressWnd("Loading", &content, &progress);
+				ProgressWnd("Loading", &OBJLoader::info, &OBJLoader::progress);
 			}
 			if (ImGui::BeginMenu("Edit")) {
 				if (ImGui::MenuItem("Undo", "CTRL+Z")) {}

@@ -6,10 +6,28 @@
 #include "MathUtils.h"
 
 #include <cmath>
+#include <algorithm>
+#include <iterator>
 
 #define MOON_DEBUG_MODE
 
 namespace MOON {
+
+	int GetLineCount(const char* filePath) {
+		std::ifstream myfile(filePath);
+
+		// new lines will be skipped unless we stop it from happening:    
+		myfile.unsetf(std::ios_base::skipws);
+
+		// count the newlines with an algorithm specialized for counting:
+		unsigned line_count = std::count(
+			std::istream_iterator<char>(myfile),
+			std::istream_iterator<char>(),
+			'\n');
+
+		return line_count;
+	}
+
 	// Split a String into a string array at a given token
 	void split(const std::string &in, std::vector<std::string> &out, std::string token) {
 		out.clear();
@@ -63,8 +81,8 @@ namespace MOON {
 	}
 
 	void OBJLoader::GetInfo(std::string& info, float& progress) {
-		info = this->info;
-		progress = this->progress;
+		info = OBJLoader::info;
+		progress = OBJLoader::progress;
 	}
 
 	void OBJLoader::LoadFile(Model* container) {
@@ -73,14 +91,16 @@ namespace MOON {
 
 	bool OBJLoader::LoadFile(const std::string &Path, std::vector<Mesh*> &LoadedMeshes, bool gammaCorrection) {
 		// If the file is not an .obj file return false
-		if (Path.substr(Path.size() - 4, 4) != ".obj")
-			return false;
+		if (Path.substr(Path.size() - 4, 4) != ".obj") return false;
+		std::ifstream file(Path); if (!file.is_open()) return false;
 
-		this->gammaCorrection = gammaCorrection;
+		unsigned int lineCount = GetLineCount(Path.c_str());
+		unsigned int currLineCnt = 0;
 
-		std::ifstream file(Path);
-		if (!file.is_open()) return false;
-
+		// Re-init
+		OBJLoader::progress = 0;
+		OBJLoader::info = "Loading... ...";
+		OBJLoader::gammaCorrection = gammaCorrection;
 		LoadedMeshes.clear();
 		LoadedVertices.clear();
 		LoadedIndices.clear();
@@ -90,15 +110,13 @@ namespace MOON {
 		std::vector<Vector3> Normals;
 		std::vector<Vertex> Vertices;
 		std::vector<unsigned int> Indices;
-
 		std::vector<std::string> MeshMatNames;
 
 		bool listening = false;
 		std::string meshname;
+		std::string curline;
 
 		Mesh* tempMesh;
-
-		std::string curline;
 
 #ifdef MOON_DEBUG_MODE
 		std::cout << std::endl;
@@ -106,7 +124,8 @@ namespace MOON {
 #endif
 
 		while (std::getline(file, curline)) {
-
+			OBJLoader::progress = (float)(currLineCnt++) / lineCount;
+			//std::cout << OBJLoader::progress << std::endl;
 			// Generate a Mesh Object or Prepare for an object to be created
 			if (firstToken(curline) == "o" || firstToken(curline) == "g" || curline[0] == 'g') {
 				if (!listening) {
@@ -137,6 +156,7 @@ namespace MOON {
 				}
 			}
 			// Generate a Vertex Position
+			OBJLoader::info = "Load Vertex Position...";
 			if (firstToken(curline) == "v") {
 				std::vector<std::string> spos;
 				Vector3 vpos;
@@ -149,6 +169,7 @@ namespace MOON {
 				Positions.push_back(vpos);
 			}
 			// Generate a Vertex Texture Coordinate
+			OBJLoader::info = "Load Texture Coordinate...";
 			if (firstToken(curline) == "vt") {
 				std::vector<std::string> stex;
 				Vector2 vtex;
@@ -160,6 +181,7 @@ namespace MOON {
 				TCoords.push_back(vtex);
 			}
 			// Generate a Vertex Normal;
+			OBJLoader::info = "Load Vertex Normal...";
 			if (firstToken(curline) == "vn") {
 				std::vector<std::string> snor;
 				Vector3 vnor;
@@ -172,6 +194,7 @@ namespace MOON {
 				Normals.push_back(vnor);
 			}
 			// Generate a Face (vertices & indices)
+			OBJLoader::info = "Load Face...";
 			if (firstToken(curline) == "f") {
 				// Generate the vertices
 				std::vector<Vertex> vVerts;
@@ -222,6 +245,7 @@ namespace MOON {
 
 			}
 			// Load Materials
+			OBJLoader::info = "Load Materials...";
 			if (firstToken(curline) == "mtllib") {
 				// Generate LoadedMaterial
 				// Generate a path to the material file
@@ -256,6 +280,7 @@ namespace MOON {
 		file.close();
 
 		// Set Materials for each Mesh
+		OBJLoader::info = "Match Material And Mesh...";
 		for (int i = 0; i < MeshMatNames.size(); i++) {
 			std::string matname = MeshMatNames[i];
 
@@ -270,15 +295,17 @@ namespace MOON {
 			}
 		}
 
+		OBJLoader::progress = 1.0f;
+		OBJLoader::info = "Done...";
 		if (LoadedMeshes.empty() && LoadedVertices.empty() && LoadedIndices.empty()) return false;
 		else {
 			for (auto &mesh : LoadedMeshes) {
 				if (!mesh->material) mesh->material = MOON_MaterialManager::defaultMat;
 #ifdef MOON_DEBUG_MODE
 				std::cout << "\r- " << mesh->name << "| vertices > " << mesh->vertices.size()
-					<< "| triangles > " << (mesh->indices.size() / 3)
-					<< "| texcoords > " << TCoords.size()
-					<< "| normals > " << Normals.size();
+						<< "| triangles > " << (mesh->indices.size() / 3)
+						<< "| texcoords > " << TCoords.size()
+						<< "| normals > " << Normals.size();
 				if (mesh->material)
 					std::cout << "| material: " + mesh->material->name << std::endl;
 #endif
