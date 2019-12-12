@@ -62,7 +62,12 @@ namespace MOON {
 		return "";
 	}
 
-	void OBJLoader::LoadFile_Thread(Model* container) {
+	void OBJLoader::GetInfo(std::string& info, float& progress) {
+		info = this->info;
+		progress = this->progress;
+	}
+
+	void OBJLoader::LoadFile(Model* container) {
 		LoadFile(container->path, container->meshList, container->gammaCorrection);
 	}
 

@@ -40,7 +40,8 @@ namespace MOON {
 		OBJLoader() : info("Loading... ..."), gammaCorrection(false), progress(0) {}
 		~OBJLoader() = default;
 
-		void LoadFile_Thread(Model* container);
+		void GetInfo(std::string& info, float& progress);
+		void LoadFile(Model* container);
 		bool LoadFile(const std::string &Path, std::vector<Mesh*> &LoadedMeshes, bool gammaCorrection = false);
 
 	private:

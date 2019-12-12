@@ -121,12 +121,59 @@ namespace MOON {
 		// window definition
 		static void MainMenu() {
 			if (icon == NULL) icon = MOON_TextureManager::GetItem("moon_icon");
-
 			ImGui::Image((void*)(intptr_t)icon->localID, ImVec2(20, 20));
 
 			if (ImGui::BeginMenu("File")) {
-				ShowFileMenu();
+				if (ImGui::MenuItem("New")) {}
+				if (ImGui::MenuItem("Open", "Ctrl+O")) {}
+				if (ImGui::BeginMenu("Open Recent")) {
+					ImGui::MenuItem("test_1.moon");
+					ImGui::MenuItem("test_2.moon");
+					if (ImGui::BeginMenu("More...")) {
+						ImGui::MenuItem("test_3.moon");
+						ImGui::MenuItem("test_4.moon");
+						ImGui::EndMenu();
+					}
+					ImGui::EndMenu();
+				}
+				if (ImGui::MenuItem("Save", "Ctrl+S")) {}
+				if (ImGui::MenuItem("Save As...")) {}
+
+				ImGui::Separator();
+				if (ImGui::BeginMenu("Import")) {
+					if (ImGui::MenuItem("Model...")) {
+						//std::string path = OpenFile();
+						RegistStackWnd("Loading", StackWndType::PROGRESS);
+						//std::cout << "Selected file: " << path << std::endl;
+						//MOON_ModelManager::LoadModel(path);
+					}
+					if (ImGui::MenuItem("Scene...")) {
+						std::cout << "Selected file: " << OpenFile() << std::endl;
+					}
+					ImGui::EndMenu();
+				}
+
+				if (ImGui::BeginMenu("Export")) {
+					if (ImGui::MenuItem("Export All...")) {
+						std::cout << "Selected folder: " << OpenFolder() << std::endl;
+					}
+					if (ImGui::MenuItem("Export Selected...")) {
+						std::cout << "Selected folder: " << OpenFolder() << std::endl;
+					}
+					ImGui::EndMenu();
+				}
+
+				ImGui::Separator();
+				if (ImGui::MenuItem("Quit", "Alt+F4")) {
+					SceneManager::exitFlag = true;
+				}
+
 				ImGui::EndMenu();
+			}
+			{
+				static std::string content = "Load OBJ File...";
+				static float progress = 0.5f;
+				ProgressWnd("Loading", &content, &progress);
 			}
 			if (ImGui::BeginMenu("Edit")) {
 				if (ImGui::MenuItem("Undo", "CTRL+Z")) {}
@@ -520,7 +567,7 @@ namespace MOON {
 			float window_visible_x2 = ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x;
 			if (selNode != NULL) selNode->RenderFolderView(window_visible_x2, selNode);
 			ImGui::EndChild();
-
+			
 			ImGui::End();
 		}
 
@@ -834,52 +881,9 @@ namespace MOON {
 			return szBuffer;
 		}
 
-		static void ShowFileMenu() {
-			//ImGui::MenuItem("(dummy menu)", NULL, false, false);
-			if (ImGui::MenuItem("New")) {}
-			if (ImGui::MenuItem("Open", "Ctrl+O")) {}
-			if (ImGui::BeginMenu("Open Recent")) {
-				ImGui::MenuItem("test_1.moon");
-				ImGui::MenuItem("test_2.moon");
-				if (ImGui::BeginMenu("More...")) {
-					ImGui::MenuItem("test_3.moon");
-					ImGui::MenuItem("test_4.moon");
-					ImGui::EndMenu();
-				}
-				ImGui::EndMenu();
-			}
-			if (ImGui::MenuItem("Save", "Ctrl+S")) {}
-			if (ImGui::MenuItem("Save As...")) {}
-
-			ImGui::Separator();
-			if (ImGui::BeginMenu("Import")) {
-				if (ImGui::MenuItem("Model...")) {
-					std::string path = OpenFile();
-					std::cout << "Selected file: " << path << std::endl;
-					MOON_ModelManager::LoadModel(path);
-				}
-				if (ImGui::MenuItem("Scene...")) {
-					std::cout << "Selected file: " << OpenFile() << std::endl;
-				}
-				ImGui::EndMenu();
-			}
-
-			if (ImGui::BeginMenu("Export")) {
-				if (ImGui::MenuItem("Export All...")) {
-					std::cout << "Selected folder: " << OpenFolder() << std::endl;
-				}
-				if (ImGui::MenuItem("Export Selected...")) {
-					std::cout << "Selected folder: " << OpenFolder() << std::endl;
-				}
-				ImGui::EndMenu();
-			}
-
-			ImGui::Separator();
-			if (ImGui::MenuItem("Quit", "Alt+F4")) {
-				SceneManager::exitFlag = true;
-			}
-
-			/*if (ImGui::BeginMenu("Options")) {
+		/*static void DemoMenu() {
+			ImGui::MenuItem("(dummy menu)", NULL, false, false);
+			if (ImGui::BeginMenu("Options")) {
 				static bool enabled = true;
 				ImGui::MenuItem("Enabled", "", &enabled);
 				ImGui::BeginChild("child", ImVec2(0, 60), true);
@@ -908,8 +912,8 @@ namespace MOON {
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("Disabled", false)) { IM_ASSERT(0); }
-			if (ImGui::MenuItem("Checked", NULL, true)) {}*/
-		}
+			if (ImGui::MenuItem("Checked", NULL, true)) {}
+		}*/
 	};
 
 }
