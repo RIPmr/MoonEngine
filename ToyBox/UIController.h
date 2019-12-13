@@ -24,6 +24,9 @@
 namespace MOON {
 	class MainUI {
 	public:
+		// parameters
+		static Vector4 clearColor;
+
 		// image resources
 		static Texture *icon, *logo, *logoFull;
 
@@ -293,19 +296,18 @@ namespace MOON {
 			ImGui::EndMainMenuBar();
 		}
 
-		static void ControlPanel(const ImGuiIO *io, const Vector4 &clear_color) {
+		static void ControlPanel() {
 			ImGui::Begin(Icon_Name_To_ID(ICON_FA_COGS, " ControlPanel"));
 
-			ImGui::Text("WireMode:"); ImGui::SameLine(80.0f);
-			ImGui::Checkbox("WireMode", &SceneManager::wireMode, true);
-
-			ImGui::Text("Debug:"); ImGui::SameLine(80.0f);
-			ImGui::Checkbox("BBox", &SceneManager::showbbox, true);
+			ImGui::Text("BColor:"); ImGui::SameLine(80.0f);
+			ImGui::ColorEdit3("", (float*)&clearColor);
 
 			ImGui::Spacing();
+			ImGui::Text("WireMode:"); ImGui::SameLine(80.0f);
+			ImGui::Checkbox("WireMode", &SceneManager::wireMode, true); ImGui::SameLine();
 
-			ImGui::Text("BColor:"); ImGui::SameLine(80.0f);
-			ImGui::ColorEdit3("", (float*)&clear_color);
+			ImGui::Text("Debug:"); ImGui::SameLine();
+			ImGui::Checkbox("BBox", &SceneManager::showbbox, true);
 
 			ImGui::End();
 		}
@@ -366,8 +368,32 @@ namespace MOON {
 		}
 
 		static void PreferencesWnd() {
-			ImGui::Begin(Icon_Name_To_ID(ICON_FA_COG, " Style Editor"), &MainUI::show_preference_window);
-			ImGui::ShowStyleEditor();
+			ImGui::Begin(Icon_Name_To_ID(ICON_FA_COG, " Preferences"), &MainUI::show_preference_window);
+			if (ImGui::BeginTabBar("##tabs", ImGuiTabBarFlags_None)) {
+				if (ImGui::BeginTabItem("Style")) {
+					ImGui::ShowStyleEditor();
+					ImGui::EndTabItem();
+				}
+				if (ImGui::BeginTabItem("Rendering")) {
+					ImGui::Text("WireMode:"); ImGui::SameLine(80.0f);
+					ImGui::Checkbox("WireMode", &SceneManager::wireMode, true);
+
+					ImGui::Text("Debug:"); ImGui::SameLine(80.0f);
+					ImGui::Checkbox("BBox", &SceneManager::showbbox, true);
+
+					ImGui::Spacing();
+
+					ImGui::Text("BColor:"); ImGui::SameLine(80.0f);
+					ImGui::ColorEdit3("", (float*)&clearColor);
+					ImGui::EndTabItem();
+				}
+				if (ImGui::BeginTabItem("Hotkey")) {
+					ImGui::Text("WIP");
+					ImGui::EndTabItem();
+				}
+				ImGui::EndTabBar();
+			}
+			
 			ImGui::End();
 		}
 

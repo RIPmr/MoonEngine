@@ -8,15 +8,14 @@ Vector2 MOON_WndSize = Vector2(1600, 900);
 float SceneManager::aspect = MOON_WndSize.x / MOON_WndSize.y;
 Vector2 MOON_OutputSize = Vector2(200, 100);
 float Renderer::aspect = MOON_OutputSize.x / MOON_OutputSize.y;
-
-Vector4 clearColor(0.45f, 0.55f, 0.60f, 1.00f);
+Vector4 MainUI::clearColor(0.45f, 0.55f, 0.60f, 1.00f);
 Vector4 grdLineColor(0.8f, 0.8f, 0.8f, 1.0f);
 
 unsigned int Renderer::samplingRate = 5;
 unsigned int Renderer::maxReflectionDepth = 5;
-// ----------------------------------------------------------------
 
-Model* boxes;
+float Camera::MouseSensitivity = 0.025f;
+// ----------------------------------------------------------------
 
 int main() {
 	std::cout << "starting moon engine... ..." << std::endl;
@@ -30,8 +29,8 @@ int main() {
 
 	// test objects ------------------------------------------------------------------------
 	//Model* teapot = MOON_ModelManager::LoadModel("Assets/Models/teapot.obj");
-	boxes = MOON_ModelManager::LoadModel("Assets/Models/box_stack.obj");
-	//teapot->transform.Scale(Vector3(0.1f, 0.1f, 0.1f));
+	Model* boxes = MOON_ModelManager::LoadModel("Assets/Models/box_stack.obj");
+	//teapot->transform.Scale(Vector3(0.2f, 0.2f, 0.2f));
 	boxes->transform.Translate(Vector3(0.0f, 1.0f, 0.0f));
 	// -------------------------------------------------------------------------------------
 
@@ -42,7 +41,7 @@ int main() {
 		// per-frame time logic
 		MOON_UpdateClock();
 
-		// configure global opengl state -------------------------------------------
+		// configure global opengl state ------------------------------------------
 		//glEnable(GL_CULL_FACE);
 		glEnable(GL_DEPTH_TEST);
 		//glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
@@ -71,7 +70,8 @@ int main() {
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		// clear background of scene
-		glClearColor(clearColor.x, clearColor.y, clearColor.z, clearColor.w);
+		glClearColor(MainUI::clearColor.x, MainUI::clearColor.y, 
+					 MainUI::clearColor.z, MainUI::clearColor.w);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// rendering objects -------------------------------------------------------
@@ -255,6 +255,13 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	if (key == GLFW_KEY_W) Gizmo::gizmoMode = GizmoMode::translate;
 	if (key == GLFW_KEY_E) Gizmo::gizmoMode = GizmoMode::rotate;
 	if (key == GLFW_KEY_R) Gizmo::gizmoMode = GizmoMode::scale;
+	if (key == GLFW_KEY_Z) {
+		if (MOON_InputManager::selection.size() > 0) {
+			if (SceneManager::GetType(MOON_Selection(0))._Equal("Model"))
+				MOON_CurrentCamera->CatchTarget(dynamic_cast<Model*>(MOON_Selection(0)));
+			else MOON_CurrentCamera->CatchTarget(NULL);
+		} else MOON_CurrentCamera->CatchTarget(NULL);
+	}
 	
 	// Escape -------------------------------------------------------------------------
 	if (key == GLFW_KEY_ESCAPE) glfwSetWindowShouldClose(window, true);
@@ -363,20 +370,16 @@ void MOON_InputProcessor(GLFWwindow *window) {
 			MOON_SceneCamera->PushCamera(MOON_InputManager::mouseScrollOffset);
 		}
 
-		if (glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS) {
-			if (MOON_InputManager::mouse_right_hold) {
-				MOON_SceneCamera->ZoomCamera(MOON_InputManager::mouseOffset);
-			}
-		}
-
 		if (MOON_InputManager::mouse_middle_hold) {
 			if (glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS) {
-				MOON_SceneCamera->RotateCamera(MOON_InputManager::mouseOffset);
+				if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) {
+					MOON_SceneCamera->ZoomCamera(MOON_InputManager::mouseOffset);
+				} else MOON_SceneCamera->RotateCamera(MOON_InputManager::mouseOffset);
 			} else if (MOON_InputManager::mouseOffset.magnitude() > 0) {
 				MOON_SceneCamera->PanCamera(MOON_InputManager::mouseOffset);
 			}
-			}
 		}
+	}
 
 	// Keys ---------------------------------------------------------------------------
 	MOON_InputManager::left_ctrl_hold = glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS;
@@ -395,7 +398,7 @@ void MOON_InputProcessor(GLFWwindow *window) {
 void MOON_DrawMainUI() {
 	MainUI::QuadMenu();
 	if (ImGui::BeginMainMenuBar())		MainUI::MainMenu();
-	if (MainUI::show_control_window)	MainUI::ControlPanel(MainUI::io, clearColor);
+	if (MainUI::show_control_window)	MainUI::ControlPanel();
 	if (MainUI::show_preference_window)	MainUI::PreferencesWnd();
 	if (MainUI::show_VFB_window)		MainUI::ShowVFB();
 	if (MainUI::show_about_window)		MainUI::AboutWnd();

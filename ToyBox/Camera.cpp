@@ -21,8 +21,10 @@ namespace MOON {
 
 	void Camera::PanCamera(Vector2 mouseOffset) {
 		mouseOffset *= MouseSensitivity;
-		transform.position -= Right * mouseOffset.x + Up * mouseOffset.y;
-		updateCameraVectors();
+		Vector3 offset = Right * mouseOffset.x + Up * mouseOffset.y;
+		transform.position -= offset;
+		tarPos -= offset;
+		UpdateCameraVectors();
 	}
 
 	void Camera::ZoomCamera(Vector2 &mouseOffset) {
@@ -30,32 +32,22 @@ namespace MOON {
 		else if (fov < 5.0f) fov = 5.0f;
 		else if (fov > 60.0f) fov = 60.0f;
 
-		updateCameraVectors();
+		UpdateCameraVectors();
 	}
 
 	void Camera::RotateCamera(Vector2 mouseOffset, bool constrainPitch) {
-		mouseOffset *= MouseSensitivity * 4.0f;
-
-		Yaw += mouseOffset.x;
-		Pitch += mouseOffset.y;
-
-		mouseOffset *= 0.32f;
-		transform.position -= Right * mouseOffset.x + Up * mouseOffset.y;
-
-		// Make sure that when pitch is out of bounds, screen doesn't get flipped
-		if (constrainPitch) {
-			if (Pitch > 89.0f) Pitch = 89.0f;
-			if (Pitch < -89.0f) Pitch = -89.0f;
-		}
+		mouseOffset *= MouseSensitivity * 8.0f;
+		transform.position = MoonMath::RotateAround(transform.position, tarPos, Up, -Deg2Rad * mouseOffset.x);
+		transform.position = MoonMath::RotateAround(transform.position, tarPos, Right, Deg2Rad * mouseOffset.y);
 
 		// Update Front, Right and Up Vectors using the updated Euler angles
-		updateCameraVectors();
+		UpdateCameraVectors();
 	}
 
 	void Camera::PushCamera(Vector2 &mouseScrollOffset) {
 		transform.position += Front * mouseScrollOffset.y;
 
-		updateCameraVectors();
+		UpdateCameraVectors();
 	}
 
 	// screen pos to world ray fast version (used in renderer)
@@ -79,11 +71,9 @@ namespace MOON {
 		vertical = aspect * half_height * focus_dist * Up;
 	}
 
-	void Camera::updateCameraVectors() {
+	void Camera::UpdateCameraVectors() {
 		// Calculate the new Front vector
-		Front.x = cos(Deg2Rad * Yaw) * cos(Deg2Rad * Pitch);
-		Front.y = sin(Deg2Rad * Pitch);
-		Front.z = sin(Deg2Rad * Yaw) * cos(Deg2Rad * Pitch);
+		Front = tarPos - transform.position;
 		Front.normalize();
 
 		// Also re-calculate the Right and Up vector
@@ -93,6 +83,15 @@ namespace MOON {
 		Up = Vector3::Normalize(Vector3::Cross(Right, Front));
 
 		UpdateMatrix();
+	}
+
+	void Camera::CatchTarget(const Model* target) {
+		tarPos = target ? target->transform.position : Vector3::ZERO();
+
+		transform.position = tarPos - Front * 
+							(target ? (target->bbox_world.max - 
+							 target->bbox_world.min).magnitude() * 2.0f : 20.0f);
+		UpdateCameraVectors();
 	}
 
 	Vector3 Camera::WorldToScreenPos(const Vector3& worldPos) const {

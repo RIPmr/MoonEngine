@@ -19,6 +19,7 @@ namespace MOON {
 	#define MOON_ModelManager SceneManager::ModelManager
 	#define MOON_CameraManager SceneManager::CameraManager
 	#define MOON_InputManager SceneManager::InputManager
+	#define MOON_Selection(x) SceneManager::objectList[SceneManager::InputManager::selection[x]]
 
 	enum ShadingMode {
 		FORWARD_SHADING,

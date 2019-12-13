@@ -39,13 +39,13 @@ namespace MOON {
 		shader->use();
 
 		shader->setMat4("model", model);
-		shader->setMat4("view", MOON_CameraManager::currentCamera->view);
-		shader->setMat4("projection", MOON_CameraManager::currentCamera->projection);
+		shader->setMat4("view", MOON_CurrentCamera->view);
+		shader->setMat4("projection", MOON_CurrentCamera->projection);
 
 		shader->setVec3("lightColor", Vector3(1.0, 1.0, 1.0));
 		shader->setVec3("objectColor", dynamic_cast<MoonMtl*>(material)->Kd);
-		shader->setVec3("lightPos", MOON_CameraManager::currentCamera->transform.position);
-		shader->setVec3("viewPos", MOON_CameraManager::currentCamera->transform.position);
+		shader->setVec3("lightPos", MOON_CurrentCamera->transform.position);
+		shader->setVec3("viewPos", MOON_CurrentCamera->transform.position);
 
 		shader->setBool("isHovered", parent->ID == MOON_InputManager::hoverID);
 		shader->setBool("isSelected", parent->selected);

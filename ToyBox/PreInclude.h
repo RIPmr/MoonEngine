@@ -136,7 +136,6 @@ DirNode* AssetLoader::DirTree				= MOON_UNSPECIFIEDID;
 // init Scene Manager
 Camera* MOON_SceneCamera					= MOON_UNSPECIFIEDID;
 Camera* MOON_CurrentCamera					= MOON_UNSPECIFIEDID;
-float Camera::MouseSensitivity				= 0.025f;
 int SceneManager::delID						= MOON_AUTOID;
 unsigned int SceneManager::objectCounter	= 1;
 float SceneManager::Clock::deltaTime		= MOON_UNSPECIFIEDID;

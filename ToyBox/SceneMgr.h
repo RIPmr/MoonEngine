@@ -316,11 +316,25 @@ namespace MOON {
 			}
 		}
 
+		static std::string GetSuperClass(const std::string& _type) {
+			std::string type;
+			if (_type._Equal("Shader"))			type = "Shader";
+			else if (_type._Equal("Texture"))	type = "Texture";
+			else if (_type._Equal("Material"))	type = "Material";
+			else if (_type._Equal("Camera") ||
+					 _type._Equal("Model")  ||
+					 _type._Equal("Shape")  || 
+					 _type._Equal("Light"))		type = "MObject";
+			else type = "Unknown";
+			return type;
+		}
+
 		template<class T>
 		static std::string GetType(T* item) {
 			std::string type;
 			if (typeid(*item) == typeid(Shader)) type = "Shader";
-			else if (typeid(*item) == typeid(Texture)) type = "Texture";
+			else if (typeid(*item) == typeid(FrameBuffer) ||
+					 typeid(*item) == typeid(Texture)) type = "Texture";
 			else if (typeid(*item) == typeid(MoonMtl) || 
 					 typeid(*item) == typeid(LightMtl) || 
 					 typeid(*item) == typeid(Lambertian) ||
@@ -473,8 +487,9 @@ namespace MOON {
 				}
 
 				if (ID) {
-					if (MOON_ObjectList[ID]->selected ^= 1) MOON_InputManager::selection.push_back(ID);
-					else {
+					if (MOON_ObjectList[ID]->selected ^= 1) {
+						MOON_InputManager::selection.push_back(ID);
+					} else {
 						auto end = MOON_InputManager::selection.end();
 						for (auto it = MOON_InputManager::selection.begin(); it != end; it++)
 							if (*it == ID) {
