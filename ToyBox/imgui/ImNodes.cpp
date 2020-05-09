@@ -21,15 +21,16 @@
 //
 
 #ifndef IMGUI_DEFINE_MATH_OPERATORS
-#   define IMGUI_DEFINE_MATH_OPERATORS
+#	define IMGUI_DEFINE_MATH_OPERATORS
 #endif
 
 #include "ImNodes.h"
+#include "ImNodesEz.h"
+#include "ImPlot.h"
+#include "../Matrix3x3.h"
 
 namespace ImNodes {
-
-	CanvasState* gCanvas = nullptr;
-	float zoomDelta = 1.0f;
+	//CanvasState* gCanvas = nullptr;
 
 	bool operator ==(const ImVec2& a, const ImVec2& b) {
 		return abs(a.x - b.x) < std::numeric_limits<float>::epsilon() &&
@@ -118,7 +119,7 @@ namespace ImNodes {
 		/// Flag indicating that new connection was just made.
 		bool just_connected = false;
 		/// Previous canvas pointer. Used to restore proper gCanvas value when nesting canvases.
-		CanvasState* prev_canvas = nullptr;
+		//CanvasState* prev_canvas = nullptr;
 		/// A list of node/slot combos that can not connect to current pending connection.
 		ImVector<_IgnoreSlot> ignore_connections{};
 	};
@@ -167,15 +168,15 @@ namespace ImNodes {
 		return tx * tx + ty * ty;
 	}
 
-	bool RenderConnection(const ImVec2& input_pos, const ImVec2& output_pos, float thickness) {
+	bool RenderConnection(CanvasState* canvas, const ImVec2& input_pos, const ImVec2& output_pos, float thickness) {
 		ImDrawList* draw_list = ImGui::GetWindowDrawList();
-		CanvasState* canvas = gCanvas;
+		//CanvasState* canvas = gCanvas;
 		const ImGuiStyle& style = ImGui::GetStyle();
 
 		thickness *= canvas->zoom;
 
-		ImVec2 p2 = input_pos - ImVec2{ 100 * canvas->zoom, 0 };
-		ImVec2 p3 = output_pos + ImVec2{ 100 * canvas->zoom, 0 };
+		ImVec2 p2 = input_pos - ImVec2{ 20 * canvas->zoom, 0 };
+		ImVec2 p3 = output_pos + ImVec2{ 20 * canvas->zoom, 0 };
 
 		// Assemble segments for path
 		draw_list->PathLineTo(input_pos);
@@ -194,57 +195,94 @@ namespace ImNodes {
 		return is_close;
 	}
 
-	void BeginCanvas(CanvasState* canvas) {
-		canvas->_impl->prev_canvas = gCanvas;
-		gCanvas = canvas;
+	void BeginCanvas(CanvasState* canvas, const bool& blockMouseAction) {
+		//canvas->_impl->prev_canvas = gCanvas;
+		//gCanvas = canvas;
 		const ImGuiWindow* w = ImGui::GetCurrentWindow();
 		ImGui::PushID(canvas);
 
-		ImGui::ItemAdd(w->ContentsRegionRect, ImGui::GetID("canvas"));
+		ImGui::ItemAdd(w->ContentRegionRect, ImGui::GetID("canvas"));
 
-		ImDrawList* draw_list = ImGui::GetWindowDrawList();
-		ImGuiIO& io = ImGui::GetIO();
+		if (!blockMouseAction) {
+			ImGuiIO& io = ImGui::GetIO();
+			//ImVec2 mousePosInWnd = pos - ImGui::GetWindowPos();
 
-		ImVec2 pos = ImGui::GetWindowPos();
-		//ImVec2 mousePosInWnd = pos - ImGui::GetWindowPos();
+			if (!ImGui::IsMouseDown(0) && ImGui::IsWindowHovered()) {
+				if (ImGui::IsMouseDragging(2)) canvas->offset += io.MouseDelta;
 
-		if (!ImGui::IsMouseDown(0) && ImGui::IsWindowHovered()) {
-			if (ImGui::IsMouseDragging(2))
-				canvas->offset += io.MouseDelta;
-
-			if (!io.KeyShift) {
-				if (io.MouseWheel != 0) {
+				if (!io.KeyShift && io.MouseWheel != 0) {
 					float oldZoom = canvas->zoom;
 					canvas->zoom = ImClamp(canvas->zoom + io.MouseWheel * canvas->zoom / 16.f, 0.3f, 3.f);
-					zoomDelta = canvas->zoom / oldZoom;
+					canvas->zoomDelta = canvas->zoom / oldZoom;
 				}
-				//canvas->offset += ImGui::GetMouseDragDelta();
 			}
+
+			ImVec2 mousePos = ImGui::GetMousePos() - ImGui::GetWindowPos();
+			if (io.MouseWheel != 0 && ImGui::IsWindowFocused() &&
+				mousePos.x > 0 && mousePos.x < ImGui::GetWindowWidth() &&
+				mousePos.y > 0 && mousePos.y < ImGui::GetWindowHeight()) {
+				mousePos -= canvas->offset;
+
+				MOON::Matrix3x3 scaMat = MOON::Matrix3x3::ScaleMat(canvas->zoomDelta);
+				scaMat[2][0] = (1.0f - canvas->zoomDelta) * mousePos.x;
+				scaMat[2][1] = (1.0f - canvas->zoomDelta) * mousePos.y;
+
+				MOON::Matrix3x3 newMat;
+				MOON::Matrix3x3::multiply(scaMat, canvas->viewMat, newMat);
+				canvas->viewMat = newMat;
+			}
+			canvas->viewStart = Wnd2Graph(canvas, &ImGui::GetWindowPos());
+			canvas->viewEnd = Wnd2Graph(canvas, &(ImGui::GetWindowPos() + ImGui::GetWindowSize()));
 		}
 
-		const float grid = 64.0f * canvas->zoom;
-
-		ImVec2 size = ImGui::GetWindowSize();
-
-		ImU32 grid_color = ImColor(canvas->colors[ColCanvasLines]);
-		for (float x = fmodf(canvas->offset.x, grid); x < size.x;) {
-			draw_list->AddLine(ImVec2(x, 0) + pos, ImVec2(x, size.y) + pos, grid_color);
-			x += grid;
-		}
-
-		for (float y = fmodf(canvas->offset.y, grid); y < size.y;) {
-			draw_list->AddLine(ImVec2(0, y) + pos, ImVec2(size.x, y) + pos, grid_color);
-			y += grid;
-		}
+		DrawGrids(canvas);
 
 		ImGui::SetWindowFontScale(canvas->zoom);
 	}
 
-	void EndCanvas() {
-		assert(gCanvas != nullptr);     // Did you forget calling BeginCanvas()?
+	ImVec2 Graph2Wnd(ImNodes::CanvasState* canvas, ImVec2* pos) {
+		ImVec2 wndPos;
+		MOON::Vector3 homoWndPos(pos->x, pos->y, 1);
+		homoWndPos = canvas->viewMat * homoWndPos;
+
+		wndPos.x = homoWndPos.x; wndPos.y = homoWndPos.y;
+		wndPos += ImGui::GetWindowPos() + canvas->offset;
+		return wndPos;
+	}
+
+	ImVec2 Wnd2Graph(ImNodes::CanvasState* canvas, ImVec2* pos) {
+		ImVec2 graphPos;
+
+		graphPos = *pos - ImGui::GetWindowPos() - canvas->offset;
+
+		MOON::Vector3 homoGraphPos(graphPos.x, graphPos.y, 1);
+		homoGraphPos = canvas->viewMat.inverse() * homoGraphPos;
+		graphPos.x = homoGraphPos.x; graphPos.y = homoGraphPos.y;
+
+		return graphPos;
+	}
+
+	void DrawGrids(CanvasState* canvas) {
+		ImDrawList* draw_list = ImGui::GetWindowDrawList();
+
+		const float gridWidth = 64.0f;
+		//ImVec2 GraphSize(3200.0f, 3200.0f);
+		ImVec2 WndSize = ImGui::GetWindowSize();
+		ImU32 grid_color = ImColor(canvas->colors[ColCanvasLines]);
+
+		for (float x = 0; x <= canvas->size.x; x += gridWidth) {
+			draw_list->AddLine(Graph2Wnd(canvas, &ImVec2(x, 0)), Graph2Wnd(canvas, &ImVec2(x, canvas->size.y)), grid_color);
+		}
+		for (float y = 0; y <= canvas->size.y; y += gridWidth) {
+			draw_list->AddLine(Graph2Wnd(canvas, &ImVec2(0, y)), Graph2Wnd(canvas, &ImVec2(canvas->size.x, y)), grid_color);
+		}
+	}
+
+	void EndCanvas(CanvasState* canvas, const bool& blockMouseAction) {
+		//assert(gCanvas != nullptr);     // Did you forget calling BeginCanvas()?
 
 		ImDrawList* draw_list = ImGui::GetWindowDrawList();
-		auto* canvas = gCanvas;
+		//auto* canvas = gCanvas;
 		auto* impl = canvas->_impl;
 		const ImGuiStyle& style = ImGui::GetStyle();
 
@@ -273,7 +311,7 @@ namespace ImNodes {
 					output_pos.x -= connection_indent;
 				}
 
-				RenderConnection(input_pos, output_pos, canvas->style.curve_thickness);
+				RenderConnection(canvas, input_pos, output_pos, canvas->style.curve_thickness);
 			}
 		}
 
@@ -281,108 +319,98 @@ namespace ImNodes {
 			impl->single_selected_node = nullptr;
 
 		switch (impl->state) {
-		case State_None:
-		{
-			ImGuiID canvas_id = ImGui::GetID("canvas");
-			if (ImGui::IsMouseDown(0) && ImGui::GetCurrentWindow()->ContentsRegionRect.Contains(ImGui::GetMousePos())) {
-				if (ImGui::IsWindowHovered()) {
-					if (!ImGui::IsWindowFocused()) 
-						ImGui::FocusWindow(ImGui::GetCurrentWindow());
+			case State_None: {
+				ImGuiID canvas_id = ImGui::GetID("canvas");
+				if (ImGui::IsMouseDown(0) && ImGui::GetCurrentWindow()->ContentRegionRect.Contains(ImGui::GetMousePos())) {
+					if (ImGui::IsWindowHovered()) {
+						if (!ImGui::IsWindowFocused()) 
+							ImGui::FocusWindow(ImGui::GetCurrentWindow());
 
-					if (!ImGui::IsAnyItemActive()) {
-						ImGui::SetActiveID(canvas_id, ImGui::GetCurrentWindow());
-						const ImGuiIO& io = ImGui::GetIO();
-						if (!io.KeyCtrl && !io.KeyShift) {
-							impl->single_selected_node = nullptr;   // unselect all
-							impl->do_selections_frame = ImGui::GetCurrentContext()->FrameCount + 1;
+						if (!ImGui::IsAnyItemActive()) {
+							ImGui::SetActiveID(canvas_id, ImGui::GetCurrentWindow());
+							const ImGuiIO& io = ImGui::GetIO();
+							if (!io.KeyCtrl && !io.KeyShift) {
+								impl->single_selected_node = nullptr;   // unselect all
+								impl->do_selections_frame = ImGui::GetCurrentContext()->FrameCount + 1;
+							}
 						}
 					}
-				}
 
-				if (ImGui::GetActiveID() == canvas_id && ImGui::IsMouseDragging(0)) {
-					impl->selection_start = ImGui::GetMousePos();
-					impl->state = State_Select;
+					if (ImGui::GetActiveID() == canvas_id && ImGui::IsMouseDragging(0)) {
+						impl->selection_start = ImGui::GetMousePos();
+						impl->state = State_Select;
+					}
+				} else if (ImGui::GetActiveID() == canvas_id)
+					ImGui::ClearActiveID();
+				break;
+			}
+			case State_Drag: {
+				if (!ImGui::IsMouseDown(0) && !blockMouseAction) {
+					impl->state = State_None;
+					impl->drag_node = nullptr;
 				}
-			} else if (ImGui::GetActiveID() == canvas_id)
-				ImGui::ClearActiveID();
-			break;
-		}
-		case State_Drag:
-		{
-			if (!ImGui::IsMouseDown(0)) {
-				impl->state = State_None;
-				impl->drag_node = nullptr;
+				break;
 			}
-			break;
-		}
-		case State_Select:
-		{
-			if (ImGui::IsMouseDown(0)) {
-				draw_list->AddRectFilled(impl->selection_start, ImGui::GetMousePos(), canvas->colors[ColSelectBg]);
-				draw_list->AddRect(impl->selection_start, ImGui::GetMousePos(), canvas->colors[ColSelectBorder]);
-			} else {
-				ImGui::ClearActiveID();
-				impl->state = State_None;
+			case State_Select: {
+				if (ImGui::IsMouseDown(0) && !blockMouseAction) {
+					draw_list->AddRectFilled(impl->selection_start, ImGui::GetMousePos(), canvas->colors[ColSelectBg]);
+					draw_list->AddRect(impl->selection_start, ImGui::GetMousePos(), canvas->colors[ColSelectBorder]);
+				} else {
+					ImGui::ClearActiveID();
+					impl->state = State_None;
+				}
+				break;
 			}
-			break;
-		}
 		}
 
 		ImGui::SetWindowFontScale(1.f);
 		ImGui::PopID();     // canvas
-		gCanvas = impl->prev_canvas;
+		//gCanvas = impl->prev_canvas;
 	}
 
-	bool BeginNode(void* node_id, ImVec2* pos, bool* selected) {
-		assert(gCanvas != nullptr);
-		assert(node_id != nullptr);
-		assert(pos != nullptr);
+	bool BeginNode(CanvasState* canvas, void* node_id, ImVec2* pos, bool* selected) {
+		//assert(gCanvas != nullptr); 
+		assert(node_id != nullptr); 
+		assert(pos != nullptr); 
 		assert(selected != nullptr);
+
 		const ImGuiStyle& style = ImGui::GetStyle();
 		ImDrawList* draw_list = ImGui::GetWindowDrawList();
-		auto* canvas = gCanvas;
+		//auto* canvas = gCanvas;
 		auto* impl = canvas->_impl;
 
 		impl->node.id = node_id;
 		impl->node.pos = pos;
 		impl->node.selected = selected;
 
-		// 0 - node rect, curves
-		// 1 - node content
+		/*
+			0 - node rect, curves
+			1 - node content
+		*/
 		draw_list->ChannelsSplit(2);
 
 		if (node_id == impl->auto_position_node_id) {
 			// Somewhere out of view so that we dont see node flicker when it will be repositioned
 			ImGui::SetCursorScreenPos(ImGui::GetWindowPos() + ImGui::GetWindowSize() + style.WindowPadding);
 		} else {
-			// Top-let corner of the node
-			ImGuiIO& io = ImGui::GetIO();
-			ImVec2 mousePos = ImGui::GetMousePos() - ImGui::GetWindowPos();
-			if (io.MouseWheel != 0 && 
-				mousePos.x > 0 && mousePos.x < ImGui::GetWindowWidth() && 
-				mousePos.y > 0 && mousePos.y < ImGui::GetWindowHeight() &&
-				ImGui::IsWindowFocused()) {
-				mousePos -= canvas->offset;
-				*pos = mousePos + (*pos - mousePos) * zoomDelta;
-			}
-			//ImVec2 nodePos = ImGui::GetWindowPos() + (*pos) * canvas->zoom + canvas->offset;
-			ImVec2 nodePos = ImGui::GetWindowPos() + *pos + canvas->offset;
-			ImGui::SetCursorScreenPos(nodePos);
+			// Top-left corner of the node
+			ImGui::SetCursorScreenPos(Graph2Wnd(canvas, pos));
 		}
 
 		ImGui::PushID(node_id);
 
-		ImGui::BeginGroup();    // Slots and content group
+		// Slots and content group
+		ImGui::BeginGroup();
 		draw_list->ChannelsSetCurrent(1);
 
 		return true;
 	}
 
-	void EndNode() {
-		assert(gCanvas != nullptr);
+	void EndNode(CanvasState* canvas, const bool& blockMouseAction, const unsigned int& anythingWrong) {
+		//assert(gCanvas != nullptr);
 		const ImGuiStyle& style = ImGui::GetStyle();
 		ImDrawList* draw_list = ImGui::GetWindowDrawList();
-		auto* canvas = gCanvas;
+		//auto* canvas = gCanvas;
 		auto* impl = canvas->_impl;
 		auto* node_id = impl->node.id;
 
@@ -396,114 +424,114 @@ namespace ImNodes {
 			ImGui::GetItemRectMax() + style.ItemInnerSpacing * canvas->zoom
 		};
 
+		MyNode* node = (MyNode*)node_id;
+		node->end = Wnd2Graph(canvas, &node_rect.Max);
+
 		// Render frame
 		draw_list->ChannelsSetCurrent(0);
 
 		ImColor node_color = canvas->colors[node_selected ? ColNodeActiveBg : ColNodeBg];
 		draw_list->AddRectFilled(node_rect.Min, node_rect.Max, node_color, style.FrameRounding);
-		draw_list->AddRect(node_rect.Min, node_rect.Max, canvas->colors[ColNodeBorder], style.FrameRounding);
+
+		ImColor nodeFrameCol;
+		if (!anythingWrong) nodeFrameCol = canvas->colors[ColNodeBorder]; // normal
+		else if (anythingWrong == 1) nodeFrameCol = ImColor(0.84f, 0.075f, 0.27f, node->GetAnim()); // error
+		else if (anythingWrong == 2) nodeFrameCol = ImColor(0.498f, 0.722f, 0.055f, node->GetAnim()); // execute
+		draw_list->AddRect(node_rect.Min, node_rect.Max, nodeFrameCol, style.FrameRounding);
 
 		// Create node item
 		ImGuiID node_item_id = ImGui::GetID(node_id);
 		ImGui::ItemSize(node_rect.GetSize());
 		ImGui::ItemAdd(node_rect, node_item_id);
 
-		// Node is active when being dragged
-		if (ImGui::IsMouseDown(0) && !ImGui::IsAnyItemActive() && ImGui::IsItemHovered())
-			ImGui::SetActiveID(node_item_id, ImGui::GetCurrentWindow());
-		else if (!ImGui::IsMouseDown(0) && ImGui::IsItemActive())
-			ImGui::ClearActiveID();
+		if (!blockMouseAction) {
+			// Node is active when being dragged
+			if (ImGui::IsMouseDown(0) && !ImGui::IsAnyItemActive() && ImGui::IsItemHovered())
+				ImGui::SetActiveID(node_item_id, ImGui::GetCurrentWindow());
+			else if (!ImGui::IsMouseDown(0) && ImGui::IsItemActive())
+				ImGui::ClearActiveID();
 
-		// Save last selection state in case we are about to start dragging multiple selected nodes
-		if (ImGui::IsMouseClicked(0)) {
-			ImGuiID prev_selected_id = ImHashStr("prev-selected", 0, ImHashData(&impl->node.id, sizeof(impl->node.id)));
-			impl->cached_data.SetBool(prev_selected_id, node_selected);
-		}
+			// Save last selection state in case we are about to start dragging multiple selected nodes
+			if (ImGui::IsMouseClicked(0)) {
+				ImGuiID prev_selected_id = ImHashStr("prev-selected", 0, ImHashData(&impl->node.id, sizeof(impl->node.id)));
+				impl->cached_data.SetBool(prev_selected_id, node_selected);
+			}
 
-		ImGuiIO& io = ImGui::GetIO();
-		switch (impl->state) {
-		case State_None:
-		{
-			// Node selection behavior. Selection can change only when no node is being dragged and connections are not being made.
-			if (impl->just_connected || ImGui::GetDragDropPayload() != nullptr) {
-				// No selections are performed when nodes are being connected.
-				impl->just_connected = false;
-			} else if (impl->do_selections_frame == ImGui::GetCurrentContext()->FrameCount) {
-				// Unselect other nodes when some node was left-clicked.
-				node_selected = impl->single_selected_node == node_id;
-			} else if (ImGui::IsMouseClicked(0) && ImGui::IsItemHovered() && ImGui::IsItemActive()) {
-				node_selected = true;
-				if (!io.KeyCtrl && node_selected) {
-					impl->single_selected_node = node_id;
-					impl->do_selections_frame = ImGui::GetCurrentContext()->FrameCount + 1;
+			ImGuiIO& io = ImGui::GetIO();
+			switch (impl->state) {
+				case State_None: {
+					// Node selection behavior. Selection can change only when no node is being dragged and connections are not being made.
+					if (impl->just_connected || ImGui::GetDragDropPayload() != nullptr) {
+						// No selections are performed when nodes are being connected.
+						impl->just_connected = false;
+					} else if (impl->do_selections_frame == ImGui::GetCurrentContext()->FrameCount) {
+						// Unselect other nodes when some node was left-clicked.
+						node_selected = impl->single_selected_node == node_id;
+					} else if (ImGui::IsMouseClicked(0) && ImGui::IsItemHovered() && ImGui::IsItemActive()) {
+						node_selected = true;
+						if (!io.KeyCtrl && node_selected) {
+							impl->single_selected_node = node_id;
+							impl->do_selections_frame = ImGui::GetCurrentContext()->FrameCount + 1;
+						}
+					} else if (ImGui::IsItemActive() && ImGui::IsMouseDragging(0)) {
+						impl->state = State_Drag;
+						if (impl->drag_node == nullptr) {
+							impl->drag_node = node_id;
+							impl->drag_node_selected = node_selected;
+						} else impl->single_selected_node = nullptr;
+					} else if (node_id == impl->auto_position_node_id) {
+						// Upon node creation we would like it to be positioned at the center of mouse cursor. This can be done only
+						// once widget dimensions are known at the end of rendering and thus on the next frame.
+						node_pos = Wnd2Graph(canvas, &canvas->lastMousePos);
+						impl->auto_position_node_id = nullptr;
+					}
+					break;
 				}
-			} else if (ImGui::IsItemActive() && ImGui::IsMouseDragging(0)) {
-				impl->state = State_Drag;
-				if (impl->drag_node == nullptr) {
-					impl->drag_node = node_id;
-					impl->drag_node_selected = node_selected;
-				} else
-					impl->single_selected_node = nullptr;
-			} else if (node_id == impl->auto_position_node_id) {
-				// Upon node creation we would like it to be positioned at the center of mouse cursor. This can be done only
-				// once widget dimensions are known at the end of rendering and thus on the next frame.
-				//node_pos = (ImGui::GetMousePos() - ImGui::GetCurrentWindow()->Pos - canvas->offset - (node_rect.GetSize() / 2)) / canvas->zoom;
-				node_pos = ImGui::GetMousePos() - ImGui::GetCurrentWindow()->Pos - canvas->offset - (node_rect.GetSize() / 2);
-				impl->auto_position_node_id = nullptr;
-			}
-			break;
-		}
-		case State_Drag:
-		{
-			if (ImGui::IsMouseDown(0)) {
-				// Node dragging behavior. Drag node under mouse and other selected nodes if current node is selected.
-				if ((ImGui::IsItemActive() || (impl->drag_node && impl->drag_node_selected && node_selected)))
-					node_pos += ImGui::GetIO().MouseDelta;
-			}
-			break;
-		}
-		case State_Select:
-		{
-			ImRect selection_rect;
-			selection_rect.Min.x = ImMin(impl->selection_start.x, ImGui::GetMousePos().x);
-			selection_rect.Min.y = ImMin(impl->selection_start.y, ImGui::GetMousePos().y);
-			selection_rect.Max.x = ImMax(impl->selection_start.x, ImGui::GetMousePos().x);
-			selection_rect.Max.y = ImMax(impl->selection_start.y, ImGui::GetMousePos().y);
+				case State_Drag: {
+					if (ImGui::IsMouseDown(0)) {
+						// Node dragging behavior. Drag node under mouse and other selected nodes if current node is selected.
+						if ((ImGui::IsItemActive() || (impl->drag_node && impl->drag_node_selected && node_selected)))
+							node_pos += ImGui::GetIO().MouseDelta / canvas->zoom;
+					}
+					break;
+				}
+				case State_Select: {
+					ImRect selection_rect;
+					selection_rect.Min.x = ImMin(impl->selection_start.x, ImGui::GetMousePos().x);
+					selection_rect.Min.y = ImMin(impl->selection_start.y, ImGui::GetMousePos().y);
+					selection_rect.Max.x = ImMax(impl->selection_start.x, ImGui::GetMousePos().x);
+					selection_rect.Max.y = ImMax(impl->selection_start.y, ImGui::GetMousePos().y);
 
-			ImGuiID prev_selected_id = ImHashStr("prev-selected", 0, ImHashData(&impl->node.id, sizeof(impl->node.id)));
-			if (io.KeyShift) {
-				// Append selection
-				if (selection_rect.Contains(node_rect))
-					node_selected = true;
-				else
-					node_selected = impl->cached_data.GetBool(prev_selected_id);
-			} else if (io.KeyCtrl) {
-				// Subtract from selection
-				if (selection_rect.Contains(node_rect))
-					node_selected = false;
-				else
-					node_selected = impl->cached_data.GetBool(prev_selected_id);
-			} else {
-				// Assign selection
-				node_selected = selection_rect.Contains(node_rect);
+					ImGuiID prev_selected_id = ImHashStr("prev-selected", 0, ImHashData(&impl->node.id, sizeof(impl->node.id)));
+					if (io.KeyShift) {
+						// Append selection
+						if (selection_rect.Contains(node_rect)) node_selected = true;
+						else node_selected = impl->cached_data.GetBool(prev_selected_id);
+					} else if (io.KeyCtrl) {
+						// Subtract from selection
+						if (selection_rect.Contains(node_rect)) node_selected = false;
+						else node_selected = impl->cached_data.GetBool(prev_selected_id);
+					} else {
+						// Assign selection
+						node_selected = selection_rect.Contains(node_rect);
+					}
+					break;
+				}
 			}
-			break;
 		}
-		}
-
 		draw_list->ChannelsMerge();
 
 		ImGui::PopID();     // id
 	}
 
-	bool GetNewConnection(void** input_node, const char** input_slot_title, void** output_node, const char** output_slot_title) {
-		assert(gCanvas != nullptr);
+	bool GetNewConnection(CanvasState* canvas, void** input_node, const char** input_slot_title, void** output_node, const char** output_slot_title) {
+		//assert(gCanvas != nullptr);
 		assert(input_node != nullptr);
 		assert(input_slot_title != nullptr);
 		assert(output_node != nullptr);
 		assert(output_slot_title != nullptr);
 
-		auto* canvas = gCanvas;
+		//auto* canvas = gCanvas;
 		auto* impl = canvas->_impl;
 
 		if (impl->new_connection.output_node != nullptr) {
@@ -518,8 +546,8 @@ namespace ImNodes {
 		return false;
 	}
 
-	bool GetPendingConnection(void** node_id, const char** slot_title, int* slot_kind) {
-		assert(gCanvas != nullptr);
+	bool GetPendingConnection(CanvasState* canvas, void** node_id, const char** slot_title, int* slot_kind) {
+		//assert(gCanvas != nullptr);
 		assert(node_id != nullptr);
 		assert(slot_title != nullptr);
 		assert(slot_kind != nullptr);
@@ -538,15 +566,15 @@ namespace ImNodes {
 		return false;
 	}
 
-	bool Connection(void* input_node, const char* input_slot, void* output_node, const char* output_slot) {
-		assert(gCanvas != nullptr);
+	bool Connection(CanvasState* canvas, void* input_node, const char* input_slot, void* output_node, const char* output_slot) {
+		//assert(gCanvas != nullptr);
 		assert(input_node != nullptr);
 		assert(input_slot != nullptr);
 		assert(output_node != nullptr);
 		assert(output_slot != nullptr);
 
 		bool is_connected = true;
-		auto* canvas = gCanvas;
+		//auto* canvas = gCanvas;
 		auto* impl = canvas->_impl;
 
 		if (input_node == impl->auto_position_node_id || output_node == impl->auto_position_node_id)
@@ -568,7 +596,7 @@ namespace ImNodes {
 		input_slot_pos.x += connection_indent;
 		output_slot_pos.x -= connection_indent;
 
-		bool curve_hovered = RenderConnection(input_slot_pos, output_slot_pos, canvas->style.curve_thickness);
+		bool curve_hovered = RenderConnection(canvas, input_slot_pos, output_slot_pos, canvas->style.curve_thickness);
 		if (curve_hovered && ImGui::IsWindowHovered()) {
 			if (ImGui::IsMouseDoubleClicked(0))
 				is_connected = false;
@@ -580,7 +608,7 @@ namespace ImNodes {
 		void* pending_node_id;
 		const char* pending_slot_title;
 		int pending_slot_kind;
-		if (GetPendingConnection(&pending_node_id, &pending_slot_title, &pending_slot_kind)) {
+		if (GetPendingConnection(canvas, &pending_node_id, &pending_slot_title, &pending_slot_kind)) {
 			_IgnoreSlot ignore_connection{};
 			if (IsInputSlotKind(pending_slot_kind)) {
 				if (pending_node_id == input_node && strcmp(pending_slot_title, input_slot) == 0) {
@@ -604,12 +632,12 @@ namespace ImNodes {
 		return is_connected;
 	}
 
-	CanvasState* GetCurrentCanvas() {
+	/*CanvasState* GetCurrentCanvas() {
 		return gCanvas;
-	}
+	}*/
 
-	bool BeginSlot(const char* title, int kind) {
-		auto* canvas = gCanvas;
+	bool BeginSlot(CanvasState* canvas, const char* title, int kind) {
+		//auto* canvas = gCanvas;
 		auto* impl = canvas->_impl;
 
 		impl->slot.title = title;
@@ -619,9 +647,9 @@ namespace ImNodes {
 		return true;
 	}
 
-	void EndSlot() {
+	void EndSlot(CanvasState* canvas) {
 		const ImGuiStyle& style = ImGui::GetStyle();
-		auto* canvas = gCanvas;
+		//auto* canvas = gCanvas;
 		auto* impl = canvas->_impl;
 
 		ImGui::EndGroup();
@@ -676,7 +704,7 @@ namespace ImNodes {
 			ImGui::EndDragDropSource();
 		}
 
-		if (IsConnectingCompatibleSlot() && ImGui::BeginDragDropTarget()) {
+		if (IsConnectingCompatibleSlot(canvas) && ImGui::BeginDragDropTarget()) {
 			// Accept drags from opposite type (input <-> output, and same kind)
 			char drag_id[32];
 			snprintf(drag_id, sizeof(drag_id), "new-node-connection-%08X", impl->slot.kind * -1);
@@ -707,20 +735,20 @@ namespace ImNodes {
 		ImGui::PopID(); // name
 	}
 
-	void AutoPositionNode(void* node_id) {
-		assert(gCanvas != nullptr);
-		gCanvas->_impl->auto_position_node_id = node_id;
+	void AutoPositionNode(CanvasState* canvas, void* node_id) {
+		//assert(gCanvas != nullptr);
+		canvas->_impl->auto_position_node_id = node_id;
 	}
 
-	bool IsSlotCurveHovered() {
-		assert(gCanvas != nullptr);
-		auto* canvas = gCanvas;
+	bool IsSlotCurveHovered(CanvasState* canvas) {
+		//assert(gCanvas != nullptr);
+		//auto* canvas = gCanvas;
 		auto* impl = canvas->_impl;
 
 		void* node_id;
 		const char* slot_title;
 		int slot_kind;
-		if (ImNodes::GetPendingConnection(&node_id, &slot_title, &slot_kind)) {
+		if (ImNodes::GetPendingConnection(canvas, &node_id, &slot_title, &slot_kind)) {
 			// In-progress connection to current slot is hovered
 			return node_id == impl->node.id && strcmp(slot_title, impl->slot.title) == 0 &&
 				slot_kind == impl->slot.kind;
@@ -731,9 +759,9 @@ namespace ImNodes {
 			IsInputSlotKind(impl->slot.kind)));
 	}
 
-	bool IsConnectingCompatibleSlot() {
-		assert(gCanvas != nullptr);
-		auto* canvas = gCanvas;
+	bool IsConnectingCompatibleSlot(CanvasState* canvas) {
+		//assert(gCanvas != nullptr);
+		//auto* canvas = gCanvas;
 		auto* impl = canvas->_impl;
 
 		if (auto* payload = ImGui::GetDragDropPayload()) {

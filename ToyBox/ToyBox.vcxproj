@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -137,16 +137,24 @@
     <ClCompile Include="imgui\imgui_widgets.cpp" />
     <ClCompile Include="imgui\ImNodes.cpp" />
     <ClCompile Include="imgui\ImNodesEz.cpp" />
+    <ClCompile Include="imgui\ImPlot.cpp" />
+    <ClCompile Include="ImPie.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Material.cpp" />
+    <ClCompile Include="MaterialEditor.cpp" />
     <ClCompile Include="MathUtils.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="MShader.cpp" />
+    <ClCompile Include="Neuron.cpp" />
+    <ClCompile Include="NFunction.cpp" />
+    <ClCompile Include="NGraph.cpp" />
+    <ClCompile Include="NNManager.cpp" />
     <ClCompile Include="ObjectBase.cpp" />
     <ClCompile Include="OBJExporter.cpp" />
     <ClCompile Include="OBJLoader.cpp" />
     <ClCompile Include="opengl\src\glad.c" />
+    <ClCompile Include="Optimizer.cpp" />
     <ClCompile Include="PipelineMgr.cpp" />
     <ClCompile Include="Quaternion.cpp" />
     <ClCompile Include="Renderer.cpp" />
@@ -157,13 +165,21 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BoundingBox.h" />
+    <ClInclude Include="ButtonEx.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="CNN.h" />
     <ClInclude Include="CodeEditor.h" />
     <ClInclude Include="Color.h" />
     <ClInclude Include="Debugger.h" />
     <ClInclude Include="FlowMenu.h" />
+    <ClInclude Include="FNN.h" />
+    <ClInclude Include="GNN.h" />
+    <ClInclude Include="imgui\ImPlot.h" />
+    <ClInclude Include="ImPie.h" />
+    <ClInclude Include="NFunction.h" />
     <ClInclude Include="FuzzyMatch.h" />
     <ClInclude Include="Gizmo.h" />
+    <ClInclude Include="NGraph.h" />
     <ClInclude Include="Helper.h" />
     <ClInclude Include="Hitable.h" />
     <ClInclude Include="HotkeyMgr.h" />
@@ -173,24 +189,33 @@
     <ClInclude Include="Light.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="MaterialEditor.h" />
+    <ClInclude Include="Matrix.h" />
+    <ClInclude Include="Matrix3x3.h" />
     <ClInclude Include="MatSphere.h" />
     <ClInclude Include="MathUtils.h" />
     <ClInclude Include="Matrix4x4.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="MoonEnums.h" />
+    <ClInclude Include="Neuron.h" />
+    <ClInclude Include="NNBase.h" />
+    <ClInclude Include="NNManager.h" />
     <ClInclude Include="NodeEditorBase.h" />
+    <ClInclude Include="NVariable.h" />
     <ClInclude Include="OBJMgr.h" />
     <ClInclude Include="OperatorBase.h" />
     <ClInclude Include="OperatorLoader.h" />
+    <ClInclude Include="Optimizer.h" />
     <ClInclude Include="OP_MeshEditor.h" />
     <ClInclude Include="PipelineMgr.h" />
+    <ClInclude Include="Plotter.h" />
     <ClInclude Include="PMapGen.h" />
     <ClInclude Include="PreInclude.h" />
     <ClInclude Include="AssetLoader.h" />
     <ClInclude Include="Quaternion.h" />
     <ClInclude Include="Ray.h" />
     <ClInclude Include="Renderer.h" />
+    <ClInclude Include="RNN.h" />
     <ClInclude Include="SceneMgr.h" />
     <ClInclude Include="MShader.h" />
     <ClInclude Include="ShapeBase.h" />

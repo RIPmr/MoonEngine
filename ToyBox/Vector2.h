@@ -24,6 +24,7 @@ namespace MOON {
 		friend std::istream& operator>>(std::istream &is, Vector2 &t);
 		friend std::ostream& operator<<(std::ostream &os, const Vector2 &t);
 		friend bool operator==(const Vector2 &v1, const Vector2 &v2);
+		friend bool operator!=(const Vector2 &v1, const Vector2 &v2);
 		friend Vector2 operator+(const Vector2 &v1, const Vector2 &v2);
 		friend Vector2 operator-(const Vector2 &v1, const Vector2 &v2);
 		friend Vector2 operator*(const Vector2 &v1, const Vector2 &v2);

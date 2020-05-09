@@ -2,6 +2,7 @@
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
+
 #include <shellapi.h>
 #include <cstdlib>
 #include <string.h>
@@ -14,7 +15,12 @@
 #include "Texture.h"
 #include "Gizmo.h"
 #include "Utility.h"
+#include "Plotter.h"
+#include "FlowMenu.h"
+#include "NGraph.h"
+#include "NNManager.h"
 #include "CodeEditor.h"
+#include "ButtonEx.h"
 #include "StackWindow.h"
 #include "AssetLoader.h"
 #include "MaterialEditor.h"
@@ -61,64 +67,22 @@ namespace MOON {
 		static bool show_profiler;
 		static bool show_render_setting;
 
+		static bool show_nn_manager;
+
 		// class-like wnds
-		static MaterialEditor nodeEditor;
+		static MaterialEditor matEditor;
 
 		static void CleanUp() {
-			nodeEditor.CleanUp();
-		}
-
-		// style event
-		static void SetButtonClicked() {
-			style->Colors[ImGuiCol_Button] = ImVec4(1.000f, 1.000f, 1.000f, 0.250f);
-		}
-
-		static void ResetButtonColor() {
-			style->Colors[ImGuiCol_Button] = ImVec4(1.000f, 1.000f, 1.000f, 0.000f);
-		}
-
-		static void SwitchButton(const char* ON_Label, const char* OFF_Label, const bool& switcher, void(*ON_Execute)(), void(*OFF_Execute)()) {
-			if (switcher) {
-				if (ImGui::Button(ON_Label, ImVec2(22, 22))) (*ON_Execute)();
-			} else {
-				SetButtonClicked();
-				if (ImGui::Button(OFF_Label, ImVec2(22, 22))) (*OFF_Execute)();
-				ResetButtonColor();
-			}
-		}
-		static void RatioButton(const char* label, const bool& switcher, void(*executer)()) {
-			if (switcher) SetButtonClicked();
-			if (ImGui::Button(label, ImVec2(22, 22))) (*executer)();
-			if (switcher) ResetButtonColor();
+			//matEditor.CleanUp();
 		}
 
 		// Right click popup wnd
-		static void QuadMenu() {
+		static void RightClickMenu() {
 			if (!MOON_InputManager::isHoverUI && ImGui::IsMouseDown(1)) {
-				ImGui::OpenPopup("QuadMenu");
+				//ImGui::OpenPopup("QuadMenu");
+				ImGui::OpenPopup("FlowMenu");
 			}
-
-			if (ImGui::BeginPopup("QuadMenu")) {
-				if (ImGui::BeginMenu("CoordSys")) {
-					if (ImGui::MenuItem("World"))  Gizmo::manipCoord = CoordSys::WORLD;
-					if (ImGui::MenuItem("Local"))  Gizmo::manipCoord = CoordSys::LOCAL;
-					if (ImGui::MenuItem("Parent")) Gizmo::manipCoord = CoordSys::PARENT;
-					if (ImGui::MenuItem("Screen")) Gizmo::manipCoord = CoordSys::SCREEN;
-					ImGui::EndMenu();
-				}
-				if (ImGui::BeginMenu("GizmoPos")) {
-					if (ImGui::MenuItem("Pivot"))  Gizmo::gizmoPos = GizmoPos::pivot;
-					if (ImGui::MenuItem("Center"))  Gizmo::gizmoPos = GizmoPos::center;
-					ImGui::EndMenu();
-				}
-
-				ImGui::Separator();
-				if (ImGui::MenuItem("Delete")) {}
-				if (ImGui::MenuItem("Copy")) {}
-				if (ImGui::MenuItem("Paste")) {}
-				
-				ImGui::EndPopup();
-			}
+			FlowMenu();
 		}
 
 		// window definition
@@ -225,6 +189,16 @@ namespace MOON {
 				}
 				if (ImGui::MenuItem("Settings", "F10", MainUI::show_render_setting)) {
 					MainUI::show_render_setting = !MainUI::show_render_setting;
+				}
+				ImGui::EndMenu();
+			}
+			if (ImGui::BeginMenu("MoonNN")) {
+				if (ImGui::MenuItem("NN Graph", "Ctrl+N", MainUI::show_nn_manager)) {
+					MainUI::show_nn_manager = !MainUI::show_nn_manager;
+				}
+				ImGui::Separator();
+				if (ImGui::MenuItem("Plot Manager")) {
+
 				}
 				ImGui::EndMenu();
 			}
@@ -640,7 +614,8 @@ namespace MOON {
 			static unsigned int prevID = MOON_TextureManager::GetItem("moon_logo_full")->localID;
 
 			ImGui::BeginChild("Previewer", ImVec2(floatWidth, 140), true, ImGuiWindowFlags_NoScrollbar);
-			ImGui::Image((void*)(intptr_t)prevID, ImVec2(125, 125));
+			//ImGui::Image((void*)(intptr_t)prevID, ImVec2(125, 125));
+			matEditor.Previewer(style);
 			ImGui::EndChild();
 
 			// materials in the scene ------------------------------------------------------
@@ -661,7 +636,7 @@ namespace MOON {
 			if (ImGui::Button("Clear")) {
 				RegistStackWnd("Information");
 			}
-			QueryWnd("Information", "Clear node editor?", &nodeEditor, &MaterialEditor::ClearEditor);
+			QueryWnd("Information", "Clear node editor?", &matEditor, &MaterialEditor::ClearEditor);
 			ImGui::SameLine();
 			ImGui::Text(u8"|"); ImGui::SameLine();
 			ImGui::Text("Material: %d", MOON_MaterialManager::CountItem());
@@ -671,25 +646,27 @@ namespace MOON {
 			ImGui::Columns(2, "matView");
 			if (firstLoop) {
 				firstLoop = false;
-				ImGui::SetColumnWidth(-1, 500);
+				ImGui::SetColumnWidth(-1, 650);
 			}
 			floatWidth = ImGui::GetColumnWidth(-1) - 15;
+
 			// node editor -------------------------------------------------------------
-			ImGui::BeginChild("nodeEditor", ImVec2(floatWidth, 0), true,
+			ImGui::BeginChild("matEditor", ImVec2(floatWidth, 0), true,
 				ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 			{
-				nodeEditor.Draw();
+				matEditor.Draw();
 			}
 			ImGui::EndChild();
 
 			ImGui::NextColumn();
+
 			// properties view ---------------------------------------------------------
 			ImGui::BeginChild("propView");
 			{
-				if (nodeEditor.anythingSelected) {
+				if (matEditor.anythingSelected) {
 					selectedMat = NULL; // TODO
 
-					nodeEditor.selectedNode->ProcessContent(false);
+					matEditor.selectedNode->ProcessContent(false);
 				} else {
 					if (selectedMat == NULL) ImGui::Text("Nothing selected");
 					else selectedMat->ListProperties();
@@ -805,7 +782,7 @@ namespace MOON {
 
 			ImGui::Text(u8"|"); ImGui::SameLine();
 
-			SwitchButton(ICON_FA_TOGGLE_OFF, ICON_FA_TOGGLE_ON, Gizmo::manipCoord == CoordSys::WORLD,
+			SwitchButtonEx(ICON_FA_TOGGLE_OFF, ICON_FA_TOGGLE_ON, Gizmo::manipCoord == CoordSys::WORLD,
 						[]() { Gizmo::manipCoord = CoordSys::LOCAL; },
 						[]() { Gizmo::manipCoord = CoordSys::WORLD; });
 			ImGui::SameLine();
@@ -874,6 +851,103 @@ namespace MOON {
 
 		static void OperatorExplorer() {
 			
+		}
+
+		static void NNManagerWnd() {
+			ImGui::Begin(Icon_Name_To_ID(ICON_FA_BRAILLE, " MOON NN"), &show_nn_manager);
+
+			ImGui::Columns(2, "nn_col_1");
+			static bool firstLoop = true;
+			if (firstLoop) ImGui::SetColumnWidth(-1, 160);
+			float floatWidth = ImGui::GetColumnWidth(-1) - 20;
+
+			// left
+			static ImNodes::MyNode* selectedNode = NULL;
+
+			ImGui::BeginChild("Previewer", ImVec2(floatWidth, 140), true, ImGuiWindowFlags_NoScrollbar);
+			NN::NNM::currentGraph->Previewer(style);
+			ImGui::EndChild();
+
+			// neurons in the scene ------------------------------------------------------
+			ImGui::BeginChild("NeuronList", ImVec2(floatWidth, 0), true);
+			for (auto &node : NN::NNM::currentGraph->nodes) {
+				if (ImGui::Selectable(node->title.c_str(), selectedNode == node)) {
+					if (selectedNode != node) {
+						selectedNode->selected = false;
+						node->selected = true;
+						selectedNode = node;
+					}
+				}
+			}
+			ImGui::EndChild();
+			ImGui::NextColumn();
+
+			// right
+			ImGui::BeginChild("GraphZone", ImVec2(0, 0));
+			ImGui::Button(ICON_FA_FLOPPY_O); ImGui::SameLine();
+			ImGui::Button(ICON_FA_FOLDER_OPEN_O); ImGui::SameLine();
+			if (ImGui::Button(ICON_FA_FILE_O)) RegistStackWnd("Information"); ImGui::SameLine(); ImGui::Text("|"); ImGui::SameLine();
+			if (ImGui::Button(ICON_FA_PLUS_SQUARE_O)) NN::NNM::NewGraph();
+			QueryWnd("Information", "Clear node editor?", NN::NNM::currentGraph, &NN::NGraph::ClearGraph);
+			ImGui::SameLine();
+			ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None | ImGuiTabBarFlags_FittingPolicyScroll | ImGuiTabBarFlags_AutoSelectNewTabs;
+			if (ImGui::BeginTabBar("NGraphTabBar", tab_bar_flags)) {
+				for (auto graph = NN::NNM::graphList.begin(); graph != NN::NNM::graphList.end(); graph++) {
+					// TODO: if invisible, delete it
+					if (ImGui::BeginTabItem((*graph)->name.c_str(), (*graph == NN::NNM::globalNNGraph) ? NULL : &(*graph)->visible)) {
+						ImGui::Columns(2, "nn_col_2");
+						if (firstLoop) {
+							firstLoop = false;
+							ImGui::SetColumnWidth(-1, 650);
+						}
+						floatWidth = ImGui::GetColumnWidth(-1) - 15;
+
+						// node editor -------------------------------------------------------------
+						ImGui::BeginChild("nGraphView", ImVec2(floatWidth, 0), true,
+							ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+						(*graph)->Draw();
+						ImGui::EndChild();
+						ImGui::NextColumn();
+
+						// properties view ---------------------------------------------------------
+						ImGui::BeginChild("nnPropView");
+						if ((*graph)->anythingSelected) {
+							selectedNode = (*graph)->selectedNode;
+							try { selectedNode->ProcessContent(false); } 
+							catch (...) {
+								try { selectedNode->content(selectedNode, false); } 
+								catch (...) {}
+								ImGui::Separator();
+								ImGui::TextColored(ImVec4(0.84f, 0.075f, 0.27f, 1.0f), "Error occured!");
+							}
+						} else ImGui::Text("Nothing selected");
+
+						ImGui::EndChild();
+						ImGui::Columns(1);
+						ImGui::EndTabItem();
+
+						NN::NNM::currentGraph = (*graph);
+					}
+				}
+
+				/*if (ImGui::BeginTabItem(ICON_FA_PLUS_SQUARE_O)) {
+					if (newGraph != NULL) newGraph = NULL;
+					else newGraph = NN::NNM::NewGraph();
+					ImGui::EndTabItem();
+				}*/
+			}
+			ImGui::EndTabBar();
+			//ImGui::Text(u8"|"); ImGui::SameLine();
+			//ImGui::Text("Neuron: %d", NN::NNM::globalNNGraph.nodes.size());
+			ImGui::EndChild();
+			ImGui::End();
+		}
+
+		static void DrawPlotWnds() {
+			for (auto &plt : MOON_PlotList) {
+				if (plt->open && !plt->wndName._Equal(""))
+					plt->DrawInWindow();
+			}
 		}
 
 	private:

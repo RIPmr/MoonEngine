@@ -6,9 +6,14 @@ namespace MOON {
 		x = v.x; y = v.y;
 	}
 
-	bool operator==(Vector2 &v1, Vector2 &v2) {
+	bool operator==(const Vector2 &v1, const Vector2 &v2) {
 		if (v1.x == v2.x && v1.y == v2.y) return true;
 		else return false;
+	}
+
+	bool operator!=(const Vector2 &v1, const Vector2 &v2) {
+		if (v1.x == v2.x && v1.y == v2.y) return false;
+		else return true;
 	}
 
 	std::istream& operator>>(std::istream &is, Vector2 &t) {

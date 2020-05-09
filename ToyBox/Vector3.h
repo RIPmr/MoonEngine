@@ -59,7 +59,7 @@ namespace MOON {
 
 		/*
 		Cross Product
-		aXb = | i,  j,  k  |
+		axb = | i,  j,  k  |
 			  | a.x a.y a.z|
 			  | b.x b.y b.z| =
 			  (a.y*b.z - a.z*b.y)i +

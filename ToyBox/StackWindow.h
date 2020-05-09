@@ -4,9 +4,10 @@
 #include <iostream>
 
 #include "IconsFontAwesome4.h"
-#define Icon_Name_To_ID(x, y) (std::string(x) + y).c_str()
 
 namespace MOON {
+	#define Icon_Name_To_ID(x, y) (std::string(x) + y).c_str()
+
 	enum StackWndType {
 		QUERY,
 		PROGRESS

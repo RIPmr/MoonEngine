@@ -250,12 +250,12 @@ namespace MOON {
 				// Generate LoadedMaterial
 				// Generate a path to the material file
 				std::vector<std::string> temp;
-				split(Path, temp, "/");
+				split(Path, temp, "\\");
 
 				std::string pathtomat = "";
 				if (temp.size() != 1) {
 					for (int i = 0; i < temp.size() - 1; i++)
-						pathtomat += temp[i] + "/";
+						pathtomat += temp[i] + "\\";
 				}
 				pathtomat += tail(curline);
 
@@ -281,6 +281,7 @@ namespace MOON {
 
 		// Set Materials for each Mesh
 		OBJLoader::info = "Match Material And Mesh...";
+		std::cout << "Match Material And Mesh..." << MeshMatNames.size() << std::endl;
 		for (int i = 0; i < MeshMatNames.size(); i++) {
 			std::string matname = MeshMatNames[i];
 
@@ -291,7 +292,6 @@ namespace MOON {
 			if (searchMat != NULL) {
 				std::cout << "material founded: " << searchMat->name << std::endl;
 				LoadedMeshes[i]->material = searchMat;
-				break;
 			}
 		}
 
@@ -539,6 +539,7 @@ namespace MOON {
 		std::ifstream file(path);
 		// If the file is not found return false
 		if (!file.is_open()) return false;
+		std::cout << "mtl opened... ..." << std::endl;
 
 		Material* tempMaterial = NULL;
 		// Go through each line looking for material variables

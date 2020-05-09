@@ -34,14 +34,8 @@
     <Filter Include="Shaders\VS">
       <UniqueIdentifier>{8278a6de-5f1e-4a73-b28f-2a44d4b73977}</UniqueIdentifier>
     </Filter>
-    <Filter Include="SourceFiles\Implementation">
-      <UniqueIdentifier>{c906942f-f04a-4bfb-ad8f-d47c5bb954ce}</UniqueIdentifier>
-    </Filter>
     <Filter Include="SourceFiles\EnterPoint">
       <UniqueIdentifier>{f4480692-8837-4467-bef3-229c9b7c60a6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="HeadFiles\Class">
-      <UniqueIdentifier>{e7f90c53-55a1-4674-ab8d-58fd1a841534}</UniqueIdentifier>
     </Filter>
     <Filter Include="HeadFiles\Operator">
       <UniqueIdentifier>{620745b1-a4d7-4939-a6a7-f12232f4cbd2}</UniqueIdentifier>
@@ -54,6 +48,24 @@
     </Filter>
     <Filter Include="HeadFiles\Miscellaneous">
       <UniqueIdentifier>{e588a6e5-ba90-4f36-bca6-2c4afabfd23a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeadFiles\NN">
+      <UniqueIdentifier>{7f61a3c1-ee5d-4b1a-b065-3c27de453fc1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeadFiles\Object">
+      <UniqueIdentifier>{e7f90c53-55a1-4674-ab8d-58fd1a841534}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SourceFiles\NN">
+      <UniqueIdentifier>{e385724b-57cc-4fdf-9052-94ed5b21b211}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SourceFiles\Math">
+      <UniqueIdentifier>{67be73da-bc16-4582-a724-69aa15813a01}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SourceFiles\Component">
+      <UniqueIdentifier>{c906942f-f04a-4bfb-ad8f-d47c5bb954ce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeadFiles\UIEnhancement">
+      <UniqueIdentifier>{561127af-05c9-42fd-abc5-804c72219f41}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -78,41 +90,32 @@
     <ClCompile Include="imgui\imgui_widgets.cpp">
       <Filter>ThirdParty</Filter>
     </ClCompile>
-    <ClCompile Include="Vector2.cpp">
-      <Filter>SourceFiles\Implementation</Filter>
-    </ClCompile>
-    <ClCompile Include="Vector3.cpp">
-      <Filter>SourceFiles\Implementation</Filter>
-    </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>SourceFiles\EnterPoint</Filter>
     </ClCompile>
     <ClCompile Include="Renderer.cpp">
-      <Filter>SourceFiles\Implementation</Filter>
+      <Filter>SourceFiles\Component</Filter>
     </ClCompile>
     <ClCompile Include="Quaternion.cpp">
-      <Filter>SourceFiles\Implementation</Filter>
+      <Filter>SourceFiles\Component</Filter>
     </ClCompile>
     <ClCompile Include="Material.cpp">
-      <Filter>SourceFiles\Implementation</Filter>
+      <Filter>SourceFiles\Component</Filter>
     </ClCompile>
     <ClCompile Include="ObjectBase.cpp">
-      <Filter>SourceFiles\Implementation</Filter>
-    </ClCompile>
-    <ClCompile Include="Vector4.cpp">
-      <Filter>SourceFiles\Implementation</Filter>
+      <Filter>SourceFiles\Component</Filter>
     </ClCompile>
     <ClCompile Include="OBJLoader.cpp">
-      <Filter>SourceFiles\Implementation</Filter>
+      <Filter>SourceFiles\Component</Filter>
     </ClCompile>
     <ClCompile Include="Camera.cpp">
-      <Filter>SourceFiles\Implementation</Filter>
+      <Filter>SourceFiles\Component</Filter>
     </ClCompile>
     <ClCompile Include="Mesh.cpp">
-      <Filter>SourceFiles\Implementation</Filter>
+      <Filter>SourceFiles\Component</Filter>
     </ClCompile>
     <ClCompile Include="OBJExporter.cpp">
-      <Filter>SourceFiles\Implementation</Filter>
+      <Filter>SourceFiles\Component</Filter>
     </ClCompile>
     <ClCompile Include="imgui\ImNodesEz.cpp">
       <Filter>SourceFiles\Other</Filter>
@@ -121,25 +124,58 @@
       <Filter>SourceFiles\Other</Filter>
     </ClCompile>
     <ClCompile Include="MShader.cpp">
-      <Filter>SourceFiles\Implementation</Filter>
+      <Filter>SourceFiles\Component</Filter>
     </ClCompile>
     <ClCompile Include="Utility.cpp">
-      <Filter>SourceFiles\Implementation</Filter>
-    </ClCompile>
-    <ClCompile Include="MathUtils.cpp">
-      <Filter>SourceFiles\Implementation</Filter>
+      <Filter>SourceFiles\Component</Filter>
     </ClCompile>
     <ClCompile Include="Gizmo.cpp">
-      <Filter>SourceFiles\Implementation</Filter>
+      <Filter>SourceFiles\Component</Filter>
     </ClCompile>
     <ClCompile Include="Debugger.cpp">
-      <Filter>SourceFiles\Implementation</Filter>
+      <Filter>SourceFiles\Component</Filter>
     </ClCompile>
     <ClCompile Include="PipelineMgr.cpp">
-      <Filter>SourceFiles\Implementation</Filter>
+      <Filter>SourceFiles\Component</Filter>
     </ClCompile>
     <ClCompile Include="Model.cpp">
-      <Filter>SourceFiles\Implementation</Filter>
+      <Filter>SourceFiles\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="Neuron.cpp">
+      <Filter>SourceFiles\NN</Filter>
+    </ClCompile>
+    <ClCompile Include="Vector4.cpp">
+      <Filter>SourceFiles\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Vector2.cpp">
+      <Filter>SourceFiles\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Vector3.cpp">
+      <Filter>SourceFiles\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="MathUtils.cpp">
+      <Filter>SourceFiles\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="NGraph.cpp">
+      <Filter>SourceFiles\NN</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\ImPlot.cpp">
+      <Filter>SourceFiles\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="NNManager.cpp">
+      <Filter>SourceFiles\NN</Filter>
+    </ClCompile>
+    <ClCompile Include="MaterialEditor.cpp">
+      <Filter>SourceFiles\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="ImPie.cpp">
+      <Filter>SourceFiles\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="Optimizer.cpp">
+      <Filter>SourceFiles\NN</Filter>
+    </ClCompile>
+    <ClCompile Include="NFunction.cpp">
+      <Filter>SourceFiles\NN</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -165,13 +201,13 @@
       <Filter>HeadFiles\Component</Filter>
     </ClInclude>
     <ClInclude Include="Camera.h">
-      <Filter>HeadFiles\Class</Filter>
+      <Filter>HeadFiles\Object</Filter>
     </ClInclude>
     <ClInclude Include="Mesh.h">
-      <Filter>HeadFiles\Class</Filter>
+      <Filter>HeadFiles\Object</Filter>
     </ClInclude>
     <ClInclude Include="MShader.h">
-      <Filter>HeadFiles\Class</Filter>
+      <Filter>HeadFiles\Object</Filter>
     </ClInclude>
     <ClInclude Include="Quaternion.h">
       <Filter>HeadFiles\Math</Filter>
@@ -180,31 +216,31 @@
       <Filter>HeadFiles\Math</Filter>
     </ClInclude>
     <ClInclude Include="Transform.h">
-      <Filter>HeadFiles\Class</Filter>
+      <Filter>HeadFiles\Object</Filter>
     </ClInclude>
     <ClInclude Include="Light.h">
-      <Filter>HeadFiles\Class</Filter>
+      <Filter>HeadFiles\Object</Filter>
     </ClInclude>
     <ClInclude Include="Material.h">
-      <Filter>HeadFiles\Class</Filter>
+      <Filter>HeadFiles\Object</Filter>
     </ClInclude>
     <ClInclude Include="Texture.h">
-      <Filter>HeadFiles\Class</Filter>
+      <Filter>HeadFiles\Object</Filter>
     </ClInclude>
     <ClInclude Include="Hitable.h">
-      <Filter>HeadFiles\Class</Filter>
+      <Filter>HeadFiles\Object</Filter>
     </ClInclude>
     <ClInclude Include="Ray.h">
       <Filter>HeadFiles\Math</Filter>
     </ClInclude>
     <ClInclude Include="ObjectBase.h">
-      <Filter>HeadFiles\Class</Filter>
+      <Filter>HeadFiles\Object</Filter>
     </ClInclude>
     <ClInclude Include="OperatorBase.h">
       <Filter>HeadFiles\Operator</Filter>
     </ClInclude>
     <ClInclude Include="Model.h">
-      <Filter>HeadFiles\Class</Filter>
+      <Filter>HeadFiles\Object</Filter>
     </ClInclude>
     <ClInclude Include="PMapGen.h">
       <Filter>HeadFiles\Miscellaneous</Filter>
@@ -225,19 +261,16 @@
       <Filter>HeadFiles\Miscellaneous</Filter>
     </ClInclude>
     <ClInclude Include="BoundingBox.h">
-      <Filter>HeadFiles\Class</Filter>
+      <Filter>HeadFiles\Object</Filter>
     </ClInclude>
     <ClInclude Include="ShapeBase.h">
-      <Filter>HeadFiles\Class</Filter>
+      <Filter>HeadFiles\Object</Filter>
     </ClInclude>
     <ClInclude Include="Helper.h">
-      <Filter>HeadFiles\Class</Filter>
+      <Filter>HeadFiles\Object</Filter>
     </ClInclude>
     <ClInclude Include="OBJMgr.h">
       <Filter>HeadFiles\Component</Filter>
-    </ClInclude>
-    <ClInclude Include="IconsFontAwesome4.h">
-      <Filter>HeadFiles\Miscellaneous</Filter>
     </ClInclude>
     <ClInclude Include="OP_MeshEditor.h">
       <Filter>HeadFiles\Operator</Filter>
@@ -251,19 +284,7 @@
     <ClInclude Include="MaterialEditor.h">
       <Filter>HeadFiles\Component</Filter>
     </ClInclude>
-    <ClInclude Include="imgui\ImNodesEz.h">
-      <Filter>HeadFiles\Miscellaneous</Filter>
-    </ClInclude>
-    <ClInclude Include="imgui\ImNodes.h">
-      <Filter>HeadFiles\Miscellaneous</Filter>
-    </ClInclude>
     <ClInclude Include="CodeEditor.h">
-      <Filter>HeadFiles\Component</Filter>
-    </ClInclude>
-    <ClInclude Include="StackWindow.h">
-      <Filter>HeadFiles\Miscellaneous</Filter>
-    </ClInclude>
-    <ClInclude Include="NodeEditorBase.h">
       <Filter>HeadFiles\Component</Filter>
     </ClInclude>
     <ClInclude Include="Gizmo.h">
@@ -286,6 +307,72 @@
     </ClInclude>
     <ClInclude Include="ThreadPool.h">
       <Filter>HeadFiles\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Matrix3x3.h">
+      <Filter>HeadFiles\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Neuron.h">
+      <Filter>HeadFiles\NN</Filter>
+    </ClInclude>
+    <ClInclude Include="Matrix.h">
+      <Filter>HeadFiles\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="NGraph.h">
+      <Filter>HeadFiles\NN</Filter>
+    </ClInclude>
+    <ClInclude Include="NFunction.h">
+      <Filter>HeadFiles\NN</Filter>
+    </ClInclude>
+    <ClInclude Include="NVariable.h">
+      <Filter>HeadFiles\NN</Filter>
+    </ClInclude>
+    <ClInclude Include="Optimizer.h">
+      <Filter>HeadFiles\NN</Filter>
+    </ClInclude>
+    <ClInclude Include="NNManager.h">
+      <Filter>HeadFiles\NN</Filter>
+    </ClInclude>
+    <ClInclude Include="FNN.h">
+      <Filter>HeadFiles\NN</Filter>
+    </ClInclude>
+    <ClInclude Include="NNBase.h">
+      <Filter>HeadFiles\NN</Filter>
+    </ClInclude>
+    <ClInclude Include="ButtonEx.h">
+      <Filter>HeadFiles\UIEnhancement</Filter>
+    </ClInclude>
+    <ClInclude Include="IconsFontAwesome4.h">
+      <Filter>HeadFiles\UIEnhancement</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\ImNodes.h">
+      <Filter>HeadFiles\UIEnhancement</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\ImNodesEz.h">
+      <Filter>HeadFiles\UIEnhancement</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\ImPlot.h">
+      <Filter>HeadFiles\UIEnhancement</Filter>
+    </ClInclude>
+    <ClInclude Include="StackWindow.h">
+      <Filter>HeadFiles\UIEnhancement</Filter>
+    </ClInclude>
+    <ClInclude Include="ImPie.h">
+      <Filter>HeadFiles\UIEnhancement</Filter>
+    </ClInclude>
+    <ClInclude Include="Plotter.h">
+      <Filter>HeadFiles\UIEnhancement</Filter>
+    </ClInclude>
+    <ClInclude Include="CNN.h">
+      <Filter>HeadFiles\NN</Filter>
+    </ClInclude>
+    <ClInclude Include="RNN.h">
+      <Filter>HeadFiles\NN</Filter>
+    </ClInclude>
+    <ClInclude Include="GNN.h">
+      <Filter>HeadFiles\NN</Filter>
+    </ClInclude>
+    <ClInclude Include="NodeEditorBase.h">
+      <Filter>HeadFiles\UIEnhancement</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

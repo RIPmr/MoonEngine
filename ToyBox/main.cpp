@@ -2,7 +2,7 @@
 //#define MOON_DEBUG_MODE
 
 // global settings ------------------------------------------------
-const char *title = "MoonEngine - v0.02 WIP";
+const char *title = "MoonEngine - v0.03 WIP";
 
 Vector2 MOON_WndSize = Vector2(1600, 900);
 float SceneManager::aspect = MOON_WndSize.x / MOON_WndSize.y;
@@ -28,8 +28,8 @@ int main() {
 	MOON_InitEngine();
 
 	// test objects ------------------------------------------------------------------------
-	//Model* teapot = MOON_ModelManager::LoadModel("Assets/Models/teapot.obj");
-	Model* boxes = MOON_ModelManager::LoadModel("Assets/Models/box_stack.obj");
+	//Model* teapot = MOON_ModelManager::LoadModel("Assets\\Models\\teapot.obj");
+	Model* boxes = MOON_ModelManager::LoadModel("Assets\\Models\\box_stack.obj");
 	//teapot->transform.Scale(Vector3(0.2f, 0.2f, 0.2f));
 	boxes->transform.Translate(Vector3(0.0f, 1.0f, 0.0f));
 	// -------------------------------------------------------------------------------------
@@ -184,6 +184,7 @@ GLFWwindow* InitWnd() {
 	);
 
 	MainUI::io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+	MainUI::io->ConfigDockingWithShift = true;
 	MainUI::io->ConfigWindowsMoveFromTitleBarOnly = true;
 
 	return window;
@@ -274,6 +275,10 @@ void MOON_CleanUp() {
 	ThreadPool::WaitAllThreadExit();
 	ThreadPool::Clean();
 	std::cout << "All thread exit." << std::endl;
+	MOON_PlotManager::Release();
+	std::cout << "PlotManager cleared." << std::endl;
+	MOON_NeuralNetworkManager::Release();
+	std::cout << "NNManager cleared." << std::endl;
 	MOON_InputManager::Clear();
 	std::cout << "InputManager cleared." << std::endl;
 	MOON_LightManager::Clear();
@@ -289,11 +294,11 @@ void MOON_CleanUp() {
 	MOON_CameraManager::Clear();
 	std::cout << "CameraManager cleared." << std::endl;
 	MainUI::CleanUp();
-	std::cout << "MainUI cleared." << std::endl;
+	std::cout << "MainUI resources cleared." << std::endl;
 	SceneManager::Clear();
 	std::cout << "SceneManager cleared." << std::endl;
 	AssetLoader::CleanUp();
-	std::cout << "Asset cleared." << std::endl;
+	std::cout << "AssetLoader cleared." << std::endl;
 	std::cout << "Done." << std::endl;
 }
 
@@ -396,7 +401,6 @@ void MOON_InputProcessor(GLFWwindow *window) {
 }
 
 void MOON_DrawMainUI() {
-	MainUI::QuadMenu();
 	if (ImGui::BeginMainMenuBar())		MainUI::MainMenu();
 	if (MainUI::show_control_window)	MainUI::ControlPanel();
 	if (MainUI::show_preference_window)	MainUI::PreferencesWnd();
@@ -415,11 +419,15 @@ void MOON_DrawMainUI() {
 	if (MainUI::show_material_editor)	MainUI::MaterialEditorWnd();
 	if (MainUI::show_render_setting)	MainUI::RenderSettingWnd();
 	if (MainUI::show_profiler)			MainUI::Profiler();
+	if (MainUI::show_nn_manager)		MainUI::NNManagerWnd();
 	if (MainUI::show_demo_window)		ImGui::ShowDemoWindow(&MainUI::show_demo_window);
+	MainUI::RightClickMenu();
+	MainUI::DrawPlotWnds();
 
 	// update output image realtime while rendering
 	if (Renderer::progress && !Renderer::prevInQueue) {
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, MOON_OutputSize.x, MOON_OutputSize.y, 0, GL_RGB, GL_UNSIGNED_BYTE, Renderer::outputImage);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, MOON_OutputSize.x, 
+			MOON_OutputSize.y, 0, GL_RGB, GL_UNSIGNED_BYTE, Renderer::outputImage);
 		if (Renderer::progress < 0) {
 			Renderer::progress = 0;
 			glBindTexture(GL_TEXTURE_2D, 0);
@@ -428,11 +436,14 @@ void MOON_DrawMainUI() {
 }
 
 void MOON_InitEngine() {
+	std::cout << "- Max CPU thread num: " << MAX_THREADSNUM << std::endl;
 	std::cout << "- Loading Assets..." << std::endl;
 	AssetLoader::BuildDirTree(".\\Assets");
 	std::cout << "- Dir Tree Created." << std::endl;
 	SceneManager::Init();
 	std::cout << "- Scene Manager Initialized." << std::endl;
+	NN::NNManager::Init();
+	std::cout << "- Neural Network Manager Initialized." << std::endl;
 	MOON_GenerateGround(1.0, 5);
 	MOON_TextureManager::CreateIDLUT();
 	std::cout << "- IDLUT Created." << std::endl;

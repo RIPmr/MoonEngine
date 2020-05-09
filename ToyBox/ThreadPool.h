@@ -7,7 +7,7 @@
 #pragma comment(lib, "pthreadVC2.lib")
 
 namespace MOON {
-	#define MAX_THREADSNUM 6
+	#define MAX_THREADSNUM std::thread::hardware_concurrency()
 
 	class MThread {
 	private:

@@ -1,14 +1,51 @@
 #pragma once
 #include <glad/glad.h> 
 #include <GLFW/glfw3.h>
-#include <string>
 #include <iostream>
+#include <string>
+#include <sstream>
+#include <iomanip>
 
 #include "Vector3.h"
 #include "Vector4.h"
 #include "Color.h"
 
 namespace MOON {
+
+	// remove first matched target
+	template <class T>
+	void RemoveElem(std::vector<T*>& set, T* target) {
+		for (auto p = set.begin(); p != set.end(); p++) {
+			if ((*p) == target) {
+				set.erase(p);
+				break;
+			}
+		}
+	}
+
+	template <typename T>
+	std::string to_string_precision(const T a_value, const int precision = 6, const int width = 6) {
+		std::ostringstream out;
+		std::ios_base::fmtflags oldFlags = out.flags();
+		out.precision(precision);
+		out.setf(std::ios_base::fixed);
+
+		out << std::setw(width) << a_value;
+
+		out.flags(oldFlags);
+		return out.str();
+	}
+
+	template <typename T>
+	inline void safe_delete_void_ptr(void *&target) {
+		if (nullptr != target) {
+			T* temp = static_cast<T*>(target);
+			delete temp;
+			temp = nullptr;
+			target = nullptr;
+		}
+	}
+
 	inline void string_replace(std::string &strBig, const std::string &strsrc, const std::string &strdst) {
 		std::string::size_type pos = 0;
 		std::string::size_type srclen = strsrc.size();

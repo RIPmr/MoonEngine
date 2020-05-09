@@ -355,6 +355,15 @@ namespace MOON {
 			return TranslateMat(moveVec) * model;
 		}
 
+		/*
+		Separate rotate matrix:
+				 |1   0      0   |		 |cos¦È   0  sin¦È|		  |cos¦È   -sin¦È   0|
+			Rx = |0  cos¦È -sin¦È|, Ry = |  0     1   0   |, Rz = |sin¦È    cos¦È	0|
+				 |0  sin¦È  cos¦È|		 |-sin¦È  0  cos¦È|		  | 0		 0		1|
+		
+		Result matrix: 
+			M(¦È) = RzRyRx
+		*/
 		static Matrix4x4 RotateMat(const float _angle, const Vector3 &_axis) {
 			Matrix4x4 result;
 

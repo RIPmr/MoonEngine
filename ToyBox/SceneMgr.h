@@ -102,7 +102,9 @@ namespace MOON {
 								lower = itemMap.lower_bound(name);
 								upper = itemMap.upper_bound(name);
 								if (lower == itemMap.end()) return false;
-								else return true;
+								else if (name._Equal(lower->first)) {
+									return true;
+								}
 							}
 
 		static T* GetItem(const std::string &name, const int &ID = MOON_FIRSTMATCH) {

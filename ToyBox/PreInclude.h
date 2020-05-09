@@ -11,8 +11,8 @@
 *	  \/__/         \/__/         \/__/         \/__/
 *
 * @author	HZT
-* @date		2019-12-06
-* @version	0.0.2
+* @date		2020-05-08
+* @version	0.0.3
 */
 
 #pragma once
@@ -40,6 +40,7 @@
 #include "Vector2.h"
 #include "Vector3.h"
 #include "Quaternion.h"
+#include "Matrix3x3.h"
 #include "Matrix4x4.h"
 #include "MathUtils.h"
 #include "Material.h"
@@ -55,6 +56,16 @@
 #include "Model.h"
 #include "Light.h"
 #include "OBJMgr.h"
+
+// NN heads
+#include "Plotter.h"
+#include "NGraph.h"
+#include "Neuron.h"
+#include "Optimizer.h"
+#include "NFunction.h"
+#include "NVariable.h"
+#include "NNManager.h"
+#include "FNN.h"
 
 using namespace MOON;
 
@@ -112,23 +123,27 @@ bool MainUI::show_profiler					= true;
 bool MainUI::show_codeEditor				= false;
 bool MainUI::show_render_setting	 		= false;
 bool MainUI::show_material_editor			= false;
+bool MainUI::show_nn_manager				= false;
 
+// init class-like windows
+MaterialEditor								  MainUI::matEditor;
+std::vector<Plotter*>						  PlotManager::plotList;
+unsigned int PlotManager::cnt				= 1;
+
+ImGuiStyle*									  MainUI::style;
 Texture* MainUI::icon						= MOON_UNSPECIFIEDID;
 Texture* MainUI::logo						= MOON_UNSPECIFIEDID;
 Texture* MainUI::logoFull					= MOON_UNSPECIFIEDID;
 ImGuiIO* MainUI::io							= MOON_UNSPECIFIEDID;
-ImGuiStyle* MainUI::style;
 
 // init OBJ Loader
-std::string									OBJLoader::info;
-std::vector<Vertex>							OBJLoader::LoadedVertices;
-std::vector<unsigned int>					OBJLoader::LoadedIndices;
+std::string									  OBJLoader::info;
+std::vector<Vertex>							  OBJLoader::LoadedVertices;
+std::vector<unsigned int>					  OBJLoader::LoadedIndices;
 bool OBJLoader::gammaCorrection				= false;
 float OBJLoader::progress					= 0;
 // init Thread Pool
-std::vector<std::thread*>					ThreadPool::pool;
-// init Node Editor
-MaterialEditor								MainUI::nodeEditor;
+std::vector<std::thread*>					  ThreadPool::pool;
 // init Math Tool
 unsigned long long MoonMath::seed			= 1;
 // init Dir Tree
@@ -144,16 +159,16 @@ bool SceneManager::showbbox					= false;
 bool SceneManager::wireMode					= false;
 bool SceneManager::exitFlag					= false;
 
-std::vector<ObjectBase*>					SceneManager::objectList;
-std::vector<ObjectBase*>					SceneManager::matchedList;
+std::vector<ObjectBase*>					  SceneManager::objectList;
+std::vector<ObjectBase*>					  SceneManager::matchedList;
 
 // init Containers
-std::multimap<std::string, Light*>			MOON_LightManager::itemMap;
-std::multimap<std::string, Material*>		MOON_MaterialManager::itemMap;
-std::multimap<std::string, Shader*>			MOON_ShaderManager::itemMap;
-std::multimap<std::string, Texture*>		MOON_TextureManager::itemMap;
-std::multimap<std::string, Model*>			MOON_ModelManager::itemMap;
-std::multimap<std::string, Camera*>			MOON_CameraManager::itemMap;
+std::multimap<std::string, Light*>			  MOON_LightManager::itemMap;
+std::multimap<std::string, Material*>		  MOON_MaterialManager::itemMap;
+std::multimap<std::string, Shader*>			  MOON_ShaderManager::itemMap;
+std::multimap<std::string, Texture*>		  MOON_TextureManager::itemMap;
+std::multimap<std::string, Model*>			  MOON_ModelManager::itemMap;
+std::multimap<std::string, Camera*>			  MOON_CameraManager::itemMap;
 
 // init Managers
 bool MOON_LightManager::sizeFlag				= true;
@@ -195,3 +210,9 @@ std::vector<float>								  Gizmo::translate;
 bool Gizmo::isActive							= true;
 bool Gizmo::hoverGizmo							= false;
 float Gizmo::threshold							= 0.1f;
+
+// NN params
+unsigned int NN::NNM::graphCnt					= 0;
+std::vector<NN::NGraph*>						  NN::NNM::graphList;
+NN::NGraph*										  NN::NNM::globalNNGraph;
+NN::NGraph*										  NN::NNM::currentGraph;

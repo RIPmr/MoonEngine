@@ -1,5 +1,6 @@
 #pragma once
 #include <cmath>
+#include <ctime>
 #include <vector>
 #include <cstdlib>
 #include <algorithm>
@@ -19,12 +20,24 @@ namespace MOON {
 	#define Rad2Deg 180/PI
 	#define Deg2Rad PI/180
 	#define INFINITY std::numeric_limits<float>::max()
+	#define INFINITY_INT std::numeric_limits<int>::max()
 	#define EPSILON 0.001
 
 	class MoonMath {
 	private:
 		static unsigned long long seed;
 	public:
+
+		inline static double ExpTylor(double x, double precision = 1e-6) {
+			double i = 1, num = 1;
+			double sum = 1, temp = 1;
+			do {
+				num = num * i;
+				temp = pow(x, i++) / num;
+				sum += temp;
+			} while (fabs(temp) > precision);
+			return sum;
+		}
 
 		inline static std::vector<int> TENtoNBase(int num, int n) {
 			std::vector<int> v;
@@ -41,18 +54,61 @@ namespace MOON {
 			GammaSpaceCol.z = sqrt(GammaSpaceCol.z);
 		}
 
+		inline static double Random01() {
+			return rand() / double(RAND_MAX);
+		}
+
+		inline static double RandomRange(const double &min, const double &max) {
+			return lerp(min, max, Random01());
+		}
+
+		inline static int RandomRange(const int &min, const int &max) {
+			//srand((unsigned)time(NULL));
+			return (rand() % (max - min + 1)) + min;
+		}
+
+		/*
+		Gaussian/normal distribution
+		E = 0
+		V = 1
+		*/
+		inline static double GaussianRand() {
+			static double V1, V2, S;
+			static int phase = 0;
+			double X;
+
+			if (phase == 0) {
+				do {
+					double U1 = (double)rand() / RAND_MAX;
+					double U2 = (double)rand() / RAND_MAX;
+
+					V1 = 2 * U1 - 1;
+					V2 = 2 * U2 - 1;
+					S = V1 * V1 + V2 * V2;
+				} while (S >= 1 || S == 0);
+
+				X = V1 * sqrt(-2 * log(S) / S);
+			} else X = V2 * sqrt(-2 * log(S) / S);
+
+			phase = 1 - phase;
+			return X;
+		}
+
+		inline static double GaussianRand(const double &E,const double &V) {
+			double X = GaussianRand();
+			X = X * V + E;
+			return X;
+		}
+
+		// 返回服从均匀分布的 [0.0, 1.0) 之间的 double 型随机数
 		inline static double drand48() {
 			seed = (MOON_a * seed + MOON_c) & 0xFFFFFFFFFFFFLL;
 			unsigned int x = seed >> 16;
-			return  ((double)x / (double)MOON_m);
+			return ((double)x / (double)MOON_m);
 		}
 
 		inline static void srand48(unsigned int i) {
 			seed = (((long long int)i) << 16) | rand();
-		}
-
-		inline static float clamp(const float &num, const float &min, const float &max) {
-			return std::max(min, std::min(max, num));
 		}
 
 		inline static Vector3 RandomInUnitSphere() { // get a random vector inside unit sphere
@@ -69,6 +125,16 @@ namespace MOON {
 				p = 2.0 * Vector3(drand48(), drand48(), 0) - Vector3(1, 1, 0);
 			} while (p.dot(p) >= 1.0);
 			return p;
+		}
+
+		// left + (right - left) * percent
+		// percent: [0,1]
+		inline static double lerp(const double &left, const double &right, const double &percent) {
+			return left + (right - left) * percent;
+		}
+
+		inline static float clamp(const float &num, const float &min, const float &max) {
+			return std::max(min, std::min(max, num));
 		}
 
 		inline static Vector3 Reflect(const Vector3 &v, const Vector3 &n) {
@@ -241,9 +307,11 @@ namespace MOON {
 		inline static float Determinant(const Vector3 &a, const Vector3 &v1, const Vector3 &v2) {
 			return a[0] * (v1[1] * v2[2] - v1[2] * v2[1]) + a[1] * (v1[2] * v2[0] - v1[0] * v2[2]) + a[2] * (v1[0] * v2[1] - v1[1] * v2[0]);
 		}
+
 		inline static float closestDistanceBetweenLines(const Ray &a0, const Ray &a1, Vector3 &p0, Vector3 &p1, const float &len0 = 1.0f, const float &len1 = 1.0f) {
 			return closestDistanceBetweenLines(a0.pos, a0.PointAtParameter(len0), a1.pos, a1.PointAtParameter(len1), p0, p1);
 		}
+
 		// Given two lines defined by (a0,a1,b0,b1)
 		// Return the closest points on each segment and their distance
 		static float closestDistanceBetweenLines(const Vector3 &a0, const Vector3 &a1, const Vector3 &b0, const Vector3 &b1, Vector3 &Line1Closest, Vector3 &Line2Closest);

@@ -2,7 +2,6 @@
 #include "Matrix4x4.h"
 
 namespace MOON {
-
 	Vector3 MoonMath::RotateAround(const Vector3 &position, const Vector3 &center, const Vector3 &axis, const float &angle) {
 		Vector3 point = Matrix4x4::RotateMat(angle, axis).multVec(position - center);
 		Vector3 resultVec3 = center + point;

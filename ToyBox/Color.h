@@ -43,7 +43,7 @@ namespace MOON {
 		// convert object color to object ID
 		inline static unsigned int IDDecoder(Vector4 Color) {
 			if (Color == Vector4::ZERO()) {
-				std::cout << "ERROR: ID can not be 0!" << std::endl;
+				//std::cout << "ERROR: ID can not be 0!" << std::endl;
 				return 0;
 			}
 
