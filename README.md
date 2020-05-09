@@ -5,16 +5,13 @@ A toy DCC software implemented based on OpenGL and imgui
     <img src="ToyBox/Assets/Textures/moon.jpg">
 </p>
 
+
 ## Feature List
 - import and view .OBJ mesh
 - basic viewport interaction
 - <strong>RABBIT RENDERER: </strong> a basic raytracing renderer
 - <strong>MOON NN: </strong> node based interactive neural network training platform
 
-## Video links
-:full_moon: [MOON ENGINE](https://www.bilibili.com/video/BV1iK4y1C7h7)
-
-:new_moon: [MOON NN](https://www.bilibili.com/video/BV1GT4y137kx)
 
 ## Quick tutorial
 ### viewport hotkeys
@@ -34,7 +31,7 @@ A toy DCC software implemented based on OpenGL and imgui
 
 ### load OBJ model
 ```
-Model* boxes = MOON_ModelManager::LoadModel("Assets\\Models\\box_stack.obj");
+auto boxes = MOON_ModelManager::LoadModel("Assets\\Models\\box_stack.obj");
 ```
 
 ### transform an object
@@ -46,7 +43,7 @@ boxes->transform.Scale(Vector3(0.2f, 0.2f, 0.2f));
 
 ### create a material
 ```
-newMat = MaterialManager::CreateMaterial("MoonMtl", "new_mat");
+auto newMat = MaterialManager::CreateMaterial("MoonMtl", "new_mat");
 ```
 
 ### assign material to mesh
@@ -69,7 +66,7 @@ Renderer::isAbort = true;
 ### create an nn via script
 ```
 // graph: a container to hold all created neurons
-NGraph* graph = new NGraph("newGraph");
+auto graph = new NGraph("newGraph");
 
 // n-dimensional input vector, not participating in training
 // input_size: dimension of input feature
@@ -82,7 +79,7 @@ auto label = new NVariable(Vector2(output_size, 1), graph, false, false);
 // construct full connection layer
 // y = wx+b
 // hsize: number of neuron
-Neuron* output = new NAdd({
+auto output = new NAdd({
     new NMatMul({
         new NVariable(Vector2(hsize, input_size), graph, true),
         feature
@@ -129,6 +126,13 @@ opt->Update();
 // clear gradient map
 opt->ClearGrad();
 ```
+
+
+## Video links
+:full_moon: [MOON ENGINE](https://www.bilibili.com/video/BV1iK4y1C7h7)
+
+:new_moon: [MOON NN](https://www.bilibili.com/video/BV1GT4y137kx)
+
 
 ## Screen shots
 <p align="center">
