@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="Assets/Textures/moon.jpg">
+    <img src="ToyBox/Assets/Textures/moon.jpg">
 </p>
 
 # MoonEngine
@@ -17,11 +17,11 @@ A toy DCC software implemented based on OpenGL and imgui
 
 ## Screen shots
 <p align="center">
-    <img src="Assets/Textures/sc01.jpg">
+    <img src="ToyBox/Assets/Textures/sc01.jpg">
 </p>
 <p align="center">
-    <img src="Assets/Textures/sc02.jpg">
+    <img src="ToyBox/Assets/Textures/sc02.jpg">
 </p>
 <p align="center">
-    <img src="Assets/Textures/sc03.jpg">
+    <img src="ToyBox/Assets/Textures/sc03.jpg">
 </p>
