@@ -1,9 +1,9 @@
+# MoonEngine
+A toy DCC software implemented based on OpenGL and imgui
+
 <p align="center">
     <img src="ToyBox/Assets/Textures/moon.jpg">
 </p>
-
-# MoonEngine
-A toy DCC software implemented based on OpenGL and imgui
 
 ## Feature List
 - import and view .OBJ mesh
