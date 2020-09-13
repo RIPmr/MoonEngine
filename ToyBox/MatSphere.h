@@ -7,16 +7,16 @@
 #include <iostream>
 
 namespace MOON {
-	class Sphere : public Hitable {
+	class MSphere : public Hitable {
 	public:
 		Vector3 pos;
 		float radius;
 		Material *mat;
 
-		Sphere(const Vector3 &pos, const float &r) : pos(pos), radius(r), mat(NULL) {};
-		Sphere(const Vector3 &pos, const float &r, Material *mat) : pos(pos), radius(r), mat(mat) {};
+		MSphere(const Vector3 &pos, const float &r) : pos(pos), radius(r), mat(NULL) {};
+		MSphere(const Vector3 &pos, const float &r, Material *mat) : pos(pos), radius(r), mat(mat) {};
 
-		~Sphere() {
+		~MSphere() {
 			//if (mat) delete mat;
 		}
 

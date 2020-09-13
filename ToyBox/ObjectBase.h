@@ -2,12 +2,12 @@
 #include <string>
 #include <vector>
 #include <imgui.h>
-#include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
+#include "Color.h"
 #include "Transform.h"
-#include "IconsFontAwesome4.h"
+#include "Icons.h"
 #pragma warning(disable:4996)
 
 #define MOON_AUTOID -1
@@ -67,37 +67,66 @@ namespace MOON {
 		virtual void ListProperties();
 	};
 
+	extern class Shader;
 	extern class Operator;
 	class MObject : public ObjectBase {
 	public:
 		struct OPStack {
-			MObject* parent;
 			bool enable;
+			MObject* parent;
+			MObject* deliver;
 			std::vector<Operator*> opList;
 
-			//OPStack() : enable(true) {}
-			OPStack(MObject* parent) : enable(true), parent(parent) {}
+			OPStack(const OPStack& other) {
+				this->enable = other.enable;
+				this->parent = other.parent;
+				this->deliver = new MObject(*other.deliver);
+				this->opList = other.opList;
+			}
+			OPStack(MObject* parent) : parent(parent), enable(true), deliver(nullptr) {}
 			~OPStack() { ClearStack(); }
 
 			void ExecuteAll();
 			void ListStacks();
+			void UpdateFrom(const int& id);
 
 			void AddStack(Operator* op);
 			void RemoveStack(Operator* op);
 			void ClearStack();
 		};
 
+		bool freezed;
 		Transform transform;
 		OPStack opstack;
+		Vector4 wireColor;
 
-		MObject() : ObjectBase(MOON_AUTOID), opstack(this) { name = "MObject_" + ID; }
-		MObject(const int &_id) : ObjectBase(_id), opstack(this) { name = "MObject_" + _id; }
-		MObject(const std::string &_name) : ObjectBase(_name, MOON_AUTOID), opstack(this) {}
-		MObject(const std::string &_name, const int &_id) : ObjectBase(_name, _id), opstack(this) {}
+		MObject() : ObjectBase(MOON_AUTOID), transform(this), opstack(this), wireColor(Color::WHITE()), freezed(false) { name = "MObject_" + ID; }
+		MObject(const int &_id) : 
+			ObjectBase(_id), transform(this), opstack(this), wireColor(Color::WHITE()), freezed(false) { name = "MObject_" + _id; }
+		MObject(const std::string &_name) : 
+			ObjectBase(_name, MOON_AUTOID), transform(this), opstack(this), wireColor(Color::WHITE()), freezed(false) {}
+		MObject(const std::string &_name, const int &_id) : 
+			ObjectBase(_name, _id), transform(this), opstack(this), wireColor(Color::WHITE()), freezed(false) {}
 		MObject(const std::string &_name, const Transform &transform, const int &_id) :
-			ObjectBase(_name, _id), transform(transform), opstack(this) {}
+			ObjectBase(_name, _id), transform(transform), opstack(this), wireColor(Color::WHITE()), freezed(false) {}
+		MObject(const MObject& other) : transform(other.transform), opstack(other.opstack) {}
 		~MObject() override {}
 
+		inline void operator=(const MObject &other) {
+			this->transform = other.transform;
+			this->opstack = other.opstack;
+			this->wireColor = other.wireColor;
+		}
+
+		// deliver is the result which have been processed by all operators
+		void DrawDeliver(Shader* overrideShader = NULL) {
+			if (opstack.deliver == nullptr) opstack.ExecuteAll();
+			opstack.deliver->Draw(overrideShader);
+		}
+
+		// draw base object
+		virtual void Draw(Shader* overrideShader = NULL) {};
+		virtual void ListName() override;
 		virtual void ListTransform();
 		virtual void ListProperties() override;
 	};

@@ -223,6 +223,7 @@ namespace ImNodes {
 	// A structure holding node state.
 	struct MyNode {
 		std::string title;
+		std::string type;
 		bool selected = false;
 		bool executed = false;
 		float zoomFactor;

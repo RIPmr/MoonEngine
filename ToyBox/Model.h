@@ -11,6 +11,7 @@
 #include "Utility.h"
 #include "Hitable.h"
 #include "ThreadPool.h"
+#include "ButtonEx.h"
 
 namespace MOON {
 	class Model : public MObject, public Hitable {
@@ -22,7 +23,7 @@ namespace MOON {
 		bool gammaCorrection;
 
 		// for procedural mesh
-		Model(const std::string &name, const int id = MOON_AUTOID) : gammaCorrection(false), MObject(name, id) {}
+		Model(const std::string &name, const int id = MOON_AUTOID) : gammaCorrection(false), MObject(name, id), path("[PROCEDURAL]") {}
 
 		// for mesh in OBJ file
 		Model(const std::string &path, const std::string &name = "FILENAME", const int id = MOON_AUTOID, const bool gamma = false) :
@@ -39,16 +40,7 @@ namespace MOON {
 			meshList.clear();
 		}
 
-		void Draw(Shader* overrideShader = NULL) {
-			for (int i = 0; i < meshList.size(); i++) {
-				meshList[i]->Draw(overrideShader == NULL ? meshList[i]->material->shader : 
-							      overrideShader, transform.modelMat);
-			}
-			if (transform.changeFlag) {
-				UpdateWorldBBox();
-				transform.changeFlag = false;
-			}
-		}
+		void Draw(Shader* overrideShader = NULL) override;
 
 		void UpdateBBox() {
 			for (auto &iter : meshList) {
@@ -62,7 +54,7 @@ namespace MOON {
 			bbox.GetCorners(&corner);
 			bbox_world.Reset();
 			for (auto &iter : corner) {
-				bbox_world.join(transform.modelMat.multVec(iter));
+				bbox_world.join(transform.localToWorldMat.multVec(iter));
 			}
 		}
 
@@ -75,7 +67,7 @@ namespace MOON {
 
 			if (bbox_world.intersect(r)) {
 				for (auto &iter : meshList) {
-					if (iter->Hit(r, tempRec)) {
+					if (iter->Hit(transform.localToWorldMat, r, tempRec)) {
 						hitAnything = true;
 						rec = tempRec;
 					}
@@ -93,33 +85,10 @@ namespace MOON {
 			return vertNum;
 		}
 
-		void ListProperties() override {
-			// list name ----------------------------------------------------------------------
-			ListName();
-			ImGui::Separator();
+		void ListProperties() override;
 
-			// list transform -----------------------------------------------------------------			ListTransform();
-			ListTransform();
-			ImGui::Separator();
-
-			// list Mesh ----------------------------------------------------------------------
-			ImGui::Text("Mesh:");
-			if (ImGui::TreeNode((std::to_string(meshList.size()) + " meshes, " + 
-								 std::to_string(CountVerts()) + " verts").c_str(), ID)) {
-				for (auto &iter : meshList) {
-					ImGui::Columns(2, "mycolumns", false);
-					ImGui::Text(Icon_Name_To_ID(ICON_FA_PUZZLE_PIECE, " " + iter->name)); ImGui::NextColumn();
-					ImGui::Text(Icon_Name_To_ID(ICON_FA_GLOBE, " " + iter->material->name));
-					ImGui::Columns(1);
-				}
-				ImGui::TreePop();
-			}
-			ImGui::Separator();
-
-			// list operators -----------------------------------------------------------------
-			opstack.ListStacks();
-			ImGui::Spacing();
-		}
-
+		// procedural mesh
+		virtual void CreateProceduralMesh(const bool& interactive) {}
+		virtual void ListProceduralProperties() {}
 	};
 }

@@ -72,6 +72,11 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <IncludePath>.\opengl\include;.\glm;.\assimp;.\assimp\include;.\imgui;..\packages\Pre-built.2\dll\x86;..\packages\Pre-built.2\include;$(IncludePath)</IncludePath>
     <LibraryPath>.\opengl\lib;.\assimp\lib;..\packages\Pre-built.2\lib\x86;$(LibraryPath)</LibraryPath>
+    <IntDir>$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>.\opengl\include;.\glm;.\assimp;.\assimp\include;.\imgui;..\packages\Pre-built.2\include;..\packages\Pre-built.2\dll\x64;$(IncludePath)</IncludePath>
+    <LibraryPath>.\opengl\lib;.\assimp\lib;E:\Workspaces\VS\ToyBox\ToyBox\opengl\lib\x64\Debug;E:\Workspaces\VS\ToyBox\ToyBox\opengl\lib\x64\Release;..\packages\Pre-built.2\lib\x64;E:\Workspaces\VS\ToyBox\ToyBox\opengl\lib;.\opengl\lib\x64\Debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -95,7 +100,12 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <OpenMPSupport>true</OpenMPSupport>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
+    <Link>
+      <AdditionalDependencies>opengl32.lib;glfw3.lib;assimp.lib;glfw3dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -126,9 +136,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Box.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="Capsule.cpp" />
+    <ClCompile Include="Coroutine.cpp" />
+    <ClCompile Include="Cylinder.cpp" />
     <ClCompile Include="Debugger.cpp" />
+    <ClCompile Include="FlowMenu.cpp" />
     <ClCompile Include="Gizmo.cpp" />
+    <ClCompile Include="HotkeyMgr.cpp" />
     <ClCompile Include="imgui\imgui.cpp" />
     <ClCompile Include="imgui\imgui_demo.cpp" />
     <ClCompile Include="imgui\imgui_draw.cpp" />
@@ -139,6 +155,7 @@
     <ClCompile Include="imgui\ImNodesEz.cpp" />
     <ClCompile Include="imgui\ImPlot.cpp" />
     <ClCompile Include="ImPie.cpp" />
+    <ClCompile Include="ImTimeline.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="MaterialEditor.cpp" />
@@ -150,12 +167,16 @@
     <ClCompile Include="NFunction.cpp" />
     <ClCompile Include="NGraph.cpp" />
     <ClCompile Include="NNManager.cpp" />
+    <ClCompile Include="NodeEditorBase.cpp" />
     <ClCompile Include="ObjectBase.cpp" />
     <ClCompile Include="OBJExporter.cpp" />
     <ClCompile Include="OBJLoader.cpp" />
     <ClCompile Include="opengl\src\glad.c" />
     <ClCompile Include="Optimizer.cpp" />
-    <ClCompile Include="PipelineMgr.cpp" />
+    <ClCompile Include="Graphics.cpp" />
+    <ClCompile Include="Plane.cpp" />
+    <ClCompile Include="Ring.cpp" />
+    <ClCompile Include="Sphere.cpp" />
     <ClCompile Include="Quaternion.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Utility.cpp" />
@@ -165,17 +186,31 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BoundingBox.h" />
+    <ClInclude Include="Box.h" />
     <ClInclude Include="ButtonEx.h" />
+    <ClInclude Include="CakeParser.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="Capsule.h" />
     <ClInclude Include="CNN.h" />
     <ClInclude Include="CodeEditor.h" />
     <ClInclude Include="Color.h" />
+    <ClInclude Include="Coroutine.h" />
+    <ClInclude Include="Curves.h" />
+    <ClInclude Include="Cylinder.h" />
     <ClInclude Include="Debugger.h" />
     <ClInclude Include="FlowMenu.h" />
     <ClInclude Include="FNN.h" />
+    <ClInclude Include="fontHeaders\IconsFontAwesome4.h" />
+    <ClInclude Include="fontHeaders\IconsKenney.h" />
+    <ClInclude Include="fontHeaders\IconsMaterialDesign.h" />
     <ClInclude Include="GNN.h" />
+    <ClInclude Include="HalfMesh.h" />
+    <ClInclude Include="Icons.h" />
     <ClInclude Include="imgui\ImPlot.h" />
     <ClInclude Include="ImPie.h" />
+    <ClInclude Include="ImTimeline.h" />
+    <ClInclude Include="LR.h" />
+    <ClInclude Include="NativeOperators.h" />
     <ClInclude Include="NFunction.h" />
     <ClInclude Include="FuzzyMatch.h" />
     <ClInclude Include="Gizmo.h" />
@@ -183,7 +218,6 @@
     <ClInclude Include="Helper.h" />
     <ClInclude Include="Hitable.h" />
     <ClInclude Include="HotkeyMgr.h" />
-    <ClInclude Include="IconsFontAwesome4.h" />
     <ClInclude Include="imgui\ImNodes.h" />
     <ClInclude Include="imgui\ImNodesEz.h" />
     <ClInclude Include="Light.h" />
@@ -204,21 +238,27 @@
     <ClInclude Include="NVariable.h" />
     <ClInclude Include="OBJMgr.h" />
     <ClInclude Include="OperatorBase.h" />
-    <ClInclude Include="OperatorLoader.h" />
+    <ClInclude Include="OperatorMgr.h" />
     <ClInclude Include="Optimizer.h" />
-    <ClInclude Include="OP_MeshEditor.h" />
-    <ClInclude Include="PipelineMgr.h" />
+    <ClInclude Include="Graphics.h" />
+    <ClInclude Include="Plane.h" />
     <ClInclude Include="Plotter.h" />
+    <ClInclude Include="PluginMgr.h" />
     <ClInclude Include="PMapGen.h" />
+    <ClInclude Include="Ring.h" />
+    <ClInclude Include="SmartMeshes.h" />
+    <ClInclude Include="Sphere.h" />
     <ClInclude Include="PreInclude.h" />
     <ClInclude Include="AssetLoader.h" />
+    <ClInclude Include="properties.h" />
     <ClInclude Include="Quaternion.h" />
     <ClInclude Include="Ray.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="RNN.h" />
     <ClInclude Include="SceneMgr.h" />
     <ClInclude Include="MShader.h" />
-    <ClInclude Include="ShapeBase.h" />
+    <ClInclude Include="Shapes.h" />
+    <ClInclude Include="Spline.h" />
     <ClInclude Include="StackWindow.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="ThreadPool.h" />
@@ -229,10 +269,14 @@
     <ClInclude Include="Vector3.h" />
     <ClInclude Include="ObjectBase.h" />
     <ClInclude Include="Vector4.h" />
+    <ClInclude Include="WideNDeep.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="BlinnPhong.fs" />
     <None Include="ConstColor.fs" />
     <None Include="ConstColor.vs" />
+    <None Include="Flat.fs" />
+    <None Include="Flat.vs" />
     <None Include="Outline.fs" />
     <None Include="Outline.vs" />
     <None Include="packages.config" />

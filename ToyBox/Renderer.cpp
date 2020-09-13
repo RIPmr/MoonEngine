@@ -12,7 +12,7 @@
 
 using namespace MOON;
 
-Camera Renderer::matCamera = Camera("matCamera", Vector3(0, 0, 4));
+Camera Renderer::matCamera = Camera("matCamera", Vector3(0, 0, -4));
 Camera* Renderer::targetCamera = MOON_UNSPECIFIEDID;
 GLubyte* Renderer::outputImage = MOON_UNSPECIFIEDID;
 GLubyte* Renderer::matPrevImage = MOON_UNSPECIFIEDID;
@@ -163,7 +163,7 @@ bool Renderer::PrepareMatPrevRendering(Texture* target) {
 	// load init blank image
 	return LoadTextureFromMemory(Material::PREVSIZE, matPrevImage, target->localID);
 }
-Vector3 Renderer::SamplingColor_Simple(const Ray &r, int depth, const Sphere* ball, const Sphere* ground) {
+Vector3 Renderer::SamplingColor_Simple(const Ray &r, int depth, const MSphere* ball, const MSphere* ground) {
 	HitRecord recB, recG;
 	if (ball->Hit(r, recB) || ground->Hit(r, recG)) {
 		Ray scattered;
@@ -180,8 +180,8 @@ void* Renderer::renderingMatPreview(void* args) {
 	int height = Material::PREVSIZE.y;
 
 	// mat ball
-	Sphere matBall(Vector3(0, 0, 0), 0.5, (Material*)args);
-	Sphere ground(Vector3(0, -100.5, 0), 100, MOON_MaterialManager::defaultMat);
+	MSphere matBall(Vector3(0, 0, 0), 0.5, (Material*)args);
+	MSphere ground(Vector3(0, -100.5, 0), 100, MOON_MaterialManager::defaultMat);
 	
 	// start rendering
 	std::cout << "rendering preview..." << std::endl;

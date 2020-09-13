@@ -2,10 +2,11 @@
 #include "SceneMgr.h"
 #include "Model.h"
 
-#define modelToWorld parent->transform.modelMat.multVec
+//#define modelToWorld parent->transform.localToWorldMat.multVec
 
 namespace MOON {
-	void Mesh::Draw(Shader* shader, const Matrix4x4 & model) {
+	void Mesh::Draw(Shader* shader, const Matrix4x4 & model, 
+		const bool &hovered = false, const bool &selected = false) {
 		// bind appropriate textures
 		unsigned int diffuseNr = 1;
 		unsigned int specularNr = 1;
@@ -39,29 +40,29 @@ namespace MOON {
 		shader->use();
 
 		shader->setMat4("model", model);
-		shader->setMat4("view", MOON_CurrentCamera->view);
-		shader->setMat4("projection", MOON_CurrentCamera->projection);
+		shader->setMat4("view", MOON_ActiveCamera->view);
+		shader->setMat4("projection", MOON_ActiveCamera->projection);
 
 		shader->setVec3("lightColor", Vector3(1.0, 1.0, 1.0));
 		shader->setVec3("objectColor", dynamic_cast<MoonMtl*>(material)->Kd);
-		shader->setVec3("lightPos", MOON_CurrentCamera->transform.position);
-		shader->setVec3("viewPos", MOON_CurrentCamera->transform.position);
+		shader->setVec3("lightPos", MOON_ActiveCamera->transform.position);
+		shader->setVec3("viewPos", MOON_ActiveCamera->transform.position);
 
-		shader->setBool("isHovered", parent->ID == MOON_InputManager::hoverID);
-		shader->setBool("isSelected", parent->selected);
+		shader->setBool("isHovered", hovered);
+		shader->setBool("isSelected", selected);
 
 		// draw mesh
-		if (!VAO) setupMesh();
+		if (!VAO) SetupMesh();
 		//std::cout << VAO << std::endl;
 		glBindVertexArray(VAO);
-		glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, triangles.size(), GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
 
 		// always good practice to set everything back to defaults once configured.
 		glActiveTexture(GL_TEXTURE0);
 	}
 
-	void Mesh::setupMesh() {
+	void Mesh::SetupMesh() {
 		glGenVertexArrays(1, &VAO);
 		glGenBuffers(1, &VBO);
 		glGenBuffers(1, &EBO);
@@ -75,7 +76,7 @@ namespace MOON {
 		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, triangles.size() * sizeof(unsigned int), &triangles[0], GL_STATIC_DRAW);
 
 		// set the vertex attribute pointers
 		// vertex Positions
@@ -97,7 +98,8 @@ namespace MOON {
 		glBindVertexArray(0);
 	}
 
-	void Mesh::GetSurfaceProperties(const uint32_t &triIndex, const Vector2 &uv, Vector3 &hitNormal, Vector2 &hitTextureCoordinates) const {
+	void Mesh::GetSurfaceProperties(const Matrix4x4 modelMat, const uint32_t &triIndex, 
+		const Vector2 &uv, Vector3 &hitNormal, Vector2 &hitTextureCoordinates) const {
 		// face normal
 		/*Vector3 &v0 = P[trisIndex[triIndex * 3]];
 		Vector3 &v1 = P[trisIndex[triIndex * 3 + 1]];
@@ -112,23 +114,23 @@ namespace MOON {
 		hitTextureCoordinates = (1 - uv.x - uv.y) * st0 + uv.x * st1 + uv.y * st2;*/
 
 		// vertex normal
-		Vector3 const &n0 = vertices[indices[triIndex * 3]].Normal;
-		Vector3 const &n1 = vertices[indices[triIndex * 3 + 1]].Normal;
-		Vector3 const &n2 = vertices[indices[triIndex * 3 + 2]].Normal;
+		Vector3 const &n0 = vertices[triangles[triIndex * 3]].Normal;
+		Vector3 const &n1 = vertices[triangles[triIndex * 3 + 1]].Normal;
+		Vector3 const &n2 = vertices[triangles[triIndex * 3 + 2]].Normal;
 
 		hitNormal = (1 - uv.x - uv.y) * n0 + uv.x * n1 + uv.y * n2;
-		hitNormal = parent->transform.modelMat.multDir(hitNormal);
+		hitNormal = modelMat.multDir(hitNormal);
 		hitNormal.normalize();
 		//std::cout << hitNormal << std::endl;
 	}
 
 	// Test if the ray interesests this triangle mesh
-	bool Mesh::Intersect(const Ray &ray, float &tNear, uint32_t &triIndex, Vector2 &uv) const {
+	bool Mesh::Intersect(const Matrix4x4 modelMat, const Ray &ray, float &tNear, uint32_t &triIndex, Vector2 &uv) const {
 		bool isect = false;
-		for (uint32_t i = 0, j = 0; i < indices.size() / 3; ++i) {
-			Vector3 const &v0 = modelToWorld(vertices[indices[j]].Position);
-			Vector3 const &v1 = modelToWorld(vertices[indices[j + 1]].Position);
-			Vector3 const &v2 = modelToWorld(vertices[indices[j + 2]].Position);
+		for (uint32_t i = 0, j = 0; i < triangles.size() / 3; ++i) {
+			Vector3 const &v0 = modelMat.multVec(vertices[triangles[j]].Position);
+			Vector3 const &v1 = modelMat.multVec(vertices[triangles[j + 1]].Position);
+			Vector3 const &v2 = modelMat.multVec(vertices[triangles[j + 2]].Position);
 
 			float t = tNear, u, v;
 			if (MoonMath::RayTriangleIntersect(ray, v0, v1, v2, t, u, v)) {

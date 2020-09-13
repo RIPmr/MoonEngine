@@ -6,6 +6,7 @@
 
 namespace MOON {
 	extern class Vector2;
+	extern class Quaternion;
 	class Vector3 {
 	public:
 		float x, y, z;
@@ -36,7 +37,7 @@ namespace MOON {
 		friend Vector3 operator*(const Vector3 &v, const float &t);
 		friend Vector3 operator/(const Vector3 &v, const float &t);
 
-		inline void operator=(const Vector3 &v) { x = v.x; y = v.y; z = v.z; }
+		inline Vector3& operator=(const Vector3 &v) { x = v.x; y = v.y; z = v.z; return *this; }
 		inline const Vector3 operator+() const { return *this; }
 		inline Vector3 operator-() const { return Vector3(-x, -y, -z); }
 		inline float operator[](int i) const { return i == 0 ? x : (i == 1 ? y : z); }
@@ -73,7 +74,7 @@ namespace MOON {
 		}
 
 		inline void normalize() {
-			float len = 1 / magnitude();
+			float len = 1.0f / magnitude();
 			x *= len; y *= len; z *= len;
 		}
 
@@ -105,8 +106,11 @@ namespace MOON {
 		static Vector3 ZERO();
 
 		inline static int DirectionSign(const Vector3 &a, const Vector3 &b) {
-			return Vector3::Normalize(a).dot(Vector3::Normalize(b));
+			return Vector3::Normalize(a).dot(Vector3::Normalize(b)) > 0 ? 1 : -1;
 		}
+
+		inline static Vector3 Decomposition(const Vector3& vector,
+			Vector3 xAxis, Vector3 yAxis, Vector3 zAxis, Quaternion coordRotation);
 
 		inline static Vector3 WORLD(const Direction &direction) {
 			switch (direction) {

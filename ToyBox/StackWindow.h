@@ -3,7 +3,7 @@
 #include <string>
 #include <iostream>
 
-#include "IconsFontAwesome4.h"
+#include "Icons.h"
 
 namespace MOON {
 	#define Icon_Name_To_ID(x, y) (std::string(x) + y).c_str()

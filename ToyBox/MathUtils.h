@@ -13,20 +13,101 @@ namespace MOON {
 	#define MOON_m 0x100000000LL
 	#define MOON_c 0xB16
 	#define MOON_a 0x5DEECE66DLL
-	/// actually it's pow(255, 4) = 0xfc05fc01
-	/// but range of int is ±2147483647, smaller than 0xfc05fc01
-	#define MOON_IDBOUNDARY std::numeric_limits<int>::max()
 	#define PI acos(-1.0)
 	#define Rad2Deg 180/PI
 	#define Deg2Rad PI/180
+	#define EPSILON 0.001
 	#define INFINITY std::numeric_limits<float>::max()
 	#define INFINITY_INT std::numeric_limits<int>::max()
-	#define EPSILON 0.001
+	/// actually it's pow(255, 4) = 0xfc05fc01
+	/// but range of int is ±2147483647, smaller than 0xfc05fc01
+	#define MOON_IDBOUNDARY std::numeric_limits<int>::max()
 
 	class MoonMath {
 	private:
 		static unsigned long long seed;
 	public:
+
+		inline static void CalculatePathVector(
+			const std::vector<Vector3> &path,
+			std::vector<Vector3> &normalList, 
+			std::vector<Vector3> &tangentList,
+			std::vector<Vector3> &bitangentList) {
+			Vector3 prev, next, tangent, normal, bitangent;
+			for (int i = 0; i < path.size(); i++) {
+				if (i == 0) prev = next = path[i + 1] - path[i];
+				else if (i == path.size() - 1) next = prev = path[i] - path[i - 1];
+				else {
+					prev = Vector3::Normalize(path[i] - path[i - 1]);
+					next = Vector3::Normalize(path[i + 1] - path[i]);
+				}
+				tangent = (prev == -next ? next : Vector3::Normalize(prev + next));
+				for (int ti = i + 2; ti < path.size() && tangent.magnitude() == 0; ti++) tangent = Vector3::Normalize(path[ti] - path[i]);
+				normal = Vector3::Cross(tangent == Vector3::WORLD(UP) || tangent == Vector3::WORLD(DOWN) ? Vector3(0.0f, 1.0f, 0.001f) : Vector3::WORLD(UP), tangent);
+				normal.normalize();
+				bitangent = Vector3::Cross(tangent, normal);
+
+				normalList.push_back(normal); tangentList.push_back(tangent); bitangentList.push_back(bitangent);
+			}
+		}
+
+		// least-squre method fitting bezier curve
+		inline static bool LeastSquareFitting(const std::vector<Vector3>& data,
+			Vector3& inTangent, Vector3& outTangent) {
+			if (data.size() < 2) return false;
+			Vector3 P0(data[0]), P3(data[data.size() - 1]);
+
+			// calculate P1 and P2
+			float distSum = 0;
+			for (int i = 0; i < data.size() - 1; i++) {
+				float dist = Vector3::Distance(data[i], data[i + 1]);
+				distSum += dist;
+			}
+			std::vector<float> ti; ti.push_back(0);
+			for (int i = 1; i < data.size(); i++) {
+				float dist = Vector3::Distance(data[i], data[i - 1]);
+				ti.push_back(ti[ti.size() - 1] + dist / distSum);
+			}
+
+			float A1 = 0; float A2 = 0; float A12 = 0; int cnt = 0;
+			Vector3 C1, C2;
+			for(auto& t : ti) {
+				A1 += t * t * std::pow((1 - t), 4);
+				A2 += std::pow(t, 4) * std::pow((1 - t), 2);
+				A12 += std::pow(t, 3) * std::pow((1 - t), 3);
+
+				C1 += 3 * t * std::pow((1 - t), 2) * (data[cnt] - std::pow((1 - t), 3) * P0 - t * t * t * P3);
+				C2 += 3 * t * t * (1 - t) * (data[cnt] - std::pow((1 - t), 3) * P0 - t * t * t * P3);
+
+				cnt++;
+			}
+			A1 *= 9; A2 *= 9; A12 *= 9;
+
+			Vector3 P1 = (A2 * C1 - A12 * C2) / (A1 * A2 - A12 * A12);
+			Vector3 P2 = (A1 * C2 - A12 * C1) / (A1 * A2 - A12 * A12);
+
+			inTangent = P1; outTangent = P2;
+			return true;
+		}
+
+		/*
+		函数模板与同名的非模板函数重载时候，调用顺序:
+			1.寻找一个参数完全匹配的函数，如果找到了就调用它
+			2.寻找一个函数模板，将其实例化，产生一个匹配的模板函数，若找到了，就调用它
+			3.若1,2都失败，再试一试低一级的对函数的重载方法，例如通过类型转换可产生参数匹配，就调用它
+			4.若1,2,3均未找到匹配的函数，则是一个错误的调用
+		*/
+		template<typename T>
+		inline static bool Approximate(const T &a, const T &b, const float &epsilon = EPSILON) {
+			if (std::abs(a - b) < epsilon) return true;
+			else return false;
+		}
+		inline static bool Approximate(const Vector3 &a, const Vector3 &b, const float &epsilon = EPSILON) {
+			return a.distance(b) < epsilon;
+		}
+		inline static bool Approximate(const Vector2 &a, const Vector2 &b, const float &epsilon = EPSILON) {
+			return a.distance(b) < epsilon;
+		}
 
 		inline static double ExpTylor(double x, double precision = 1e-6) {
 			double i = 1, num = 1;

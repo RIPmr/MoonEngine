@@ -241,24 +241,22 @@ namespace ImNodes {
 	}
 
 	ImVec2 Graph2Wnd(ImNodes::CanvasState* canvas, ImVec2* pos) {
+		//if (canvas == NULL) return ImVec2();
 		ImVec2 wndPos;
 		MOON::Vector3 homoWndPos(pos->x, pos->y, 1);
 		homoWndPos = canvas->viewMat * homoWndPos;
-
 		wndPos.x = homoWndPos.x; wndPos.y = homoWndPos.y;
 		wndPos += ImGui::GetWindowPos() + canvas->offset;
 		return wndPos;
 	}
 
 	ImVec2 Wnd2Graph(ImNodes::CanvasState* canvas, ImVec2* pos) {
+		//if (canvas == NULL) return ImVec2();
 		ImVec2 graphPos;
-
 		graphPos = *pos - ImGui::GetWindowPos() - canvas->offset;
-
 		MOON::Vector3 homoGraphPos(graphPos.x, graphPos.y, 1);
 		homoGraphPos = canvas->viewMat.inverse() * homoGraphPos;
 		graphPos.x = homoGraphPos.x; graphPos.y = homoGraphPos.y;
-
 		return graphPos;
 	}
 

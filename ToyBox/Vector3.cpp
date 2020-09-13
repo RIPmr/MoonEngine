@@ -1,5 +1,6 @@
 #include "Vector3.h"
 #include "Vector2.h"
+#include "Quaternion.h"
 
 namespace MOON {
 	Vector3::Vector3(const Vector2 &v) {
@@ -88,7 +89,7 @@ namespace MOON {
 	}
 
 	Vector3 Vector3::Normalize(const Vector3 &v) {
-		float len = 1 / v.magnitude();
+		float len = 1.0f / v.magnitude();
 
 		return Vector3(v.x, v.y, v.z) * len;
 	}
@@ -98,11 +99,14 @@ namespace MOON {
 	}
 
 	Vector3 Vector3::Cross(const Vector3 &v1, const Vector3 &v2) {
-		return Vector3(v1.y * v2.z - v1.z * v2.y,
+		return Vector3(
+			v1.y * v2.z - v1.z * v2.y,
 			v1.z * v2.x - v1.x * v2.z,
-			v1.x * v2.y - v1.y * v2.x);
+			v1.x * v2.y - v1.y * v2.x
+		);
 	}
 
+	// return angle in radians
 	float Vector3::Angle(const Vector3 &a, const Vector3 &b) {
 		//float angle = a.dot(b);
 		//angle /= (a.magnitude() * b.magnitude());
@@ -121,5 +125,21 @@ namespace MOON {
 
 	Vector3 Vector3::ZERO() {
 		return Vector3(0.0, 0.0, 0.0);
+	}
+
+	Vector3 Vector3::Decomposition(
+		const Vector3& vector,
+		Vector3 xAxis, Vector3 yAxis, Vector3 zAxis,
+		Quaternion coordRotation = Quaternion::identity()) {
+		if (coordRotation != Quaternion::identity()) {
+			xAxis = coordRotation * xAxis;
+			yAxis = coordRotation * yAxis;
+			zAxis = coordRotation * zAxis;
+		}
+		auto xProj = Vector3::ProjectionMag(vector, xAxis);
+		auto yProj = Vector3::ProjectionMag(vector, yAxis);
+		auto zProj = Vector3::ProjectionMag(vector, zAxis);
+
+		return Vector3(xProj, yProj, zProj);
 	}
 }

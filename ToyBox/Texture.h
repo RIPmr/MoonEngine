@@ -54,6 +54,7 @@ namespace MOON {
 		void ListProperties() override {
 			// list name
 			ListName();
+			ImGui::Text(("Size:      (" + std::to_string(width) + u8"¡Á" + std::to_string(height) + ")").c_str());
 
 			// list preview
 			ImGui::Text("Location: ");
@@ -88,12 +89,23 @@ namespace MOON {
 		}
 
 		~FrameBuffer() override {
-			if (localID > 0) glDeleteTextures(1, &localID);
-			if (rbo > 0) glGenRenderbuffers(1, &rbo);
-			if (fbo > 0) glGenFramebuffers(1, &fbo);
+			DeleteFrameBuffer();
+		}
+
+		void Reallocate(const int &_width, const int &_height) {
+			DeleteFrameBuffer();
+			this->height = _height;
+			this->width = _width;
+			CreateFrameBuffer();
 		}
 
 	private:
+		void DeleteFrameBuffer() {
+			if (localID > 0) glDeleteTextures(1, &localID);
+			if (rbo > 0) glDeleteRenderbuffers(1, &rbo);
+			if (fbo > 0) glDeleteFramebuffers(1, &fbo);
+		}
+
 		void CreateFrameBuffer() {
 			// framebuffer configuration
 			glGenFramebuffers(1, &fbo);

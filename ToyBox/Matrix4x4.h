@@ -40,9 +40,9 @@ namespace MOON {
 					x[i][j] = m[i][j];
 		}
 		Matrix4x4(const Quaternion &q) {
-			x[0][0] = 1-2*(q.y*q.y+q.z*q.z); x[1][0] = 2*(q.x*q.y-q.w*q.z); x[2][0] = 2*(q.x*q.z+q.w*q.y); x[3][0] = 0;
-			x[0][1] = 2*(q.x*q.y+q.w*q.z); x[1][1] = 1-2*(q.x*q.x+q.z*q.z); x[2][1] = 2*(q.y*q.z-q.w*q.x); x[3][1] = 0;
-			x[0][2] = 2*(q.x*q.z-q.w*q.y); x[1][2] = 2*(q.y*q.z+q.w*q.x); x[2][2] = 1-2*(q.x*q.x+q.y*q.y); x[3][2] = 0;
+			x[0][0] = 1 - 2 * (q.y*q.y + q.z*q.z); x[1][0] = 2 * (q.x*q.y - q.w*q.z); x[2][0] = 2 * (q.x*q.z + q.w*q.y); x[3][0] = 0;
+			x[0][1] = 2 * (q.x*q.y + q.w*q.z); x[1][1] = 1 - 2 * (q.x*q.x + q.z*q.z); x[2][1] = 2 * (q.y*q.z - q.w*q.x); x[3][1] = 0;
+			x[0][2] = 2 * (q.x*q.z - q.w*q.y); x[1][2] = 2 * (q.y*q.z + q.w*q.x); x[2][2] = 1 - 2 * (q.x*q.x + q.y*q.y); x[3][2] = 0;
 			x[0][3] = 0; x[1][3] = 0; x[2][3] = 0; x[3][3] = 1;
 		}
 
@@ -315,15 +315,36 @@ namespace MOON {
 
 		// right hand
 		static Matrix4x4 Perspective(const float &fovy, const float &aspect, const float &zNear, const float &zFar) {
-			float const tanHalfFovy = tan(Deg2Rad * fovy / 2.0);
+			float const tanHalfFovy = tan(Deg2Rad * fovy / 2.0f);
 
-			Matrix4x4 Result(0.0);
-			Result[0][0] = 1.0 / (aspect * tanHalfFovy);
-			Result[1][1] = 1.0 / (tanHalfFovy);
-			Result[2][3] = -1.0;
+			Matrix4x4 Result(0.0f);
+			Result[0][0] = 1.0f / (aspect * tanHalfFovy);
+			Result[1][1] = 1.0f / (tanHalfFovy);
+			Result[2][3] = -1.0f;
 			Result[2][2] = -(zFar + zNear) / (zFar - zNear);
-			Result[3][2] = -(2.0 * zFar * zNear) / (zFar - zNear);
+			Result[3][2] = -(2.0f * zFar * zNear) / (zFar - zNear);
 
+			return Result;
+		}
+
+		static Matrix4x4 Orthographic(const float &width, const float &height, const float &zNear, const float &zFar) {
+			Matrix4x4 Result(1.0f);
+			Result[0][0] = 2.0f / width;
+			Result[1][1] = 2.0f / height;
+			Result[2][2] = -2.0f / (zFar - zNear);
+			Result[3][2] = -(zFar + zNear) / (zFar - zNear);
+			return Result;
+		}
+
+		static Matrix4x4 Orthographic(const float &left, const float &right,
+			const float &top, const float &bottom, const float &zNear, const float &zFar) {
+			Matrix4x4 Result(1.0f);
+			Result[0][0] = 2.0f / (right - left);
+			Result[1][1] = 2.0f / (top - bottom);
+			Result[0][3] = -(right + left) / (right - left);
+			Result[1][3] = -(top + bottom) / (top - bottom);
+			Result[2][2] = -2.0f / (zFar - zNear);
+			Result[3][2] = -(zFar + zNear) / (zFar - zNear);
 			return Result;
 		}
 
@@ -467,6 +488,43 @@ namespace MOON {
 			c = src[0] * x[0][2] + src[1] * x[1][2] + src[2] * x[2][2];
 
 			return Vector3(a, b, c);
+		}
+
+		// * polar decomposition, NOT TESTED YET
+		void Decompose(Vector3& scale, Quaternion& rotation, Vector3& translation) {
+			translation.x = x[3][0];
+			translation.y = x[3][1];
+			translation.z = x[3][2];
+
+			float norm;
+			unsigned int iter = 0;
+			Matrix4x4 R(*this);
+			R[3][0] = 0; R[3][1] = 0; R[3][2] = 0;
+			Matrix4x4 M(R);
+
+			do {
+				Matrix4x4 Rnext;
+				Matrix4x4 Rit(R.transpose().inverse());
+				for (int i = 0; i < 4; ++i)
+					for (int j = 0; j < 4; ++j)
+						Rnext[j][i] = 0.5f * (R[j][i] + Rit[j][i]);
+
+				norm = 0;
+				for (int i = 0; i < 3; ++i) {
+					float n = std::abs(R[0][i] - Rnext[0][i]) +
+						std::abs(R[1][i] - Rnext[1][i]) +
+						std::abs(R[2][i] - Rnext[2][i]);
+					norm = std::max(norm, n);
+				}
+				R = Rnext;
+			} while (++iter < 100 && norm > .0001);
+
+			auto scaMat = R.inverse() * M;
+			rotation = Quaternion(R);
+
+			scale.x = scaMat[0][0];
+			scale.y = scaMat[1][1];
+			scale.z = scaMat[2][2];
 		}
 
 	};

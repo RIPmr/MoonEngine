@@ -80,8 +80,7 @@ namespace MOON {
 
 			if (!hasSubFolder) baseFlag |= ImGuiTreeNodeFlags_Leaf;
 			if (isClicked) baseFlag |= ImGuiTreeNodeFlags_Selected;
-			bool node_open = ImGui::TreeNodeEx(parent == NULL ? "Assets" : name.c_str(), 
-				baseFlag, parent == NULL ? "Assets" : name.c_str());
+			bool node_open = ImGui::TreeNodeEx(parent == NULL ? "Assets" : name.c_str(), baseFlag);
 
 			if (ImGui::IsItemClicked()) {
 				// reset all click state
@@ -162,7 +161,7 @@ namespace MOON {
 
 	private:
 		inline static void UpdateTree(const std::string &path, const bool &loopSubFolder = true, DirNode* parentNode = NULL) {
-			long hFile = 0;
+			intptr_t hFile = 0;
 			std::string pathName;
 			struct _finddata_t fileInfo;
 

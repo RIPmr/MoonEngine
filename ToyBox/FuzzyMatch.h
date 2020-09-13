@@ -27,9 +27,7 @@ namespace MOON {
 			return fuzzy_match_recursive(pattern, str, outScore, str, nullptr, matches, maxMatches, 0, recursionCount, recursionLimit);
 		}
 
-		inline static bool fuzzy_match_recursive(const char *pattern, const char *str, int &outScore,
-			const char *strBegin, uint8_t const *srcMatches, uint8_t *matches, int maxMatches,
-			int nextMatch, int & recursionCount, int recursionLimit) {
+		inline static bool fuzzy_match_recursive(const char *pattern, const char *str, int &outScore, const char *strBegin, uint8_t const *srcMatches, uint8_t *matches, int maxMatches, int nextMatch, int & recursionCount, int recursionLimit) {
 			++recursionCount;
 			if (recursionCount >= recursionLimit)
 				return false;

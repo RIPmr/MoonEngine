@@ -4,10 +4,13 @@
 
 namespace MOON {
 	Quaternion::Quaternion(const Matrix4x4 &mat) {
-		float m11 = mat.x[0][0], m12 = mat.x[1][0], m13 = mat.x[2][0];
-		float m21 = mat.x[0][1], m22 = mat.x[1][1], m23 = mat.x[2][1];
-		float m31 = mat.x[0][2], m32 = mat.x[1][2], m33 = mat.x[2][2];
+		//float m11 = mat.x[0][0], m12 = mat.x[1][0], m13 = mat.x[2][0];
+		//float m21 = mat.x[0][1], m22 = mat.x[1][1], m23 = mat.x[2][1];
+		//float m31 = mat.x[0][2], m32 = mat.x[1][2], m33 = mat.x[2][2];
 
+		float m11 = mat.x[0][0], m12 = mat.x[0][1], m13 = mat.x[0][2];
+		float m21 = mat.x[1][0], m22 = mat.x[1][1], m23 = mat.x[1][2];
+		float m31 = mat.x[2][0], m32 = mat.x[2][1], m33 = mat.x[2][2];
 
 		//探测四元数中最大的项 
 		float fourWSquaredMinusl = m11 + m22 + m33;
@@ -61,6 +64,8 @@ namespace MOON {
 			y = (m23 + m32)*mult;
 			break;
 		}
+
+		UpdateEulerAngle();
 	}
 
 	float Quaternion::MagSquared() const { return (x * x + y * y + z * z + w * w); }
@@ -201,6 +206,15 @@ namespace MOON {
 		return *this;
 	}
 
+
+	bool operator==(const Quaternion &q1, const Quaternion &q2) {
+		return (q1.x == q2.x && q1.y == q2.y && q1.z == q2.z && q1.w == q2.w);
+	}
+
+	bool operator!=(const Quaternion &q1, const Quaternion &q2) {
+		return (q1.x == q2.x && q1.y == q2.y && q1.z == q2.z && q1.w == q2.w);
+	}
+
 	Quaternion& Quaternion::operator*=(float s) {
 		x *= s; y *= s; z *= s; w *= s;
 
@@ -232,14 +246,28 @@ namespace MOON {
 	}
 
 	Quaternion operator*(const Quaternion& lhs, const Quaternion& rhs) {
-		float w1 = lhs.w;
+		/*float w1 = lhs.w;
 		float w2 = rhs.w;
 		Vector3 v1(lhs.x, lhs.y, lhs.z);
 		Vector3 v2(rhs.x, rhs.y, rhs.z);
 		float w3 = w1 * w2 - v1.dot(v2);
 		Vector3 v3 = v1.cross(v2) + v2 * w1 + v1 * w2;
 
-		return Quaternion(v3.x, v3.y, v3.z, w3);
+		return Quaternion(v3.x, v3.y, v3.z, w3);*/
+
+		float w1 = lhs.w, x1 = lhs.x, y1 = lhs.y, z1 = lhs.z;
+		float w2 = rhs.w, x2 = rhs.x, y2 = rhs.y, z2 = rhs.z;
+
+		return Quaternion(
+			(w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2),
+			(w1 * y2 - x1 * z2 + y1 * w2 + z1 * x2),
+			(w1 * z2 + x1 * y2 - y1 * x2 + z1 * w2),
+			(w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2)
+		);
+	}
+
+	Quaternion operator/(const Quaternion& lhs, const Quaternion& rhs) {
+		return lhs * rhs.Inverse();
 	}
 
 	Quaternion operator*(const Quaternion& r, const float& s) {
@@ -272,9 +300,31 @@ namespace MOON {
 	}
 
 	void Quaternion::UpdateEulerAngle() {
-		float yaw = atan2(2 * (w * x + z * y), 1 - 2 * (x * x + y * y));
+		/*float yaw = atan2(2 * (w * x + z * y), 1 - 2 * (x * x + y * y));
 		float pitch = asin(MoonMath::clamp(2 * (w * y - x * z), -1.0f, 1.0f));
 		float roll = atan2(2 * (w * z + x * y), 1 - 2 * (z * z + y * y));
-		eulerAngles.setValue(Rad2Deg * yaw, Rad2Deg * pitch, Rad2Deg * roll);
+		eulerAngles.setValue(Rad2Deg * yaw, Rad2Deg * pitch, Rad2Deg * roll);*/
+
+		float check = 2.0f * (-y * z + w * x);
+
+		if (check < -0.995f) {
+			eulerAngles.setValue(
+				-90.0f,
+				0.0f,
+				-atan2f(2.0f * (x * z - w * y), 1.0f - 2.0f * (y * y + z * z)) * Rad2Deg
+			);
+		} else if (check > 0.995f) {
+			eulerAngles.setValue(
+				90.0f,
+				0.0f,
+				atan2f(2.0f * (x * z - w * y), 1.0f - 2.0f * (y * y + z * z)) * Rad2Deg
+			);
+		} else {
+			eulerAngles.setValue(
+				asinf(check) * Rad2Deg,
+				atan2f(2.0f * (x * z + w * y), 1.0f - 2.0f * (x * x + y * y)) * Rad2Deg,
+				atan2f(2.0f * (x * y + w * z), 1.0f - 2.0f * (x * x + z * z)) * Rad2Deg
+			);
+		}
 	}
 }

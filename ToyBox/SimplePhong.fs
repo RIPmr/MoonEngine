@@ -8,8 +8,8 @@ uniform vec3 lightPos;
 uniform vec3 viewPos; 
 uniform vec3 lightColor;
 uniform vec3 objectColor;
-uniform bool isHovered;
-uniform bool isSelected;
+//uniform bool isHovered;
+//uniform bool isSelected;
 
 void main() {
     // ambient
@@ -30,10 +30,10 @@ void main() {
     vec3 specular = specularStrength * spec * lightColor;  
         
     vec3 result = (ambient + diffuse + specular) * objectColor;
-	if (isSelected)
-		FragColor = vec4(result, 1.0) * 0.8 + vec4(1.0, 1.0, 0.0, 1.0) * 0.2;
-	else if (isHovered)
-		FragColor = vec4(result, 1.0) * 0.8 + vec4(0.529, 0.808, 1.0, 1.0) * 0.2;
-	else
+	//if (isSelected)
+		//FragColor = vec4(result, 1.0) * 0.8 + vec4(1.0, 1.0, 0.0, 1.0) * 0.2;
+	//else if (isHovered)
+		//FragColor = vec4(result, 1.0) * 0.8 + vec4(0.529, 0.808, 1.0, 1.0) * 0.2;
+	//else
 		FragColor = vec4(result, 1.0);
 } 

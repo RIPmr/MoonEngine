@@ -57,7 +57,7 @@ namespace MOON {
 
 	private:
 		static Vector3 SamplingColor(const Ray &r, int depth);
-		static Vector3 SamplingColor_Simple(const Ray &r, int depth, const Sphere* ball, const Sphere* ground);
+		static Vector3 SamplingColor_Simple(const Ray &r, int depth, const MSphere* ball, const MSphere* ground);
 		static Vector3 SimpleSky(const Ray &r);
 	};
 }

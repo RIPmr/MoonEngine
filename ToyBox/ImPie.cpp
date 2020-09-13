@@ -115,6 +115,7 @@ namespace ImGui {
 
 		bool bItemHovered = false;
 
+		const int	subdiv = 2;
 		const float c_fDefaultRotate = -IM_PI / 2.f;
 		float fLastRotate = c_fDefaultRotate;
 		for (int iIndex = 0; iIndex <= s_oPieMenuContext.m_iMaxIndex; ++iIndex) {
@@ -154,7 +155,7 @@ namespace ImGui {
 					}
 				}
 
-				int arc_segments = (int)(32 * item_arc_span / (2 * IM_PI)) + 1;
+				int arc_segments = (int)(32 * subdiv * item_arc_span / (2 * IM_PI)) + 1;
 
 				ImU32 iColor = hovered ? ImColor(100, 100, 150) : ImColor(70, 70, 70);
 				iColor = ImGui::GetColorU32(hovered ? ImGuiCol_HeaderHovered : ImGuiCol_FrameBg);

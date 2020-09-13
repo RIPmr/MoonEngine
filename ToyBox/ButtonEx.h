@@ -4,9 +4,49 @@
 #include <iostream>
 
 #include "imgui_internal.h"
-#include "IconsFontAwesome4.h"
+#include "Icons.h"
 
 namespace MOON {
+	template<class T>
+	static void MakeDragAndDropWidget(T* &payload_in, const char* type, const char* label, void(*dropable)(T*&, T*&) = nullptr) {
+		if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoPreviewTooltip)) {
+			ImGui::SetDragDropPayload(type, &payload_in, sizeof(T*));
+			ImGui::SetTooltip(label);
+			ImGui::EndDragDropSource();
+		}
+		if (dropable != nullptr && ImGui::BeginDragDropTarget()) {
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(type)) {
+				IM_ASSERT(payload->DataSize == sizeof(T*));
+				T* payload_m = *(T**)payload->Data;
+				dropable(payload_in, payload_m);
+			}
+			ImGui::EndDragDropTarget();
+		}
+	}
+
+	template<class T>
+	static bool DragAndDropButton(T* &payload_in, const char* type, const char* label, const ImVec2& size_arg = ImVec2(0, 0), const int ID = -1) {
+		bool flag = ImGui::Button(label, size_arg, ID);
+
+		if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoPreviewTooltip)) {
+			// Set payload to carry the index of our item (could be anything)
+			ImGui::SetDragDropPayload(type, &payload_in, sizeof(T*));
+			ImGui::SetTooltip(label);
+			ImGui::EndDragDropSource();
+		}
+
+		if (ImGui::BeginDragDropTarget()) {
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(type)) {
+				IM_ASSERT(payload->DataSize == sizeof(T*));
+				T* payload_m = *(T**)payload->Data;
+				payload_in = payload_m;
+			}
+			ImGui::EndDragDropTarget();
+		}
+
+		return flag;
+	}
+
 	// style event
 	static void SetButtonClicked() {
 		ImGui::GetStyle().Colors[ImGuiCol_Button] = ImVec4(1.000f, 1.000f, 1.000f, 0.250f);

@@ -48,6 +48,7 @@ namespace MOON {
 		Quaternion Inverse() const;
 		Vector3 EulerAngle() const;
 
+
 		Quaternion& operator^=(const float &pow);
 		Quaternion& operator+=(const Quaternion &q);
 		Quaternion& operator-=(const Quaternion &q);
@@ -55,9 +56,12 @@ namespace MOON {
 		Quaternion& operator*=(float s);
 		Quaternion& operator/=(float s);
 
+		friend bool operator!=(const Quaternion &q1, const Quaternion &q2);
+		friend bool operator==(const Quaternion &q1, const Quaternion &q2);
 		friend Quaternion operator+(const Quaternion& lhs, const Quaternion& rhs);
 		friend Quaternion operator-(const Quaternion& lhs, const Quaternion& rhs);
 		friend Quaternion operator*(const Quaternion& lhs, const Quaternion& rhs);
+		friend Quaternion operator/(const Quaternion& lhs, const Quaternion& rhs);
 
 		friend Vector3 operator*(const Quaternion& q, const Vector3& point);
 
@@ -70,10 +74,25 @@ namespace MOON {
 		void normalize();
 		void UpdateEulerAngle();
 
+		// angle is in radians
 		inline static Quaternion Rotate(const Vector3 &axis, float angle) {
 			angle /= 2.0f;
 			float sint = sinf(angle);
 			return Quaternion(axis.x * sint, axis.y * sint, axis.z * sint, cosf(angle));
+		}
+
+		// * When the angle between from and to is 180 degrees,
+		// the rotate axis is uncertain, so you need to determine the axis180 on your own
+		inline static Quaternion Rotate(const Vector3 &from, const Vector3 &to, const Vector3& axis180 = Vector3::WORLD(UP)) {
+			auto angle = Vector3::Angle(from, to);
+			if (!angle) return Quaternion::identity();
+			else if (from == -to) {
+				return Quaternion::Rotate(axis180, Deg2Rad * 180);
+			} else {
+				auto axis = from.cross(to);
+				axis.normalize();
+				return Quaternion::Rotate(axis, angle);
+			}
 		}
 	};
 }

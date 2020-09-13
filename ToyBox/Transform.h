@@ -3,125 +3,235 @@
 #include "Quaternion.h"
 #include "Matrix4x4.h"
 #include "MathUtils.h"
+#include "Utility.h"
+#include "properties.h"
 
 #include <vector>
 
 namespace MOON {
-	extern class Model;
+	extern class MObject;
 	class Transform {
+	private:
+		Vector3 _position;
+		Quaternion _rotation;
+		Vector3 _scale;
+
+		Vector3 deltaSca;
+		Quaternion deltaRot;
+		Matrix4x4 parentMat;
+
+		Matrix4x4 nativeMat;
+
 	public:
-		Vector3 position;
-		Quaternion rotation;
-		Vector3 scale;
+		PROPERTY(Vector3, position);
+		GET(position) { 
+			if (parent != nullptr) 
+				return (parent->localToWorldMat * parentMat).multVec(_position);
+			else return _position; 
+		}
+		SET(position) {
+			if (parent != nullptr)
+				_position = (parentMat.inverse() * parent->worldToLocalMat).multVec(value);
+			else _position = value;
+			UpdateMatrix();
+		}
+		PROPERTY(Vector3, localPosition);
+		GET(localPosition) {
+			if (parent != nullptr)
+				return _position - parent->position;
+			else return _position;
+		}
+		SET(localPosition) {
+			if (parent != nullptr)
+				_position = value + parent->position;
+			else _position = value;
+			UpdateMatrix();
+		}
 
-		Vector3 localPosition;
-		Quaternion localRotation;
-		Vector3 localScale;
+		PROPERTY(Quaternion, rotation);
+		GET(rotation) { 
+			if (parent != nullptr) 
+				return parent->rotation * deltaRot * _rotation;
+			else return _rotation;
+		}
+		SET(rotation) {
+			if (parent != nullptr)
+				_rotation = (parent->rotation * deltaRot).Inverse() * value;
+			else _rotation = value;
+			UpdateMatrix();
+		}
+		PROPERTY(Quaternion, localRotation);
+		GET(localRotation) {
+			if (parent != nullptr) return deltaRot * _rotation;
+			else return _rotation;
+		}
+		SET(localRotation) {
+			if (parent != nullptr) _rotation = value / deltaRot;
+			else _rotation = value;
+			UpdateMatrix();
+		}
 
-		Matrix4x4 modelMat;
-		Matrix4x4 transformMat;
-		Matrix4x4 localModelMat;
+		PROPERTY(Vector3, scale);
+		GET(scale) { 
+			if (parent != nullptr) {
+				auto mat = parent->localToWorldMat * parentMat;
+				Vector3 xSca = mat.multVec(_scale.x * GetNativeAxis(LEFT)),
+						ySca = mat.multVec(_scale.y * GetNativeAxis(UP)),
+						zSca = mat.multVec(_scale.z * GetNativeAxis(FORWARD));
+				return Vector3(xSca.magnitude(), ySca.magnitude(), zSca.magnitude());
+			} else return _scale;
+		}
+		SET(scale) {
+			if (parent != nullptr) {
+				auto mat = (parent->localToWorldMat * parentMat).inverse();
+				Vector3 xSca = mat.multVec(value.x * GetLocalAxis(LEFT)),
+						ySca = mat.multVec(value.y * GetLocalAxis(UP)),
+						zSca = mat.multVec(value.z * GetLocalAxis(FORWARD));
+				_scale.setValue(xSca.magnitude(), ySca.magnitude(), zSca.magnitude());
+			} else _scale = value;
+			UpdateMatrix();
+		}
+		PROPERTY(Vector3, localScale);
+		GET(localScale) {
+			if (parent != nullptr) return _scale / deltaSca;
+			else return _scale;
+		}
+		SET(localScale) {
+			if (parent != nullptr) _scale = value * deltaSca;
+			else _scale = value;
+			UpdateMatrix();
+		}
 
-		Model* parent;
-		std::vector<Model*> childs;
+		Matrix4x4 localToWorldMat; // model matrix
+		Matrix4x4 worldToLocalMat; // transform matrix (Axis)
+
+		MObject* mobject;
+
+		Transform* parent;
+		std::vector<Transform*> childs;
 
 		bool changeFlag;
 
-		Transform() : position(Vector3::ZERO()), localPosition(Vector3::ZERO()),
-			rotation(Quaternion::identity()), localRotation(Quaternion::identity()),
-			scale(Vector3::ONE()), localScale(Vector3::ONE()), changeFlag(true),
-			parent(NULL), modelMat(Matrix4x4::identity()) {}
+		Transform(MObject* mobject) : _position(Vector3::ZERO()),
+			_rotation(Quaternion::identity()), _scale(Vector3::ONE()), changeFlag(true),
+			parent(nullptr), localToWorldMat(Matrix4x4::identity()), mobject(mobject) {}
+
+		inline void operator=(const Transform &other) {
+			this->_position = const_cast<Transform&>(other).position;
+			this->_rotation = const_cast<Transform&>(other).rotation;
+			this->_scale = const_cast<Transform&>(other).scale;
+			this->localToWorldMat = other.localToWorldMat;
+			this->worldToLocalMat = other.worldToLocalMat;
+			this->parent = other.parent;
+			//this->childs = other.childs;
+			//this->changeFlag = false;
+			//this->mobject = nullptr;
+		}
 
 		Transform(const Vector3 &position, const Quaternion &rotation, const Vector3 &scale) :
-			position(position), rotation(rotation), scale(scale), changeFlag(true),
-			parent(NULL), modelMat(Matrix4x4::identity()) {
-			localPosition = Vector3::ZERO();
-			localRotation = Quaternion::identity();
-			localScale = Vector3::ONE();
+			_position(position), _rotation(rotation), _scale(scale), changeFlag(true),
+			parent(NULL), localToWorldMat(Matrix4x4::identity()) {
+			UpdateChildTransform();
+			UpdateMatrix();
 		}
 
 		~Transform() {}
 
-		inline void set(const Vector3* position, const Quaternion* rotation = NULL, const Vector3* scale = NULL) {
-			if (position != NULL) this->position.setValue(*position);
-			if (rotation != NULL) this->rotation.SetValue(*rotation);
-			if (scale != NULL) this->scale.setValue(*scale);
+		inline void SetParent(Transform* parent) {
+			if (parent == this->parent) return;
+			if (this->parent != nullptr) {
+				_scale = scale;
+				_rotation = rotation;
+				_position = position;
+			}
 
-			UpdateLocalTransform();
+			if (parent != nullptr) {
+				auto tmp = parent;
+				while (tmp->parent != nullptr) {
+					if (tmp->parent == this) {
+						tmp->SetParent(this->parent);
+						break;
+					} else tmp = tmp->parent;
+				}
+			}
+			if (this->parent != nullptr) this->parent->RemoveChild(this);
+			this->parent = parent;
+			if (parent != nullptr){
+				deltaRot = parent->rotation.Inverse();
+				deltaSca = parent->scale;
+				parentMat = parent->worldToLocalMat;
+				parent->AddChild(this);
+			}
 			UpdateMatrix();
+		}
+		inline void AddChild(Transform* child) {
+			this->childs.push_back(child);
+		}
+		inline void RemoveChild(Transform* child) {
+			RemoveElem(this->childs, child);
 		}
 
 		inline void Rotate(const Quaternion &deltaQ, const CoordSys coordinate = CoordSys::WORLD) {
-			if (coordinate == CoordSys::WORLD)
-				rotation = deltaQ * rotation;
-			else
-				rotation *= deltaQ;
+			if (coordinate == CoordSys::WORLD) {
+				if (parent != nullptr) {
+					//auto div = parent->rotation * deltaRot;
+					//_rotation = div.Inverse() * deltaQ * div * _rotation;
+					rotation = deltaQ * rotation;
+				} else 
+					_rotation = deltaQ * _rotation;
+			} else {
+				_rotation = deltaQ * _rotation;
+			}
 
-			UpdateLocalTransform();
 			UpdateMatrix();
 		}
 
 		inline void Translate(const Vector3 &deltaV, const CoordSys coordinate = CoordSys::WORLD) {
-			if (coordinate == CoordSys::WORLD)
+			if (coordinate == WORLD) {
 				position += deltaV;
-			else
+			} else {
 				// TODO
-				//position += forward() * deltaV.z + right() * deltaV.x + up() * deltaV.y;
+			}
 
-			UpdateLocalTransform();
 			UpdateMatrix();
 		}
 
 		inline void Scale(const Vector3 &scaleVec, const CoordSys coordinate = CoordSys::LOCAL) {
-			if (coordinate == CoordSys::WORLD)
-				;// TODO
-			else
-				scale.setValue(scaleVec);
+			if (coordinate == CoordSys::WORLD) {
+				// TODO
+			} else {
+				_scale.setValue(scaleVec);
+			}
 
-			UpdateLocalTransform();
 			UpdateMatrix();
 		}
 
-		inline Matrix4x4 UpdateMatrix() {
+		inline void UpdateMatrix() {
 			// model = T * R * S * E
-			//Matrix4x4 model = Matrix4x4::Scale(Matrix4x4::identity(), scale);
-			modelMat = Matrix4x4::ScaleMat(scale);
-			modelMat = Matrix4x4::Rotate(modelMat, rotation);
-			modelMat = Matrix4x4::Translate(modelMat, position);
+			localToWorldMat = Matrix4x4::ScaleMat(_scale);
+			localToWorldMat = Matrix4x4::Rotate(localToWorldMat, _rotation);
+			localToWorldMat = Matrix4x4::Translate(localToWorldMat, _position);
+			nativeMat = localToWorldMat.inverse();
 
-			transformMat = modelMat.inverse();
+			if (parent != nullptr)
+				localToWorldMat = parent->localToWorldMat * parentMat * localToWorldMat;
 
-			return modelMat;
+			worldToLocalMat = localToWorldMat.inverse();
+			UpdateChildTransform();
 		}
 
-		inline Matrix4x4 GetLocalMatrix() {
-			localModelMat = Matrix4x4::ScaleMat(localScale);
-			localModelMat = Matrix4x4::Rotate(localModelMat, localRotation);
-			localModelMat = Matrix4x4::Translate(localModelMat, localPosition);
-
-			return localModelMat;
-		}
-
-		inline void UpdateLocalTransform() {
-			changeFlag = true;
-
-			if (parent != NULL) {
-				// TODO
-			} else {
-				localPosition = position;
-				localRotation = rotation;
-				localScale = scale;
-			}
+		inline void UpdateChildTransform() {
+			for (auto child : childs) child->UpdateMatrix();
 		}
 
 		inline Vector3 forward() const {
-			return Vector3::Normalize(Vector3(transformMat.x[0][2], transformMat.x[1][2], transformMat.x[2][2]));
+			return Vector3::Normalize(Vector3(worldToLocalMat.x[0][2], worldToLocalMat.x[1][2], worldToLocalMat.x[2][2]));
 		}
 		inline Vector3 left() const {
-			return Vector3::Normalize(Vector3(transformMat.x[0][0], transformMat.x[1][0], transformMat.x[2][0]));
+			return Vector3::Normalize(Vector3(worldToLocalMat.x[0][0], worldToLocalMat.x[1][0], worldToLocalMat.x[2][0]));
 		}
 		inline Vector3 up() const {
-			return Vector3::Normalize(Vector3(transformMat.x[0][1], transformMat.x[1][1], transformMat.x[2][1]));
+			return Vector3::Normalize(Vector3(worldToLocalMat.x[0][1], worldToLocalMat.x[1][1], worldToLocalMat.x[2][1]));
 		}
 		inline Vector3 GetLocalAxis(const Direction &direction) const {
 			switch (direction) {
@@ -137,10 +247,22 @@ namespace MOON {
 			}
 		}
 		inline int AxisSign(const Direction &dir) const {
-			if (dir == Direction::UP && scale.y < 0) return -1;
-			else if (dir == Direction::LEFT && scale.x < 0)  return - 1;
-			else if (dir == Direction::FORWARD && scale.z < 0)  return - 1;
+			if (dir == Direction::UP && _scale.y < 0) return -1;
+			else if (dir == Direction::LEFT && _scale.x < 0)  return - 1;
+			else if (dir == Direction::FORWARD && _scale.z < 0)  return - 1;
 			return 1;
+		}
+
+		// * for child object
+		inline Vector3 GetNativeAxis(const Direction &direction) const {
+			if (parent == nullptr) return GetLocalAxis(direction);
+			switch (direction) {
+				case Direction::UP:			return Vector3::Normalize(Vector3(nativeMat.x[0][1], nativeMat.x[1][1], nativeMat.x[2][1]));
+				case Direction::LEFT:		return Vector3::Normalize(Vector3(nativeMat.x[0][0], nativeMat.x[1][0], nativeMat.x[2][0]));
+				case Direction::FORWARD:	return Vector3::Normalize(Vector3(nativeMat.x[0][2], nativeMat.x[1][2], nativeMat.x[2][2]));
+
+				default:					return Vector3::ZERO();
+			}
 		}
 	};
 }

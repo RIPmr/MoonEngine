@@ -1,4 +1,4 @@
-#include "stb_image.h"
+#include "STB/stb_image.h"
 #include "Utility.h"
 #include "SceneMgr.h"
 
@@ -6,7 +6,7 @@ namespace MOON {
 
 	// gives mouse pixel in NDC coordinates [-1, 1]
 	Vector2 NormalizedMousePos() {
-		return Vector2(MOON_MousePos.x / MOON_WndSize.x * 2 - 1, (MOON_WndSize.y - MOON_MousePos.y - 1) / MOON_WndSize.y * 2 - 1);
+		return Vector2(MOON_MousePos.x / MOON_ScrSize.x * 2 - 1, (MOON_ScrSize.y - MOON_MousePos.y - 1) / MOON_ScrSize.y * 2 - 1);
 	}
 
 	bool LoadTextureFromFile(const std::string &path, std::string &name, GLuint &textureID, int &width, int &height, bool gamma) {

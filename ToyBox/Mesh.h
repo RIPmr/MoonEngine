@@ -14,6 +14,7 @@
 
 namespace MOON {
 	struct Vertex {
+	public:
 		Vector3 Position;
 		Vector3 Normal;
 		Vector2 TexCoords;
@@ -25,25 +26,25 @@ namespace MOON {
 	class Mesh : public ObjectBase, public Hitable {
 	public:
 		std::vector<Vertex> vertices;
-		std::vector<unsigned int> indices;
-		Model* parent;
+		std::vector<unsigned int> triangles;
+		//Model* parent;
 		Material* material;
 		BoundingBox bbox;
 		unsigned int VAO;
 
 		Mesh() {}
-		Mesh(const Mesh &mesh) : vertices(mesh.vertices), indices(mesh.indices), material(mesh.material), VAO(mesh.VAO), bbox(mesh.bbox) {}
-		Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices) : ObjectBase("Mesh", MOON_UNSPECIFIEDID), VAO(0) {
+		Mesh(const Mesh &mesh) : vertices(mesh.vertices), triangles(mesh.triangles), material(mesh.material), VAO(mesh.VAO), bbox(mesh.bbox) {}
+		Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> triangles) : ObjectBase("Mesh", MOON_UNSPECIFIEDID), VAO(0) {
 			this->vertices = vertices;
-			this->indices = indices;
+			this->triangles = triangles;
 
 			// set the vertex buffers and its attribute pointers
 			//setupMesh();
 			UpdateBBox();
 		}
-		Mesh(const std::string &name, std::vector<Vertex> vertices, std::vector<unsigned int> indices) : ObjectBase(name, MOON_UNSPECIFIEDID), VAO(0) {
+		Mesh(const std::string &name, std::vector<Vertex> vertices, std::vector<unsigned int> triangles) : ObjectBase(name, MOON_UNSPECIFIEDID), VAO(0) {
 			this->vertices = vertices;
-			this->indices = indices;
+			this->triangles = triangles;
 
 			// set the vertex buffers and its attribute pointers
 			//setupMesh();
@@ -64,16 +65,20 @@ namespace MOON {
 			}
 		}
 
-		void Draw(Shader* shader, const Matrix4x4 & model);
+		void Draw(Shader* shader, const Matrix4x4 &model, const bool &hovered, const bool &selected);
 
 		bool Hit(const Ray &r, HitRecord &rec) const {
+			return Hit(Matrix4x4::identity(), r, rec);
+		}
+
+		bool Hit(const Matrix4x4 modelMat, const Ray &r, HitRecord &rec) const {
 			uint32_t triIndex;
 			Vector2 uv;
 			Vector3 hitNormal;
 			Vector2 hitTextureCoordinates;
 
-			if (Intersect(r, rec.t, triIndex, uv)) {
-				GetSurfaceProperties(triIndex, uv, hitNormal, hitTextureCoordinates);
+			if (Intersect(modelMat, r, rec.t, triIndex, uv)) {
+				GetSurfaceProperties(modelMat, triIndex, uv, hitNormal, hitTextureCoordinates);
 				rec.p = r.PointAtParameter(rec.t);
 				//rec.normal = Vector3::Normalize(rec.p);
 				rec.normal = hitNormal;
@@ -89,9 +94,9 @@ namespace MOON {
 		unsigned int VBO, EBO;
 
 		// initializes all the buffer objects/arrays
-		void setupMesh();
-		void GetSurfaceProperties(const uint32_t &triIndex, const Vector2 &uv, Vector3 &hitNormal, Vector2 &hitTextureCoordinates) const;
+		void SetupMesh();
+		void GetSurfaceProperties(const Matrix4x4 modelMat, const uint32_t &triIndex, const Vector2 &uv, Vector3 &hitNormal, Vector2 &hitTextureCoordinates) const;
 		// Test if the ray interesests this triangle mesh
-		bool Intersect(const Ray &ray, float &tNear, uint32_t &triIndex, Vector2 &uv) const;
+		bool Intersect(const Matrix4x4 modelMat, const Ray &ray, float &tNear, uint32_t &triIndex, Vector2 &uv) const;
 	};
 }

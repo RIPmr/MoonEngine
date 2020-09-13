@@ -37,9 +37,6 @@
     <Filter Include="SourceFiles\EnterPoint">
       <UniqueIdentifier>{f4480692-8837-4467-bef3-229c9b7c60a6}</UniqueIdentifier>
     </Filter>
-    <Filter Include="HeadFiles\Operator">
-      <UniqueIdentifier>{620745b1-a4d7-4939-a6a7-f12232f4cbd2}</UniqueIdentifier>
-    </Filter>
     <Filter Include="HeadFiles\Component">
       <UniqueIdentifier>{1ff57407-bcd7-4991-8f76-d0df3ea88c0d}</UniqueIdentifier>
     </Filter>
@@ -49,14 +46,8 @@
     <Filter Include="HeadFiles\Miscellaneous">
       <UniqueIdentifier>{e588a6e5-ba90-4f36-bca6-2c4afabfd23a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="HeadFiles\NN">
-      <UniqueIdentifier>{7f61a3c1-ee5d-4b1a-b065-3c27de453fc1}</UniqueIdentifier>
-    </Filter>
     <Filter Include="HeadFiles\Object">
       <UniqueIdentifier>{e7f90c53-55a1-4674-ab8d-58fd1a841534}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="SourceFiles\NN">
-      <UniqueIdentifier>{e385724b-57cc-4fdf-9052-94ed5b21b211}</UniqueIdentifier>
     </Filter>
     <Filter Include="SourceFiles\Math">
       <UniqueIdentifier>{67be73da-bc16-4582-a724-69aa15813a01}</UniqueIdentifier>
@@ -64,8 +55,32 @@
     <Filter Include="SourceFiles\Component">
       <UniqueIdentifier>{c906942f-f04a-4bfb-ad8f-d47c5bb954ce}</UniqueIdentifier>
     </Filter>
+    <Filter Include="HeadFiles\MOONNN">
+      <UniqueIdentifier>{7f61a3c1-ee5d-4b1a-b065-3c27de453fc1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeadFiles\MOONCAKE">
+      <UniqueIdentifier>{29f1cb1a-1767-4ad9-8605-a3b16942c639}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeadFiles\RABBIT">
+      <UniqueIdentifier>{aa432a36-0228-45d2-adfb-b30feda1dc1d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SourceFiles\MOONNN">
+      <UniqueIdentifier>{e385724b-57cc-4fdf-9052-94ed5b21b211}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SourceFiles\RABBIT">
+      <UniqueIdentifier>{9506ac61-b38c-4adb-aea6-d109e33f6c2d}</UniqueIdentifier>
+    </Filter>
     <Filter Include="HeadFiles\UIEnhancement">
       <UniqueIdentifier>{561127af-05c9-42fd-abc5-804c72219f41}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeadFiles\UIEnhancement\Icon">
+      <UniqueIdentifier>{6027bfa1-5b89-4551-829e-1b3d797556bc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SourceFiles\SmartMesh">
+      <UniqueIdentifier>{9a86c03b-148c-4190-83cd-b57b3807c121}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeadFiles\Object\SmartMesh">
+      <UniqueIdentifier>{b8eaf32a-391b-4923-a1e1-6c807d7fa280}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -93,13 +108,7 @@
     <ClCompile Include="main.cpp">
       <Filter>SourceFiles\EnterPoint</Filter>
     </ClCompile>
-    <ClCompile Include="Renderer.cpp">
-      <Filter>SourceFiles\Component</Filter>
-    </ClCompile>
     <ClCompile Include="Quaternion.cpp">
-      <Filter>SourceFiles\Component</Filter>
-    </ClCompile>
-    <ClCompile Include="Material.cpp">
       <Filter>SourceFiles\Component</Filter>
     </ClCompile>
     <ClCompile Include="ObjectBase.cpp">
@@ -135,14 +144,11 @@
     <ClCompile Include="Debugger.cpp">
       <Filter>SourceFiles\Component</Filter>
     </ClCompile>
-    <ClCompile Include="PipelineMgr.cpp">
-      <Filter>SourceFiles\Component</Filter>
-    </ClCompile>
     <ClCompile Include="Model.cpp">
       <Filter>SourceFiles\Component</Filter>
     </ClCompile>
     <ClCompile Include="Neuron.cpp">
-      <Filter>SourceFiles\NN</Filter>
+      <Filter>SourceFiles\MOONNN</Filter>
     </ClCompile>
     <ClCompile Include="Vector4.cpp">
       <Filter>SourceFiles\Math</Filter>
@@ -157,13 +163,13 @@
       <Filter>SourceFiles\Math</Filter>
     </ClCompile>
     <ClCompile Include="NGraph.cpp">
-      <Filter>SourceFiles\NN</Filter>
+      <Filter>SourceFiles\MOONNN</Filter>
     </ClCompile>
     <ClCompile Include="imgui\ImPlot.cpp">
       <Filter>SourceFiles\Other</Filter>
     </ClCompile>
     <ClCompile Include="NNManager.cpp">
-      <Filter>SourceFiles\NN</Filter>
+      <Filter>SourceFiles\MOONNN</Filter>
     </ClCompile>
     <ClCompile Include="MaterialEditor.cpp">
       <Filter>SourceFiles\Component</Filter>
@@ -172,10 +178,52 @@
       <Filter>SourceFiles\Other</Filter>
     </ClCompile>
     <ClCompile Include="Optimizer.cpp">
-      <Filter>SourceFiles\NN</Filter>
+      <Filter>SourceFiles\MOONNN</Filter>
     </ClCompile>
     <ClCompile Include="NFunction.cpp">
-      <Filter>SourceFiles\NN</Filter>
+      <Filter>SourceFiles\MOONNN</Filter>
+    </ClCompile>
+    <ClCompile Include="NodeEditorBase.cpp">
+      <Filter>SourceFiles\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics.cpp">
+      <Filter>SourceFiles\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer.cpp">
+      <Filter>SourceFiles\RABBIT</Filter>
+    </ClCompile>
+    <ClCompile Include="Material.cpp">
+      <Filter>SourceFiles\RABBIT</Filter>
+    </ClCompile>
+    <ClCompile Include="FlowMenu.cpp">
+      <Filter>SourceFiles\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="HotkeyMgr.cpp">
+      <Filter>SourceFiles\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="ImTimeline.cpp">
+      <Filter>SourceFiles\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="Sphere.cpp">
+      <Filter>SourceFiles\SmartMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="Coroutine.cpp">
+      <Filter>SourceFiles\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="Plane.cpp">
+      <Filter>SourceFiles\SmartMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="Box.cpp">
+      <Filter>SourceFiles\SmartMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="Capsule.cpp">
+      <Filter>SourceFiles\SmartMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="Cylinder.cpp">
+      <Filter>SourceFiles\SmartMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="Ring.cpp">
+      <Filter>SourceFiles\SmartMesh</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -187,9 +235,6 @@
     </ClInclude>
     <ClInclude Include="MathUtils.h">
       <Filter>HeadFiles\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer.h">
-      <Filter>HeadFiles\Component</Filter>
     </ClInclude>
     <ClInclude Include="UIController.h">
       <Filter>HeadFiles\Component</Filter>
@@ -221,9 +266,6 @@
     <ClInclude Include="Light.h">
       <Filter>HeadFiles\Object</Filter>
     </ClInclude>
-    <ClInclude Include="Material.h">
-      <Filter>HeadFiles\Object</Filter>
-    </ClInclude>
     <ClInclude Include="Texture.h">
       <Filter>HeadFiles\Object</Filter>
     </ClInclude>
@@ -236,14 +278,8 @@
     <ClInclude Include="ObjectBase.h">
       <Filter>HeadFiles\Object</Filter>
     </ClInclude>
-    <ClInclude Include="OperatorBase.h">
-      <Filter>HeadFiles\Operator</Filter>
-    </ClInclude>
     <ClInclude Include="Model.h">
       <Filter>HeadFiles\Object</Filter>
-    </ClInclude>
-    <ClInclude Include="PMapGen.h">
-      <Filter>HeadFiles\Miscellaneous</Filter>
     </ClInclude>
     <ClInclude Include="Utility.h">
       <Filter>HeadFiles\Miscellaneous</Filter>
@@ -257,13 +293,7 @@
     <ClInclude Include="FuzzyMatch.h">
       <Filter>HeadFiles\Miscellaneous</Filter>
     </ClInclude>
-    <ClInclude Include="MatSphere.h">
-      <Filter>HeadFiles\Miscellaneous</Filter>
-    </ClInclude>
     <ClInclude Include="BoundingBox.h">
-      <Filter>HeadFiles\Object</Filter>
-    </ClInclude>
-    <ClInclude Include="ShapeBase.h">
       <Filter>HeadFiles\Object</Filter>
     </ClInclude>
     <ClInclude Include="Helper.h">
@@ -272,16 +302,7 @@
     <ClInclude Include="OBJMgr.h">
       <Filter>HeadFiles\Component</Filter>
     </ClInclude>
-    <ClInclude Include="OP_MeshEditor.h">
-      <Filter>HeadFiles\Operator</Filter>
-    </ClInclude>
-    <ClInclude Include="OperatorLoader.h">
-      <Filter>HeadFiles\Component</Filter>
-    </ClInclude>
     <ClInclude Include="AssetLoader.h">
-      <Filter>HeadFiles\Component</Filter>
-    </ClInclude>
-    <ClInclude Include="MaterialEditor.h">
       <Filter>HeadFiles\Component</Filter>
     </ClInclude>
     <ClInclude Include="CodeEditor.h">
@@ -299,12 +320,6 @@
     <ClInclude Include="HotkeyMgr.h">
       <Filter>HeadFiles\Component</Filter>
     </ClInclude>
-    <ClInclude Include="PipelineMgr.h">
-      <Filter>HeadFiles\Component</Filter>
-    </ClInclude>
-    <ClInclude Include="FlowMenu.h">
-      <Filter>HeadFiles\Component</Filter>
-    </ClInclude>
     <ClInclude Include="ThreadPool.h">
       <Filter>HeadFiles\Component</Filter>
     </ClInclude>
@@ -312,36 +327,33 @@
       <Filter>HeadFiles\Math</Filter>
     </ClInclude>
     <ClInclude Include="Neuron.h">
-      <Filter>HeadFiles\NN</Filter>
+      <Filter>HeadFiles\MOONNN</Filter>
     </ClInclude>
     <ClInclude Include="Matrix.h">
       <Filter>HeadFiles\Math</Filter>
     </ClInclude>
     <ClInclude Include="NGraph.h">
-      <Filter>HeadFiles\NN</Filter>
+      <Filter>HeadFiles\MOONNN</Filter>
     </ClInclude>
     <ClInclude Include="NFunction.h">
-      <Filter>HeadFiles\NN</Filter>
+      <Filter>HeadFiles\MOONNN</Filter>
     </ClInclude>
     <ClInclude Include="NVariable.h">
-      <Filter>HeadFiles\NN</Filter>
+      <Filter>HeadFiles\MOONNN</Filter>
     </ClInclude>
     <ClInclude Include="Optimizer.h">
-      <Filter>HeadFiles\NN</Filter>
+      <Filter>HeadFiles\MOONNN</Filter>
     </ClInclude>
     <ClInclude Include="NNManager.h">
-      <Filter>HeadFiles\NN</Filter>
+      <Filter>HeadFiles\MOONNN</Filter>
     </ClInclude>
     <ClInclude Include="FNN.h">
-      <Filter>HeadFiles\NN</Filter>
+      <Filter>HeadFiles\MOONNN</Filter>
     </ClInclude>
     <ClInclude Include="NNBase.h">
-      <Filter>HeadFiles\NN</Filter>
+      <Filter>HeadFiles\MOONNN</Filter>
     </ClInclude>
     <ClInclude Include="ButtonEx.h">
-      <Filter>HeadFiles\UIEnhancement</Filter>
-    </ClInclude>
-    <ClInclude Include="IconsFontAwesome4.h">
       <Filter>HeadFiles\UIEnhancement</Filter>
     </ClInclude>
     <ClInclude Include="imgui\ImNodes.h">
@@ -363,16 +375,112 @@
       <Filter>HeadFiles\UIEnhancement</Filter>
     </ClInclude>
     <ClInclude Include="CNN.h">
-      <Filter>HeadFiles\NN</Filter>
+      <Filter>HeadFiles\MOONNN</Filter>
     </ClInclude>
     <ClInclude Include="RNN.h">
-      <Filter>HeadFiles\NN</Filter>
+      <Filter>HeadFiles\MOONNN</Filter>
     </ClInclude>
     <ClInclude Include="GNN.h">
-      <Filter>HeadFiles\NN</Filter>
+      <Filter>HeadFiles\MOONNN</Filter>
     </ClInclude>
     <ClInclude Include="NodeEditorBase.h">
       <Filter>HeadFiles\UIEnhancement</Filter>
+    </ClInclude>
+    <ClInclude Include="LR.h">
+      <Filter>HeadFiles\MOONNN</Filter>
+    </ClInclude>
+    <ClInclude Include="WideNDeep.h">
+      <Filter>HeadFiles\MOONNN</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics.h">
+      <Filter>HeadFiles\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Spline.h">
+      <Filter>HeadFiles\Object</Filter>
+    </ClInclude>
+    <ClInclude Include="Shapes.h">
+      <Filter>HeadFiles\Object</Filter>
+    </ClInclude>
+    <ClInclude Include="Curves.h">
+      <Filter>HeadFiles\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer.h">
+      <Filter>HeadFiles\RABBIT</Filter>
+    </ClInclude>
+    <ClInclude Include="Material.h">
+      <Filter>HeadFiles\RABBIT</Filter>
+    </ClInclude>
+    <ClInclude Include="MaterialEditor.h">
+      <Filter>HeadFiles\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="PluginMgr.h">
+      <Filter>HeadFiles\MOONCAKE</Filter>
+    </ClInclude>
+    <ClInclude Include="NativeOperators.h">
+      <Filter>HeadFiles\MOONCAKE</Filter>
+    </ClInclude>
+    <ClInclude Include="OperatorBase.h">
+      <Filter>HeadFiles\MOONCAKE</Filter>
+    </ClInclude>
+    <ClInclude Include="OperatorMgr.h">
+      <Filter>HeadFiles\MOONCAKE</Filter>
+    </ClInclude>
+    <ClInclude Include="CakeParser.h">
+      <Filter>HeadFiles\MOONCAKE</Filter>
+    </ClInclude>
+    <ClInclude Include="MatSphere.h">
+      <Filter>HeadFiles\RABBIT</Filter>
+    </ClInclude>
+    <ClInclude Include="PMapGen.h">
+      <Filter>HeadFiles\RABBIT</Filter>
+    </ClInclude>
+    <ClInclude Include="ImTimeline.h">
+      <Filter>HeadFiles\UIEnhancement</Filter>
+    </ClInclude>
+    <ClInclude Include="properties.h">
+      <Filter>HeadFiles\Miscellaneous</Filter>
+    </ClInclude>
+    <ClInclude Include="FlowMenu.h">
+      <Filter>HeadFiles\UIEnhancement</Filter>
+    </ClInclude>
+    <ClInclude Include="fontHeaders\IconsMaterialDesign.h">
+      <Filter>HeadFiles\UIEnhancement\Icon</Filter>
+    </ClInclude>
+    <ClInclude Include="fontHeaders\IconsKenney.h">
+      <Filter>HeadFiles\UIEnhancement\Icon</Filter>
+    </ClInclude>
+    <ClInclude Include="fontHeaders\IconsFontAwesome4.h">
+      <Filter>HeadFiles\UIEnhancement\Icon</Filter>
+    </ClInclude>
+    <ClInclude Include="Icons.h">
+      <Filter>HeadFiles\UIEnhancement\Icon</Filter>
+    </ClInclude>
+    <ClInclude Include="HalfMesh.h">
+      <Filter>HeadFiles\Object</Filter>
+    </ClInclude>
+    <ClInclude Include="Sphere.h">
+      <Filter>HeadFiles\Object\SmartMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="Coroutine.h">
+      <Filter>HeadFiles\Miscellaneous</Filter>
+    </ClInclude>
+    <ClInclude Include="Plane.h">
+      <Filter>HeadFiles\Object\SmartMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="Box.h">
+      <Filter>HeadFiles\Object\SmartMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="Capsule.h">
+      <Filter>HeadFiles\Object\SmartMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="Cylinder.h">
+      <Filter>HeadFiles\Object\SmartMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="SmartMeshes.h">
+      <Filter>HeadFiles\Object\SmartMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="Ring.h">
+      <Filter>HeadFiles\Object\SmartMesh</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -402,6 +510,15 @@
       <Filter>Shaders\FS</Filter>
     </None>
     <None Include="ScreenBuffer.vs">
+      <Filter>Shaders\VS</Filter>
+    </None>
+    <None Include="BlinnPhong.fs">
+      <Filter>Shaders\FS</Filter>
+    </None>
+    <None Include="Flat.fs">
+      <Filter>Shaders\FS</Filter>
+    </None>
+    <None Include="Flat.vs">
       <Filter>Shaders\VS</Filter>
     </None>
   </ItemGroup>

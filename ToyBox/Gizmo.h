@@ -34,7 +34,7 @@ namespace MOON {
 		inline static void SetThreshold(const float& newThreshold) { threshold = newThreshold; }
 		inline static void RecalcCircle(float m_Theta = 12.0f, bool close = true) {
 			m_Theta *= Deg2Rad;
-			if (m_Theta < 0.0001f)m_Theta = 0.0001f;
+			if (m_Theta < 0.0001f) m_Theta = 0.0001f;
 			float m_Radius = 1.0f;
 
 			circle.clear();
@@ -59,17 +59,31 @@ namespace MOON {
 		static Quaternion Rotate(const Ray& ray, const Direction& dir, Matrix4x4& model, Transform *trans, Vector3& cAxisPoint_O, bool& xActive);
 		static Vector3 Scale(const Ray& ray, const Direction& dir, Transform *trans, Vector3& cAxisPoint_O, bool& xActive, float maxCamRayLength);
 		// screen space version
-		static Quaternion Rotate_SS(const Ray& ray, const Direction& dir, Matrix4x4& model, Transform *trans, Vector3& cAxisPoint_O, Vector2& screenPos_O, bool& xActive);
-
+		static Quaternion Rotate_SS(const Ray& ray, const Direction& dir, Matrix4x4& model, Transform *trans, Vector3& cAxisPoint_O, Vector2& screenPos_O, bool& xActive, float& deltaAngle);
 		static void Manipulate(void* transform, const float maxCamRayLength = 10000.0f);
 
+		// Prototypes
+		static void DrawPoint(const Vector3 &position, const Vector4 &color = Color::WHITE(), const float &pointSize = 1.0f, const Matrix4x4 model = Matrix4x4::identity());
+		static void DrawPoints(const std::vector<Vector3> &points, const Vector4 &color = Color::WHITE(), const float &pointSize = 1.0f, const Matrix4x4 model = Matrix4x4::identity());
+		static void DrawLine(const Vector3 &start, const Vector3 &end, const Vector4 &color = Color::WHITE(), const float &lineWidth = 1.0f, const Matrix4x4 model = Matrix4x4::identity());
+		static void DrawLines(const std::vector<Vector3> &lines, const Vector4 &color = Color::WHITE(), const float &lineWidth = 1.0f, const bool &isStrip = true, const Matrix4x4 model = Matrix4x4::identity(), const Shader* overrideShader = NULL);
+		static void DrawDashedLine(const Vector3 &start, const Vector3 &end, const Vector4 &color = Color::WHITE(), const float &lineWidth = 1.0f, const Matrix4x4 model = Matrix4x4::identity());
+		
+		static void DrawCube(const Vector3& position, const Quaternion& rotation, const Vector3& scale);
+		static void DrawSphere(const Vector3& position, const Quaternion& rotation, const float& radius);
+		static void DrawCircle(const Vector3& position, const Quaternion& rotation, const float& radius);
+		static void DrawRectangle(const Vector3& position, const Quaternion& rotation, const Vector2& size);
+
+		static void DrawPointPrototype(std::vector<float> &data, const Vector4 &color = Color::WHITE(), const float &pointSize = 1.0f, const Matrix4x4 model = Matrix4x4::identity());
+		static void DrawLinePrototype(std::vector<float> &data, const Vector4 &color = Color::WHITE(), const float &lineWidth = 1.0f, const bool &isStrip = true, const Matrix4x4 model = Matrix4x4::identity(), const Shader* overrideShader = NULL);
 	private:
 		static float threshold;
 
 		static std::vector<float> circle;
 		static std::vector<float> translate;
 
-		static void DrawPrototype(const Matrix4x4& mat, const Vector4& color);
+		static std::vector<float> GenerateDashedLine(const Vector3 &start, const Vector3 &end, const float &gap);
+		static void DrawTransPrototype(const Matrix4x4& mat, const Vector4& color);
 
 		inline static Quaternion RotAxisByDir(const Direction& dir) {
 			switch (dir) {

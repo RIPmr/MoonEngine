@@ -18,6 +18,13 @@ namespace MOON {
 		static Vector4 ORANGE() { return Vector4(1.0, 0.647, 0.0, 1.0); }
 		static Vector4 Gray() { return Vector4(0.439, 0.502, 0.565, 1.0); }
 
+		static Vector4 Random(bool randomAlpha = false) { return Vector4(
+			MoonMath::Random01(), 
+			MoonMath::Random01(), 
+			MoonMath::Random01(), 
+			randomAlpha ? MoonMath::Random01() : 1.0f
+		);}
+
 		inline static float GrayScaleVal(const Vector4 &color) { return (color.x + color.y + color.z) / 3.0f; }
 		inline static Vector4 GrayScaleColor(const Vector4 &color) {
 			float grayCol = GrayScaleVal(color);

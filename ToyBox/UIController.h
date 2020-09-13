@@ -11,20 +11,24 @@
 #include <shlobj.h>
 #include <commDlg.h>
 
+#include "SmartMeshes.h"
+#include "HotkeyMgr.h"
 #include "ThreadPool.h"
+#include "Coroutine.h"
 #include "Texture.h"
 #include "Gizmo.h"
 #include "Utility.h"
 #include "Plotter.h"
+#include "ImTimeline.h"
 #include "FlowMenu.h"
 #include "NGraph.h"
 #include "NNManager.h"
 #include "CodeEditor.h"
 #include "ButtonEx.h"
+#include "Icons.h"
 #include "StackWindow.h"
 #include "AssetLoader.h"
 #include "MaterialEditor.h"
-#include "IconsFontAwesome4.h"
 #pragma warning(disable:4996)
 
 namespace MOON {
@@ -32,6 +36,7 @@ namespace MOON {
 	public:
 		// parameters
 		static Vector4 clearColor;
+		static ObjectBase* drag_drop_payload;
 
 		// image resources
 		static Texture *icon, *logo, *logoFull;
@@ -68,6 +73,7 @@ namespace MOON {
 		static bool show_render_setting;
 
 		static bool show_nn_manager;
+		static bool show_right_click_menu;
 
 		// class-like wnds
 		static MaterialEditor matEditor;
@@ -78,11 +84,13 @@ namespace MOON {
 
 		// Right click popup wnd
 		static void RightClickMenu() {
-			if (!MOON_InputManager::isHoverUI && ImGui::IsMouseDown(1)) {
+			if (show_right_click_menu) {
+				// legacy menu
 				//ImGui::OpenPopup("QuadMenu");
 				ImGui::OpenPopup("FlowMenu");
+				show_right_click_menu = false;
 			}
-			FlowMenu();
+			MOON_FlowMenu::FlowMenu();
 		}
 
 		// window definition
@@ -267,21 +275,61 @@ namespace MOON {
 				}
 				ImGui::EndMenu();
 			}
-			ImGui::EndMainMenuBar();
+			ImGui::EndMenuBar();
+		}
+
+		static void ShowDockSpace(bool p_open) {
+			static bool opt_fullscreen_persistant = true;
+			bool opt_fullscreen = opt_fullscreen_persistant;
+			static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
+
+			ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+			if (opt_fullscreen) {
+				ImGuiViewport* viewport = ImGui::GetMainViewport();
+				ImGui::SetNextWindowPos(viewport->GetWorkPos());
+				ImGui::SetNextWindowSize(viewport->GetWorkSize());
+				ImGui::SetNextWindowViewport(viewport->ID);
+				ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+				ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+				window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+				window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+			}
+
+			if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
+				window_flags |= ImGuiWindowFlags_NoBackground;
+
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+			ImGui::Begin("DockSpace", &p_open, window_flags);
+			ImGui::PopStyleVar();
+
+			if (opt_fullscreen) ImGui::PopStyleVar(2);
+
+			// DockSpace
+			ImGuiIO& io = ImGui::GetIO();
+			if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable) {
+				ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+				ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+			}
+
+			if (ImGui::BeginMenuBar()) MainMenu();
+
+			ImGui::End();
 		}
 
 		static void ControlPanel() {
 			ImGui::Begin(Icon_Name_To_ID(ICON_FA_COGS, " ControlPanel"));
 
-			ImGui::Text("BColor:"); ImGui::SameLine(80.0f);
+			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvailWidth());
 			ImGui::ColorEdit3("", (float*)&clearColor);
 
 			ImGui::Spacing();
-			ImGui::Text("WireMode:"); ImGui::SameLine(80.0f);
-			ImGui::Checkbox("WireMode", &SceneManager::wireMode, true); ImGui::SameLine();
 
 			ImGui::Text("Debug:"); ImGui::SameLine();
-			ImGui::Checkbox("BBox", &SceneManager::showbbox, true);
+			ImGui::Checkbox("BBox", &SceneManager::debug, true);
+
+			if (ImGui::Button("Test Btn")) {
+				
+			}
 
 			ImGui::End();
 		}
@@ -334,7 +382,7 @@ namespace MOON {
 
 			ImGui::Text("[Statistics]");
 			ImGui::Text("FPS: %.1f (%.2f ms/frame)", ImGui::GetIO().Framerate, 1000.0f / ImGui::GetIO().Framerate);
-			ImGui::Text("Hover UI: %d", io->WantCaptureMouse);
+			ImGui::Text("Hover UI: %d", MOON_InputManager::isHoverUI);
 
 			ImGui::Separator();
 
@@ -344,20 +392,9 @@ namespace MOON {
 		static void PreferencesWnd() {
 			ImGui::Begin(Icon_Name_To_ID(ICON_FA_COG, " Preferences"), &MainUI::show_preference_window);
 			if (ImGui::BeginTabBar("##tabs", ImGuiTabBarFlags_None)) {
-				if (ImGui::BeginTabItem("Style")) {
-					ImGui::ShowStyleEditor();
-					ImGui::EndTabItem();
-				}
-				if (ImGui::BeginTabItem("Rendering")) {
-					ImGui::Text("WireMode:"); ImGui::SameLine(80.0f);
-					ImGui::Checkbox("WireMode", &SceneManager::wireMode, true);
-
-					ImGui::Text("Debug:"); ImGui::SameLine(80.0f);
-					ImGui::Checkbox("BBox", &SceneManager::showbbox, true);
-
-					ImGui::Spacing();
-
-					ImGui::Text("BColor:"); ImGui::SameLine(80.0f);
+				if (ImGui::BeginTabItem("Graphics")) {
+					ImGui::Spacing(); ImGui::AlignTextToFramePadding();
+					ImGui::Text("BG Color:"); ImGui::SameLine();
 					ImGui::ColorEdit3("", (float*)&clearColor);
 					ImGui::EndTabItem();
 				}
@@ -365,10 +402,164 @@ namespace MOON {
 					ImGui::Text("WIP");
 					ImGui::EndTabItem();
 				}
+				if (ImGui::BeginTabItem("EditorStyle")) {
+					ImGui::ShowStyleEditor();
+					ImGui::EndTabItem();
+				}
 				ImGui::EndTabBar();
 			}
 			
 			ImGui::End();
+		}
+
+		static void DrawScene(Vector2 wndSize, SceneView view = persp) {
+			auto buffer = MOON_TextureManager::SCENEBUFFERS[view];
+			auto offset = ImGui::GetCursorPos();
+			ImGui::Image((void*)(intptr_t)buffer->localID, ImVec2(buffer->width, buffer->height), ImVec2(0, 1), ImVec2(1, 0));
+
+			if (view == MOON_ActiveView) {
+				MOON_InputManager::isHoverUI = !ImGui::IsWindowHovered();
+				// get mouse pos
+				Vector2 newPos = Vector2(
+					ImGui::GetMousePos().x - ImGui::GetWindowPos().x - offset.x,
+					ImGui::GetMousePos().y - ImGui::GetWindowPos().y - offset.y
+				);
+				if (MOON_MousePos[0] == -2) MOON_MousePos = newPos;
+				else {
+					MOON_InputManager::mouseOffset.setValue(newPos.x - MOON_MousePos.x, MOON_MousePos.y - newPos.y);
+					MOON_MousePos = newPos;
+				}
+				//std::cout << MOON_MousePos << std::endl;
+			}
+			if (buffer->width != wndSize.x || buffer->height != wndSize.y) {
+				SceneManager::SetWndSize(wndSize.x, wndSize.y, view);
+				buffer->Reallocate(wndSize.x, wndSize.y);
+			}
+		}
+
+		static void ForceNoTabBar(const char* name, bool& docked) {
+			if (ImGui::IsWindowDocked()) {
+				if (!docked) {
+					docked = true;
+					auto* wnd = ImGui::FindWindowByName(name);
+					if (wnd) {
+						ImGuiDockNode* node = wnd->DockNode;
+						if (node && !node->IsHiddenTabBar())
+							node->WantHiddenTabBarToggle = true;
+					}
+				}
+			} else docked = false;
+		}
+
+		static void SplitSceneWnd(const char* name, const SceneView view, bool (&docked)[4], bool focus = false) {
+			ImGui::Begin(name, 0, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+			ForceNoTabBar(name, docked[view]);
+			Vector2 wndSize(
+				ImGui::GetWindowSize().x - ImGui::GetStyle().WindowPadding.x,
+				ImGui::GetWindowSize().y - ImGui::GetStyle().WindowPadding.y
+			);
+			if (focus || (ImGui::IsMouseDown(0) && 
+				ImGui::IsMouseHoveringRect(ImGui::GetWindowPos(), 
+				ImVec2(ImGui::GetWindowPos().x + ImGui::GetWindowSize().x, 
+				ImGui::GetWindowPos().y + ImGui::GetWindowSize().y)))) {
+				MOON_ActiveView = view;
+				MOON_ActiveCamera = MOON_SceneCameras[view];
+				MOON_MousePos.setValue(-2, -2);
+			}
+			if (focus) ImGui::SetWindowFocus();
+			DrawScene(wndSize, view);
+
+			// overlay options
+			ImGui::SetCursorPos(ImVec2(10.0f, 10.0f));
+			const char* viewCon[] = {"PERSP", "FRONT", "LEFT", "TOP"};
+			ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0, 0, 0, 0));
+			if (ImGui::SmallButton(viewCon[view])) ImGui::OpenPopup("ViewControl");
+			ImGui::SameLine(0.0f, 1.0f); ImGui::Text("|"); ImGui::SameLine(0.0f, 1.0f);
+			const char*	shadeStr[] = {
+				"DEFAULT", "FACET", "WIRE",
+				"DEFWIRE", "ALBEDO", "NORMAL",
+				"CHECKER", "OVERLAY"
+			};
+			auto& shading = SceneManager::splitShading[view];
+			if (ImGui::SmallButton(shadeStr[shading])) ImGui::OpenPopup("Shading");
+
+			if (ImGui::BeginPopup("ViewControl")) {
+				if (ImGui::MenuItem("Persp", 0, view == persp)) {}
+				if (ImGui::MenuItem("Front", 0, view == front)) {}
+				if (ImGui::MenuItem("Left", 0, view == left)) {}
+				if (ImGui::MenuItem("Top", 0, view == top)) {}
+				ImGui::EndPopup();
+			}
+
+			if (ImGui::BeginPopup("Shading")) {
+				if (ImGui::MenuItem("Default", 0, shading == DEFAULT)) { shading = DEFAULT; }
+				if (ImGui::MenuItem("Facet", 0, shading == FACET)) { shading = FACET; }
+				if (ImGui::MenuItem("Wire", 0, shading == WIRE)) { shading = WIRE; }
+				if (ImGui::MenuItem("Def+Wire", 0, shading == DEFWIRE)) { shading = DEFWIRE; }
+				ImGui::Separator();
+				if (ImGui::BeginMenu("Overlay")) {
+					if (ImGui::MenuItem("Albedo", 0, shading == ALBEDO)) { shading = ALBEDO; }
+					if (ImGui::MenuItem("Normal", 0, shading == NORMAL)) { shading = NORMAL; }
+					if (ImGui::MenuItem("Checker", 0, shading == CHECKER)) { shading = CHECKER; }
+					ImGui::EndMenu();
+				}
+				if (ImGui::MenuItem("Debug", 0, SceneManager::debug)) { SceneManager::debug = !SceneManager::debug; }
+				ImGui::Separator();
+				if (ImGui::BeginMenu("Background")) {
+					if (ImGui::MenuItem("Color", 0, true)) {}
+					if (ImGui::MenuItem("Image")) {}
+					if (ImGui::MenuItem("Settings...")) {}
+					ImGui::EndMenu();
+				}
+				ImGui::EndPopup();
+			}
+			ImGui::PopStyleColor();
+
+			ImGui::End();
+		}
+
+		static void SceneWnd() {
+			static bool old = true, currentLayout_m = false;
+			static bool docked[4] = { false, false, false, false };
+			if (MOON_InputManager::IsKeyDown(KEY_SPACE)) currentLayout_m = !currentLayout_m;
+
+			const char* dockspaceName;
+			if (currentLayout_m) dockspaceName = "layout_default";
+			else dockspaceName = "layout_split";
+			auto dockSpaceId_m = ImGui::GetID(dockspaceName);
+
+			ImGui::Begin(Icon_Name_To_ID(ICON_FA_GAMEPAD, " Scene"), &MainUI::show_scene_window,
+				ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+			if (old != currentLayout_m) {
+				old = currentLayout_m;
+				ImGui::DockBuilderRemoveNode(dockSpaceId_m); // Clear out existing layout
+				ImGui::DockBuilderAddNode(dockSpaceId_m); // Add empty node
+				ImGuiID dock_main_id = dockSpaceId_m;
+				if (currentLayout_m) ImGui::DockBuilderDockWindow("persp", dock_main_id);
+				else {
+					ImGuiID topView = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Right, 0.5f, NULL, &dock_main_id);
+					ImGuiID frontView = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Down, 0.5f, NULL, &dock_main_id);
+
+					ImGuiID leftView = ImGui::DockBuilderSplitNode(topView, ImGuiDir_Down, 0.5f, NULL, &topView);
+					ImGuiID perspView = ImGui::DockBuilderSplitNode(leftView, ImGuiDir_Down, 0.5f, NULL, &leftView);
+
+					ImGui::DockBuilderDockWindow("top", dock_main_id);
+					ImGui::DockBuilderDockWindow("front", frontView);
+					ImGui::DockBuilderDockWindow("left", leftView);
+					ImGui::DockBuilderDockWindow("persp", perspView);
+				}
+				ImGui::DockBuilderFinish(dockSpaceId_m);
+				for (int i = 0; i < 4; i++) docked[i] = false;
+			}
+			ImGui::DockSpace(dockSpaceId_m, ImVec2(0.0f, 0.0f), 0);
+			ImGui::End();
+
+			if (!currentLayout_m) {
+				SplitSceneWnd("top", top, docked);
+				SplitSceneWnd("left", left, docked);
+				SplitSceneWnd("front", front, docked);
+			}
+			SplitSceneWnd("persp", persp, docked, MOON_InputManager::IsKeyDown(KEY_SPACE));
 		}
 
 		static void ShowVFB() {
@@ -458,49 +649,87 @@ namespace MOON {
 
 			ImGui::End();
 		}
-
+		
 		static void ExplorerWnd() {
-			ImGui::Begin(Icon_Name_To_ID(ICON_FA_SHOPPING_BASKET, " Explorer"), 
-				&MainUI::show_explorer_window,ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+			ImGui::Begin(
+				Icon_Name_To_ID(ICON_FA_SHOPPING_BASKET, " Explorer"), 
+				&MainUI::show_explorer_window, 
+				ImGuiWindowFlags_NoScrollbar | 
+				ImGuiWindowFlags_NoScrollWithMouse
+			);
 
-			static bool showAll = true;
-			static bool showModel = true;
-			static bool showMat = true;
-			static bool showTex = true;
-			static bool showLight = true;
-			static bool showCam = true;
-			static bool showShader = true;
+			static bool showAll		= true;
+			static bool showModel	= true;
+			static bool showMat		= true;
+			static bool showTex		= true;
+			static bool showLight	= true;
+			static bool showCam		= true;
+			static bool showShader	= true;
+			static bool showShape	= true;
+			static bool showFX		= true;
+			static bool showHelper	= true;
 
 			static bool allFlag = true;
 			static char pattern[128] = "";
 			bool notEmpty = strcmp(pattern, "");
 
-			ImGui::Checkbox("All", &showAll); ImGui::SameLine(80);
-			ImGui::SetNextItemWidth(ImGui::GetWindowWidth() / 1.65 - (notEmpty ? 20 : 0));
-			ImGui::InputTextWithHint("search", "type to search", pattern, IM_ARRAYSIZE(pattern));
-			if (ImGui::IsItemDeactivated() && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Enter))) {
+			ImGui::Columns(2, "columns", false);
+			ImGui::SetColumnWidth(-1, 32);
+			ImGui::BeginChild("categories", ImVec2(25, 0), false, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+			//ImGui::Checkbox("All", &showAll);
+			SwitchButton("A", "N", showAll, ImVec2(22, 22));
 
+			SwitchButton(ICON_FA_CUBE, ICON_FA_CUBE, showModel);
+			SwitchButton(ICON_FA_GLOBE, ICON_FA_GLOBE, showMat);
+			SwitchButton(ICON_FA_FILE_IMAGE_O, ICON_FA_FILE_IMAGE_O, showTex);
+			SwitchButton(ICON_FA_LIGHTBULB_O, ICON_FA_LIGHTBULB_O, showLight);
+			SwitchButton(ICON_FA_VIDEO_CAMERA, ICON_FA_VIDEO_CAMERA, showCam);
+			SwitchButton(ICON_FA_FILE_CODE_O, ICON_FA_FILE_CODE_O, showShader);
+			SwitchButton(ICON_FA_LEMON_O, ICON_FA_LEMON_O, showShape);
+			SwitchButton("FX", "FX", showFX);
+			SwitchButton("H", "H", showHelper);
+
+			ImGui::EndChild();
+			ImGui::NextColumn();
+
+			ImGui::BeginChild("content", ImVec2(0, 0), false, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+			//ImGui::SetNextItemWidth(ImGui::GetWindowWidth() / 1.65 - (notEmpty ? 20 : 0));
+			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvailWidth() - (notEmpty ? 30 : 0));
+			if (ImGui::InputTextWithHint("search", "type to search", pattern, IM_ARRAYSIZE(pattern))) {
+				SceneManager::matchedList.clear();
+				FuzzySearch(pattern);
 			}
+			/*if (ImGui::IsItemDeactivated() && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Enter))) {
+
+			}*/
+
 			if (notEmpty) {
 				ImGui::SameLine();
-				if (ImGui::Button(ICON_FA_TIMES, ImVec2(20, 20))) {
+				if (ImGui::Button(ICON_FA_TIMES, ImVec2(22, 22))) {
 					sprintf_s(pattern, "");
+					SceneManager::matchedList.clear();
 				}
 			}
-			ImGui::Checkbox("Model", &showModel); ImGui::SameLine(80);
-			ImGui::Checkbox("Mat", &showMat); ImGui::SameLine(160);
-			ImGui::Checkbox("Tex", &showTex);
-			ImGui::Checkbox("Light", &showLight); ImGui::SameLine(80);
-			ImGui::Checkbox("Camera", &showCam); ImGui::SameLine(160);
-			ImGui::Checkbox("Shader", &showShader);
+			/*if (ImGui::CollapsingHeader("Categories")) {
+				ImGui::Checkbox("Model", &showModel); ImGui::SameLine(80);
+				ImGui::Checkbox("Mat", &showMat); ImGui::SameLine(160);
+				ImGui::Checkbox("Image", &showTex);
+				ImGui::Checkbox("Light", &showLight); ImGui::SameLine(80);
+				ImGui::Checkbox("Camera", &showCam); ImGui::SameLine(160);
+				ImGui::Checkbox("Shader", &showShader);
+				ImGui::Checkbox("Shape", &showShape); ImGui::SameLine(80);
+				ImGui::Checkbox("Helper", &showHelper); ImGui::SameLine(160);
+				ImGui::Checkbox("FXnode", &showFX);
+			}*/
 
 			if (allFlag != showAll) {
 				allFlag = showAll;
 				showModel = showAll; showMat = showAll; showTex = showAll;
 				showLight = showAll; showCam = showAll; showShader = showAll;
+				showShape = showAll; showFX = showAll; showHelper = showAll;
 			}
 
-			static float colWidth = 180;
+			static float colWidth = 140;
 
 			ImGui::Spacing();
 			ImGui::Columns(2, "mycolumns", false);
@@ -511,37 +740,39 @@ namespace MOON {
 			ImGui::Separator();
 			ImGui::Columns(1);
 
-			ImGui::BeginChild("explorer_scrolling", ImVec2(0, 0), 
-							  false, ImGuiWindowFlags_HorizontalScrollbar);
+			ImGui::BeginChild("explorer_scrolling", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
 			ImGui::Columns(2, "mycolumns", false);
-			ImGui::SetColumnWidth(-1, colWidth - 8);
+			ImGui::SetColumnWidth(-1, colWidth);
 
 			MOON_InputManager::ResetSizeChangeState();
-			if (showModel) MOON_ModelManager::ListItems();
-			if (showMat) MOON_MaterialManager::ListItems();
-			if (showTex) MOON_TextureManager::ListItems();
-			if (showLight) MOON_LightManager::ListItems();
-			if (showCam) MOON_CameraManager::ListItems();
-			if (showShader) MOON_ShaderManager::ListItems();
-			ImGui::NextColumn();
-			if (showModel) MOON_ModelManager::ListID();
-			if (showMat) MOON_MaterialManager::ListID();
-			if (showTex) MOON_TextureManager::ListID();
-			if (showLight) MOON_LightManager::ListID();
-			if (showCam) MOON_CameraManager::ListID();
-			if (showShader) MOON_ShaderManager::ListID();
+			if (notEmpty) {
+				SceneManager::ListMatchedItems();
+			} else {
+				if (showModel) MOON_ModelManager::ListItems_Hierarchial();
+				if (showMat) MOON_MaterialManager::ListItems_Hierarchial();
+				if (showTex) MOON_TextureManager::ListItems_Hierarchial();
+				if (showLight) MOON_LightManager::ListItems_Hierarchial();
+				if (showCam) MOON_CameraManager::ListItems_Hierarchial();
+				if (showShader) MOON_ShaderManager::ListItems_Hierarchial();
+				if (showShape) MOON_ShapeManager::ListItems_Hierarchial();
+			}
+
+			if (!ImGui::IsAnyItemHovered() && ImGui::IsWindowHovered()) {
+				if (ImGui::IsMouseReleased(0)) {
+					const ImGuiPayload* payload = ImGui::GetDragDropPayload();
+					if (payload != NULL) {
+						MObject* payload_m = *(MObject**)payload->Data;
+						payload_m->transform.SetParent(nullptr);
+					}
+				} else if (ImGui::IsMouseClicked(0)) MOON_InputManager::ClearSelection();
+			}
+
+			ImGui::Columns(1);
+			ImGui::EndChild();
+
 			ImGui::EndChild();
 
 			ImGui::Columns(1);
-			ImGui::Spacing();
-			
-			ImGui::End();
-		}
-
-		static void SceneWnd() {
-			ImGui::Begin(Icon_Name_To_ID(ICON_FA_GAMEPAD, " Scene"),
-						  &MainUI::show_scene_window, ImGuiWindowFlags_NoBackground);
-
 			ImGui::End();
 		}
 		
@@ -571,6 +802,7 @@ namespace MOON {
 
 		static void InspectorWnd() {
 			ImGui::Begin(Icon_Name_To_ID(ICON_FA_SEARCH, " Inspector"), &MainUI::show_inspector_window);
+			
 			// loop all selected objects and list their properties
 			for (auto &iter : MOON_InputManager::selection) {
 				bool checker = MOON_ObjectList[iter]->selected;
@@ -581,12 +813,13 @@ namespace MOON {
 					MOON_ObjectList[iter]->ListProperties();
 				}
 
+				if (iter >= SceneManager::GetObjectNum()) break;
 				// remove ID in selection slot while click close button in the collapsing header
 				if (checker && !MOON_ObjectList[iter]->selected) {
 					auto end = MOON_InputManager::selection.end();
 					for (auto it = MOON_InputManager::selection.begin(); it != end; it++)
 						if (*it == MOON_ObjectList[iter]->ID) {
-							it = MOON_InputManager::selection.erase(it);
+							MOON_InputManager::selection.erase(it);
 							break;
 						}
 				}
@@ -596,8 +829,23 @@ namespace MOON {
 		}
 
 		static void ShowTimeline() {
-			ImGui::Begin("TimeLine", &MainUI::show_timeline);
+			static int rows = 6;
+			static float offset = 50.0f;
+			static double range = 100.0, in = 0.0, out = 1.0;
+			static double events[12] = { 10.f,20.f,0.5f,30.f,40.f,50.f,20.f,40.f,15.f,22.5f,35.f,45.f };
 
+			ImGui::Begin(Icon_Name_To_ID(ICON_FA_CLOCK_O, " TimeLine"), &MainUI::show_timeline, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+			if (ImGui::ImTimeline::BeginTimeline("MyTimeline", offset, range, rows)) {
+				if (ImGui::ImTimeline::TimelineEvent("Event1", events[0], events[1], out - in)) {
+					// events[0] and/or events[1] modified
+				}
+				ImGui::ImTimeline::TimelineEvent("Event2", events[2], events[3], out - in);
+				ImGui::ImTimeline::TimelineEvent("Event3", events[4], events[5], out - in);
+				ImGui::ImTimeline::TimelineEvent("Event4", events[6], events[7], out - in);
+				//ImGui::ImTimeline::TimelineEvent("Event5", events[8], events[9], out - in);
+				//ImGui::ImTimeline::TimelineEvent("Event6", events[10], events[11], out - in);
+			}
+			ImGui::ImTimeline::EndTimeline(5, in, out, range);
 			ImGui::End();
 		}
 
@@ -697,11 +945,15 @@ namespace MOON {
 					ImGui::Spacing();
 					if (ImGui::Button("Cube", ImVec2(width, 20.0))) {}
 					ImGui::SameLine();
-					if (ImGui::Button("Sphere", ImVec2(width, 20.0))) {}
+					if (ImGui::Button("Sphere", ImVec2(width, 20.0))) {
+						MOON_ModelManager::CreateSmartMesh(sphere, "sphere", true);
+					}
 					ImGui::SameLine();
 					if (ImGui::Button("Cylinder", ImVec2(width, 20.0))) {}
 
-					if (ImGui::Button("Plane", ImVec2(width, 20.0))) {}
+					if (ImGui::Button("Plane", ImVec2(width, 20.0))) {
+						MOON_ModelManager::CreateSmartMesh(plane, "plane", true);
+					}
 					ImGui::SameLine();
 					if (ImGui::Button("Capsule", ImVec2(width, 20.0))) {}
 					ImGui::SameLine();
@@ -767,8 +1019,8 @@ namespace MOON {
 		}
 
 		static void RibbonBar() {
-			ImGui::Begin("Ribbon", &MainUI::show_ribbon, ImGuiWindowFlags_NoDecoration | 
-						 ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollWithMouse );
+			ImGui::Begin("Ribbon", &MainUI::show_ribbon, ImGuiWindowFlags_NoScrollbar | 
+				ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
 
 			ImGui::Button(ICON_FA_FILE, ImVec2(22, 22)); ImGui::SameLine();
 			ImGui::Button(ICON_FA_FLOPPY_O, ImVec2(22, 22)); ImGui::SameLine();
@@ -784,7 +1036,11 @@ namespace MOON {
 
 			SwitchButtonEx(ICON_FA_TOGGLE_OFF, ICON_FA_TOGGLE_ON, Gizmo::manipCoord == CoordSys::WORLD,
 						[]() { Gizmo::manipCoord = CoordSys::LOCAL; },
-						[]() { Gizmo::manipCoord = CoordSys::WORLD; });
+						[]() { Gizmo::manipCoord = CoordSys::WORLD; }); ImGui::SameLine();
+			SwitchButton(ICON_FA_MAGNET, ICON_FA_MAGNET, HotKeyManager::enableSnap, ImVec2(22, 22)); ImGui::SameLine();
+			SwitchButtonEx("P", "C", Gizmo::gizmoPos == GizmoPos::pivot,
+				[]() { Gizmo::gizmoPos = GizmoPos::center; },
+				[]() { Gizmo::gizmoPos = GizmoPos::pivot; });
 			ImGui::SameLine();
 
 			ImGui::Text(u8"|"); ImGui::SameLine();
@@ -840,7 +1096,7 @@ namespace MOON {
 
 			ImGui::Button(ICON_FA_QUESTION_CIRCLE, ImVec2(22, 22));
 
-			ImGui::Separator();
+			//ImGui::Separator();
 
 			ImGui::End();
 		}
@@ -870,14 +1126,17 @@ namespace MOON {
 
 			// neurons in the scene ------------------------------------------------------
 			ImGui::BeginChild("NeuronList", ImVec2(floatWidth, 0), true);
+			int nodeid = 0;
 			for (auto &node : NN::NNM::currentGraph->nodes) {
+				ImGui::PushID(nodeid++);
 				if (ImGui::Selectable(node->title.c_str(), selectedNode == node)) {
 					if (selectedNode != node) {
-						selectedNode->selected = false;
+						if (selectedNode != NULL) selectedNode->selected = false;
 						node->selected = true;
 						selectedNode = node;
 					}
 				}
+				ImGui::PopID();
 			}
 			ImGui::EndChild();
 			ImGui::NextColumn();
@@ -898,7 +1157,7 @@ namespace MOON {
 						ImGui::Columns(2, "nn_col_2");
 						if (firstLoop) {
 							firstLoop = false;
-							ImGui::SetColumnWidth(-1, 650);
+							ImGui::SetColumnWidth(-1, ImGui::GetWindowSize().x * 0.75f);
 						}
 						floatWidth = ImGui::GetColumnWidth(-1) - 15;
 
@@ -951,6 +1210,21 @@ namespace MOON {
 		}
 
 	private:
+		static void FuzzySearch(const char* pattern) {
+			std::map<int, ObjectBase*> fuzzyRes;
+
+			for (auto lower = MOON_ObjectList.begin(); lower != MOON_ObjectList.end(); lower++) {
+				if ((*lower) == nullptr) continue;
+				int score = -INFINITY_INT;
+				MatchTool::fuzzy_match(pattern, (*lower)->name.c_str(), score);
+				if (score > 0) fuzzyRes.insert(std::pair<int, ObjectBase*>(score, (*lower)));
+				else ; // discard
+			}
+
+			for (auto it = fuzzyRes.rbegin(); it != fuzzyRes.rend(); it++) 
+				SceneManager::matchedList.push_back((*it).second);
+		}
+
 		static std::string OpenFile() {
 			TCHAR szBuffer[MAX_PATH] = { 0 };
 			BROWSEINFO bi;

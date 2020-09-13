@@ -8,6 +8,7 @@
 #include "Matrix4x4.h"
 #include "MathUtils.h"
 #include "ObjectBase.h"
+#include "Model.h"
 
 namespace MOON {
 	// An Euler Angles Version
@@ -16,7 +17,6 @@ namespace MOON {
 		Vector3 lower_left_corner;
 		Vector3 horizontal;
 		Vector3 vertical;
-		Vector3 WorldUp;
 
 	public:
 		// global param
@@ -26,22 +26,12 @@ namespace MOON {
 		MObject* target;
 		Vector3 tarPos;
 
-		// Camera attributes
-		Vector3 Front;
-		Vector3 Right;
-		Vector3 Up;
-
 		float lens_radius;
-
-		// Euler angles
-		//float Yaw;	/// Æ«º½: Y-Axis of Euler angle
-		//float Pitch;	/// ¸©Ñö: X-Axis of Euler angle
-		//float Roll;	/// ·­¹ö: Z-Axis of Euler angle
 
 		// Camera options
 		float fov;
-		float zNear;
-		float zFar;
+		float zNear, zFar;
+		float width, height;
 
 		// Camera matrix
 		bool isortho;
@@ -49,53 +39,37 @@ namespace MOON {
 		Matrix4x4 projection;
 
 		// Constructor with vectors
-		Camera(const std::string &name, const Vector3 &position = Vector3::ZERO(), const float aperture = 0.0f, const int id = MOON_AUTOID) :
-			Front(Vector3(0.0f, 0.0f, -1.0f)), fov(45.0f), lens_radius(aperture / 2), MObject(name, id) {
+		Camera(const std::string &name, const Vector3 &position = Vector3::ZERO(), 
+			const Vector3 &lookDir = Vector3::WORLD(FORWARD), const bool& isortho = false,
+			const float aperture = 0.0f, const int id = MOON_AUTOID) :
+			fov(45.0f), lens_radius(aperture / 2), MObject(name, id), isortho(isortho) {
 			transform.position = position;
-			WorldUp = Vector3(0.0f, 1.0f, 0.0f);
-			//Yaw = -90.0f;
-			//Pitch = 0.0f;
-			zNear = 0.1f;
-			zFar = 100.0f;
+			transform.rotation = Quaternion::Rotate(Vector3::WORLD(FORWARD), lookDir);
+			zNear = 0.1f; zFar = 100.0f;
+			width = 1.0f; height = 1.0f;
 			tarPos = Vector3::ZERO();
 
-			UpdateCameraVectors();
+			UpdateMatrix();
 		}
 
-		Camera(const Vector3 &position = Vector3::ZERO(), const float aperture = 0.0f, const int id = MOON_AUTOID) :
-			Front(Vector3(0.0f, 0.0f, -1.0f)), fov(45.0f), lens_radius(aperture / 2), MObject(id) {
+		Camera(const Vector3 &position = Vector3::ZERO(), const Vector3 &Front = Vector3(0.0f, 0.0f, -1.0f),
+			const bool& isortho = false, const float aperture = 0.0f, const int id = MOON_AUTOID) :
+			fov(45.0f), lens_radius(aperture / 2), MObject(id), isortho(isortho) {
 			transform.position = position;
-			WorldUp = Vector3(0.0f, 1.0f, 0.0f);
-			//Yaw = -90.0f;
-			//Pitch = 0.0f;
-			zNear = 0.1f;
-			zFar = 100.0f;
+			zNear = 0.1f; zFar = 1000.0f;
+			width = 1.0f; height = 1.0f;
 			tarPos = Vector3::ZERO();
 
-			UpdateCameraVectors();
-		}
-
-		// Constructor with scalar values
-		Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch, const float aperture = 0.0f) :
-				Front(Vector3(0.0f, 0.0f, -1.0f)), fov(45.0f), lens_radius(aperture / 2) {
-			transform.position = Vector3(posX, posY, posZ);
-			WorldUp = Vector3(upX, upY, upZ);
-			//Yaw = yaw;
-			//Pitch = pitch;
-			zNear = 0.1f;
-			zFar = 100.0f;
-			tarPos = Vector3::ZERO();
-
-			UpdateCameraVectors();
+			UpdateMatrix();
 		}
 
 		void InitRenderCamera();
 		void UpdateMatrix();
 		// Returns the view matrix calculated using Euler Angles and the LookAt Matrix
-		Matrix4x4 GetViewMatrix() const;
-		Matrix4x4 GetProjectionMatrix() const;
+		Matrix4x4 GetViewMatrix();
+		Matrix4x4 GetProjectionMatrix();
 
-		Ray GetRay(float s, float t, float aspect) const;
+		Ray GetRay(float s, float t, float aspect);
 		// rough way, treat camera position as start point of the ray
 		Ray GetMouseRay() const;
 		// accurate solution
@@ -109,9 +83,5 @@ namespace MOON {
 		void ZoomCamera(Vector2 &mouseOffset);
 		void RotateCamera(Vector2 mouseOffset, bool constrainPitch = true);
 		void PushCamera(Vector2 &mouseScrollOffset);
-
-	private:
-		// Calculates the front vector from the Camera's (updated) Euler Angles
-		void UpdateCameraVectors();
 	};
 }

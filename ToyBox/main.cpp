@@ -2,10 +2,12 @@
 //#define MOON_DEBUG_MODE
 
 // global settings ------------------------------------------------
-const char *title = "MoonEngine - v0.03 WIP";
+const char *title = "MoonEngine - v0.10 WIP";
 
 Vector2 MOON_WndSize = Vector2(1600, 900);
-float SceneManager::aspect = MOON_WndSize.x / MOON_WndSize.y;
+Vector2 MOON_ScrSize = Vector2(800, 450);
+float SceneManager::aspect = MOON_ScrSize.x / MOON_ScrSize.y;
+SceneView SceneManager::activeView = top;
 Vector2 MOON_OutputSize = Vector2(200, 100);
 float Renderer::aspect = MOON_OutputSize.x / MOON_OutputSize.y;
 Vector4 MainUI::clearColor(0.45f, 0.55f, 0.60f, 1.00f);
@@ -29,11 +31,33 @@ int main() {
 
 	// test objects ------------------------------------------------------------------------
 	//Model* teapot = MOON_ModelManager::LoadModel("Assets\\Models\\teapot.obj");
-	Model* boxes = MOON_ModelManager::LoadModel("Assets\\Models\\box_stack.obj");
 	//teapot->transform.Scale(Vector3(0.2f, 0.2f, 0.2f));
-	boxes->transform.Translate(Vector3(0.0f, 1.0f, 0.0f));
-	// -------------------------------------------------------------------------------------
 
+	/*Model* rabbit = MOON_ModelManager::LoadModel("Assets\\Models\\bunny.obj");
+	rabbit->transform.Scale(Vector3::ONE() * 5.0f);
+	rabbit->transform.Translate(Vector3::WORLD(LEFT) * 2.0f);*/
+
+	Model* sphere = MOON_ModelManager::CreateSmartMesh(SmartMesh::sphere, "sphere");
+	sphere->transform.Translate(Vector3::WORLD(UP) + Vector3::WORLD(LEFT) * 2.0f);
+
+	Model* boxes = MOON_ModelManager::LoadModel("Assets\\Models\\box_stack.obj");
+	boxes->transform.Translate(Vector3::WORLD(UP));
+	boxes->transform.Translate(Vector3::WORLD(RIGHT) * 1.0f);
+	//boxes->transform.Rotate(Quaternion(Vector3(0, 0, 45)));
+
+	Shape* sp = MOON_ShapeManager::CreateShape(line, "spline");
+	sp->splineList[0].knotNum = 5;
+	sp->splineList[0].Update();
+	sp->splineList[0].knotList[2].setValue(1, 1, 0);
+	sp->splineList[0].knotList[3].setValue(0, 1, 0);
+	sp->splineList[0].knotList[4].setValue(0, 0, 0);
+	sp->transform.Translate(Vector3::WORLD(RIGHT) * 4.0f);
+	sp->transform.Translate(Vector3::WORLD(UP));
+	sp->transform.Rotate(Quaternion(Vector3(0, 90, 0)));
+
+	//sp->transform.SetParent(&boxes->transform);
+	//rabbit->transform.SetParent(&sp->transform);
+	// -------------------------------------------------------------------------------------
 	std::cout << "done." << std::endl;
 
 	// main loop  --------------------------------------------------------------------------
@@ -41,67 +65,45 @@ int main() {
 		// per-frame time logic
 		MOON_UpdateClock();
 
+		// schedule all coroutines
+		// *moved to: Graphics Module
+		//MOON_CoroutineLoop();
+
 		// configure global opengl state ------------------------------------------
 		//glEnable(GL_CULL_FACE);
 		glEnable(GL_DEPTH_TEST);
+		//glDepthMask(GL_TRUE); // is depth mask writable
 		//glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
-		if (SceneManager::wireMode) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		else glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-		// clear background of framebuffer
-		glBindFramebuffer(GL_FRAMEBUFFER, MOON_TextureManager::IDLUT->fbo);
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-		// Start the Dear ImGui frame ---------------------------------------------
+		// Start the Dear ImGui frame -----------------------------------------------
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
-		// UI controller
+		// draw Scene View ----------------------------------------------------------
+		Graphics::DrawSceneView(persp);
+		Graphics::DrawSceneView(front);
+		Graphics::DrawSceneView(top);
+		Graphics::DrawSceneView(left);
+
+		// clear background
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		// draw main UI ------------------------------------------------------------
 		MOON_DrawMainUI();
 
-		// drawing ID LUT ---------------------------------------------------------
-		MOON_ModelManager::DrawIDLUT();
-		MOON_InputManager::GetIDFromLUT(MOON_MousePos);
-		if (!MainUI::io->WantCaptureMouse && MainUI::io->MouseClicked[0] && !Gizmo::hoverGizmo)
-			MOON_InputManager::Select(MOON_InputManager::hoverID);
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-		// clear background of scene
-		glClearColor(MainUI::clearColor.x, MainUI::clearColor.y, 
-					 MainUI::clearColor.z, MainUI::clearColor.w);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		// rendering objects -------------------------------------------------------
-		MOON_ModelManager::DrawModels();
-
-		// drawing Gizmos ----------------------------------------------------------
-		/// enable color blend and anti-aliasing
-		glEnable(GL_BLEND);
-		glEnable(GL_LINE_SMOOTH);
-		glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-		MOON_DrawGround(MOON_ShaderManager::lineShader);
-
-		glDisable(GL_DEPTH_TEST);
-		SceneManager::DrawGizmos();
-
-		/// disable anti-aliasing
-		glDisable(GL_LINE_SMOOTH);
-		glDisable(GL_BLEND);
-
 		// process user input ------------------------------------------------------
-		MOON_InputManager::isHoverUI = MainUI::io->WantCaptureMouse;
-		MOON_InputProcessor(window);
+		//MOON_InputManager::isHoverUI = MainUI::io->WantCaptureMouse;
+		HotKeyManager::MOON_InputProcessor(window);
 
 		// Rendering UI ------------------------------------------------------------
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
+		MOON_InputManager::ResetKeyState();
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
@@ -161,27 +163,9 @@ GLFWwindow* InitWnd() {
 	// add fonts
 	MainUI::io = &ImGui::GetIO();
 	MainUI::style = &ImGui::GetStyle();
-	//MainUI::io->Fonts->AddFontDefault();
 
-	// add simplified Chinese
-	MainUI::io->Fonts->AddFontFromFileTTF(
-		"./Resources/msyh.ttc",
-		16.0f,
-		NULL,
-		MainUI::io->Fonts->GetGlyphRangesChineseSimplifiedCommon()
-	);
-
-	// merge FontAwesome
-	ImFontConfig config;
-	config.MergeMode = true;
-	config.GlyphMinAdvanceX = 13.0f; // Use if you want to make the icon monospaced
-	static const ImWchar icon_ranges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
-	MainUI::io->Fonts->AddFontFromFileTTF(
-		"./Resources/fontawesome-webfont.ttf", 
-		13.0f, 
-		&config, 
-		icon_ranges
-	);
+	// merge custom fonts
+	LoadIcons(MainUI::io);
 
 	MainUI::io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 	MainUI::io->ConfigDockingWithShift = true;
@@ -190,22 +174,74 @@ GLFWwindow* InitWnd() {
 	return window;
 }
 
+void LoadIcons(ImGuiIO *io) {
+	// add simplified Chinese
+	MainUI::io->Fonts->AddFontFromFileTTF(
+		"./Resources/msyh.ttc",
+		16.0f,
+		NULL,
+		MainUI::io->Fonts->GetGlyphRangesChineseSimplifiedCommon()
+	);
+
+	ImFontConfig config;
+	config.MergeMode = true;
+	config.GlyphMinAdvanceX = 13.0f; // Use if you want to make the icon monospaced
+
+	// merge FontAwesome
+	// https://fontawesome.dashgame.com/.
+	static const ImWchar icon_ranges_fa[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
+	io->Fonts->AddFontFromFileTTF(
+		"./Resources/fontawesome-webfont.ttf",
+		13.0f,
+		&config,
+		icon_ranges_fa
+	);
+
+	// merge Fontaudio
+	/*static const ImWchar icon_ranges_fad[] = { ICON_MIN_FAD, ICON_MAX_FAD, 0 };
+	io->Fonts->AddFontFromFileTTF(
+		"./Resources/fontaudio.ttf",
+		13.0f,
+		&config,
+		icon_ranges_fad
+	);*/
+
+	// merge kenney icons
+	/*static const ImWchar icon_ranges_ki[] = { ICON_MIN_KI, ICON_MAX_KI, 0 };
+	io->Fonts->AddFontFromFileTTF(
+		"./Resources/kenney-icon-font.ttf",
+		13.0f,
+		&config,
+		icon_ranges_ki
+	);*/
+
+	// merge MaterialIcons
+	// https://www.wp2.cn/material_icons/.
+	static const ImWchar icon_ranges_md[] = { ICON_MIN_MD, ICON_MAX_MD, 0 };
+	io->Fonts->AddFontFromFileTTF(
+		"./Resources/MaterialIcons-Regular.ttf",
+		13.0f,
+		&config,
+		icon_ranges_md
+	);
+}
+
 // glfw callbacks --------------------------------------------------------------------------
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 	// make sure the viewport matches the new window dimensions; note that width and 
 	// height will be significantly larger than specified on retina displays.
-	SceneManager::SetWndSize(width, height);
+	//SceneManager::SetWndSize(width, height);
 	glViewport(0, 0, width, height);
 }
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
-	if (MOON_MousePos[0] == -2.0f) MOON_MousePos.setValue(xpos, ypos);
+	/*if (MOON_MousePos[0] == -2.0f) MOON_MousePos.setValue(xpos, ypos);
 
 	float xoffset = xpos - MOON_MousePos.x;
 	float yoffset = MOON_MousePos.y - ypos;
 
 	MOON_MousePos.setValue(xpos, ypos);
-	MOON_InputManager::mouseOffset.setValue(xoffset, yoffset);
+	MOON_InputManager::mouseOffset.setValue(xoffset, yoffset);*/
 }
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
@@ -213,8 +249,8 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 	MOON_InputManager::mouseAction = action;
 	MOON_InputManager::mouseMods = mods;
 
-	if (MOON_InputManager::mouseAction == GLFW_PRESS)
-		switch (MOON_InputManager::mouseButton) {
+	if (action == GLFW_PRESS)
+		switch (button) {
 			case GLFW_MOUSE_BUTTON_LEFT:
 				MOON_InputManager::mouse_left_hold = true;
 				break;
@@ -227,8 +263,8 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 			default:
 				return;
 		} else
-	if (MOON_InputManager::mouseAction == GLFW_RELEASE)
-		switch (MOON_InputManager::mouseButton) {
+	if (action == GLFW_RELEASE)
+		switch (button) {
 			case GLFW_MOUSE_BUTTON_LEFT:
 				MOON_InputManager::mouse_left_hold = false;
 				break;
@@ -248,24 +284,27 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
 }
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-	if (key == GLFW_KEY_M && action == GLFW_PRESS)
-		MainUI::show_material_editor = !MainUI::show_material_editor;
+	MOON_InputManager::keyButton = key;
+	MOON_InputManager::keyAction = action;
+	MOON_InputManager::keyMods = mods;
 
-	// Gizmo --------------------------------------------------------------------------
-	if (key == GLFW_KEY_Q) Gizmo::gizmoMode = GizmoMode::none;
-	if (key == GLFW_KEY_W) Gizmo::gizmoMode = GizmoMode::translate;
-	if (key == GLFW_KEY_E) Gizmo::gizmoMode = GizmoMode::rotate;
-	if (key == GLFW_KEY_R) Gizmo::gizmoMode = GizmoMode::scale;
-	if (key == GLFW_KEY_Z) {
-		if (MOON_InputManager::selection.size() > 0) {
-			if (SceneManager::GetType(MOON_Selection(0))._Equal("Model"))
-				MOON_CurrentCamera->CatchTarget(dynamic_cast<Model*>(MOON_Selection(0)));
-			else MOON_CurrentCamera->CatchTarget(NULL);
-		} else MOON_CurrentCamera->CatchTarget(NULL);
-	}
-	
-	// Escape -------------------------------------------------------------------------
-	if (key == GLFW_KEY_ESCAPE) glfwSetWindowShouldClose(window, true);
+	//if (key == GLFW_KEY_M && action == GLFW_PRESS)
+	//	MainUI::show_material_editor = !MainUI::show_material_editor;
+	//// Gizmo --------------------------------------------------------------------------
+	//if (key == GLFW_KEY_Q) Gizmo::gizmoMode = GizmoMode::none;
+	//if (key == GLFW_KEY_W) Gizmo::gizmoMode = GizmoMode::translate;
+	//if (key == GLFW_KEY_E) Gizmo::gizmoMode = GizmoMode::rotate;
+	//if (key == GLFW_KEY_R) Gizmo::gizmoMode = GizmoMode::scale;
+	//if (key == GLFW_KEY_Z) {
+	//	if (MOON_InputManager::selection.size() > 0) {
+	//		if (SceneManager::GetType(MOON_Selection(0))._Equal("Model"))
+	//			MOON_CurrentCamera->CatchTarget(dynamic_cast<Model*>(MOON_Selection(0)));
+	//		else MOON_CurrentCamera->CatchTarget(NULL);
+	//	} else MOON_CurrentCamera->CatchTarget(NULL);
+	//}
+	//
+	//// Escape -------------------------------------------------------------------------
+	//if (key == GLFW_KEY_ESCAPE) glfwSetWindowShouldClose(window, true);
 }
 
 // moon callbacks --------------------------------------------------------------------------
@@ -289,6 +328,8 @@ void MOON_CleanUp() {
 	std::cout << "ShaderManager cleared." << std::endl;
 	MOON_TextureManager::Clear();
 	std::cout << "TextureManager cleared." << std::endl;
+	MOON_ShapeManager::Clear();
+	std::cout << "ShapeManager cleared." << std::endl;
 	MOON_ModelManager::Clear();
 	std::cout << "ModelManager cleared." << std::endl;
 	MOON_CameraManager::Clear();
@@ -308,100 +349,40 @@ void MOON_UpdateClock() {
 	MOON_Clock::lastFrame = currentFrame;
 }
 
+void MOON_CoroutineLoop() {
+	auto poolSize = Coroutine::co_pool.size();
+	for (auto& it : Coroutine::co_pool) {
+		if (poolSize != Coroutine::co_pool.size()) {
+			MOON_CoroutineLoop(); break;
+		}
+		if (it.first && it.second->get_state() != CoroutineState::term) it.second->resume();
+	}
+}
+
 void MOON_GenerateGround(const float &space, const int &gridCnt) {
-	grid.clear();
-	// generate grid points
+	Graphics::ground.clear();
+	// generate Graphics::ground points
 	for (int i = -gridCnt; i <= gridCnt; i++) {
-		grid.push_back(i * space);
-		grid.push_back(0.0);
-		grid.push_back(gridCnt * -space);
+		Graphics::ground.push_back(i * space);
+		Graphics::ground.push_back(0.0);
+		Graphics::ground.push_back(gridCnt * -space);
 
-		grid.push_back(i * space);
-		grid.push_back(0.0);
-		grid.push_back(gridCnt * space);
+		Graphics::ground.push_back(i * space);
+		Graphics::ground.push_back(0.0);
+		Graphics::ground.push_back(gridCnt * space);
 
-		grid.push_back(gridCnt * -space);
-		grid.push_back(0.0);
-		grid.push_back(i * space);
+		Graphics::ground.push_back(gridCnt * -space);
+		Graphics::ground.push_back(0.0);
+		Graphics::ground.push_back(i * space);
 
-		grid.push_back(gridCnt * space);
-		grid.push_back(0.0);
-		grid.push_back(i * space);
+		Graphics::ground.push_back(gridCnt * space);
+		Graphics::ground.push_back(0.0);
+		Graphics::ground.push_back(i * space);
 	}
-}
-
-void MOON_DrawGround(const Shader* groundShader) {
-	// configure shader
-	groundShader->use();
-	groundShader->setVec4("lineColor", grdLineColor);
-	groundShader->setMat4("model", Matrix4x4());
-	groundShader->setMat4("view", MOON_CurrentCamera->view);
-	groundShader->setMat4("projection", MOON_CurrentCamera->projection);
-	
-	// vertex array object
-	unsigned int VAO;
-	glGenVertexArrays(1, &VAO);
-	// vertex buffer object
-	unsigned int VBO;
-	glGenBuffers(1, &VBO);
-	// bind buffers
-	glBindVertexArray(VAO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	// line width
-	glLineWidth(1.0);
-	// copy data
-	glBufferData(GL_ARRAY_BUFFER, grid.size() * sizeof(float), &grid[0], GL_STATIC_DRAW);
-	// vertex data format
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
-	glEnableVertexAttribArray(0);
-	// unbind buffers
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glDrawArrays(GL_LINES, 0, grid.size() / 3);
-	glBindVertexArray(0);
-	// delete buffer object
-	glDeleteVertexArrays(1, &VAO);
-	glDeleteBuffers(1, &VBO);
-
-	// disable anti-aliasing
-	//glDisable(GL_LINE_SMOOTH);
-	//glDisable(GL_BLEND);
-}
-
-void MOON_InputProcessor(GLFWwindow *window) {
-	if (MOON_InputManager::isHoverUI) {
-
-	} else {
-		if (MOON_InputManager::mouseScrollOffset.magnitude() > 0) {
-			MOON_SceneCamera->PushCamera(MOON_InputManager::mouseScrollOffset);
-		}
-
-		if (MOON_InputManager::mouse_middle_hold) {
-			if (glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS) {
-				if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) {
-					MOON_SceneCamera->ZoomCamera(MOON_InputManager::mouseOffset);
-				} else MOON_SceneCamera->RotateCamera(MOON_InputManager::mouseOffset);
-			} else if (MOON_InputManager::mouseOffset.magnitude() > 0) {
-				MOON_SceneCamera->PanCamera(MOON_InputManager::mouseOffset);
-			}
-		}
-	}
-
-	// Keys ---------------------------------------------------------------------------
-	MOON_InputManager::left_ctrl_hold = glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS;
-	MOON_InputManager::left_shift_hold = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS;
-	MOON_InputManager::right_ctrl_hold = glfwGetKey(window, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS;
-	MOON_InputManager::right_ctrl_hold = glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
-
-	// reset offset -------------------------------------------------------------------
-	MOON_InputManager::mouseOffset.setValue(0.0f, 0.0f);
-	MOON_InputManager::mouseScrollOffset.setValue(0.0f, 0.0f);
-
-	// exit ---------------------------------------------------------------------------
-	if (SceneManager::exitFlag) glfwSetWindowShouldClose(window, true);
 }
 
 void MOON_DrawMainUI() {
-	if (ImGui::BeginMainMenuBar())		MainUI::MainMenu();
+	MainUI::ShowDockSpace(true);
 	if (MainUI::show_control_window)	MainUI::ControlPanel();
 	if (MainUI::show_preference_window)	MainUI::PreferencesWnd();
 	if (MainUI::show_VFB_window)		MainUI::ShowVFB();
@@ -445,6 +426,6 @@ void MOON_InitEngine() {
 	NN::NNManager::Init();
 	std::cout << "- Neural Network Manager Initialized." << std::endl;
 	MOON_GenerateGround(1.0, 5);
-	MOON_TextureManager::CreateIDLUT();
+	MOON_TextureManager::CreateBuffers();
 	std::cout << "- IDLUT Created." << std::endl;
 }

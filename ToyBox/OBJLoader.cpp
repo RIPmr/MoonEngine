@@ -193,7 +193,7 @@ namespace MOON {
 
 				Normals.push_back(vnor);
 			}
-			// Generate a Face (vertices & indices)
+			// Generate a Face (vertices & triangles)
 			OBJLoader::info = "Load Face...";
 			if (firstToken(curline) == "f") {
 				// Generate the vertices
@@ -303,7 +303,7 @@ namespace MOON {
 				if (!mesh->material) mesh->material = MOON_MaterialManager::defaultMat;
 #ifdef MOON_DEBUG_MODE
 				std::cout << "\r- " << mesh->name << "| vertices > " << mesh->vertices.size()
-						<< "| triangles > " << (mesh->indices.size() / 3)
+						<< "| triangles > " << (mesh->triangles.size() / 3)
 						<< "| texcoords > " << TCoords.size()
 						<< "| normals > " << Normals.size();
 				if (mesh->material)

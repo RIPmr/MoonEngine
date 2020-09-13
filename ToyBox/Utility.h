@@ -12,6 +12,12 @@
 
 namespace MOON {
 
+	template <typename T>
+	void Constraint(T& num, const T& min, const T& max) {
+		if (num < min) num = min;
+		else if (num > max) num = max;
+	}
+
 	// remove first matched target
 	template <class T>
 	void RemoveElem(std::vector<T*>& set, T* target) {
@@ -21,6 +27,14 @@ namespace MOON {
 				break;
 			}
 		}
+	}
+
+	template <class T>
+	void ReleaseVector(std::vector<T*>& set) {
+		for (auto it = set.begin(); it != set.end(); it++) {
+			delete *it;
+		}
+		set.clear();
 	}
 
 	template <typename T>

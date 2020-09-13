@@ -2,18 +2,21 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <iomanip>
 
 #include "Gizmo.h"
+#include "SmartMeshes.h"
 #include "Debugger.h"
 #include "Vector2.h"
 #include "Camera.h"
 #include "Model.h"
 #include "Light.h"
+#include "Shapes.h"
 #include "Texture.h"
 #include "MShader.h"
 #include "Material.h"
 #include "MatSphere.h"
-#include "ShapeBase.h"
+#include "Graphics.h"
 
 namespace MOON {
 	template <class T>
@@ -45,17 +48,106 @@ namespace MOON {
 			}
 		}
 
-		static void ListID() {
-			for (auto &iter : itemMap) {
-				char label[32];
-				if (typeid(*itemMap.begin()->second) == typeid(Texture))
-					sprintf_s(label, "%d-[T%d]", iter.second->ID, dynamic_cast<Texture*>(iter.second)->localID);
-				else if (typeid(*itemMap.begin()->second) == typeid(Shader))
-					sprintf_s(label, "%d-[S%d]", iter.second->ID, dynamic_cast<Shader*>(iter.second)->localID);
-				else
-					sprintf_s(label, "%d", iter.second->ID);
-				ImGui::Text(label);
+		static void ListItems_Recursively(MObject* item) {
+			ImGuiTreeNodeFlags baseFlag = ImGuiTreeNodeFlags_OpenOnArrow |
+										  ImGuiTreeNodeFlags_OpenOnDoubleClick |
+										  ImGuiTreeNodeFlags_SpanAvailWidth |
+										  ImGuiTreeNodeFlags_DefaultOpen;
+			if (item->selected) baseFlag |= ImGuiTreeNodeFlags_Selected;
+			if (ImGui::TreeNodeEx((SceneManager::GetTypeIcon(item) + "  " + item->name).c_str(), 
+				item->transform.childs.size() ? baseFlag : baseFlag | ImGuiTreeNodeFlags_Leaf)) {
+				if (item->transform.childs.size()) {
+					if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(0)) MOON_InputManager::Select(item->ID);
+					// drag and drop
+					MakeDragAndDropWidget<MObject>(item, "MObject", (SceneManager::GetTypeIcon(item) + " " + item->name).c_str(),
+						[](MObject* &payload, MObject* &input) -> void { input->transform.SetParent(&payload->transform); });
+
+					ImGui::NextColumn(); ImGui::Text(std::to_string(item->ID).c_str()); ImGui::NextColumn();
+
+					ImGui::Indent(-10);
+					for (auto& child : item->transform.childs) ListItems_Recursively(child->mobject);
+					ImGui::Unindent(-10);
+				} else {
+					if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(0)) MOON_InputManager::Select(item->ID);
+					// drag and drop
+					MakeDragAndDropWidget<MObject>(item, "MObject", (SceneManager::GetTypeIcon(item) + " " + item->name).c_str(),
+						[](MObject* &payload, MObject* &input) -> void { input->transform.SetParent(&payload->transform); });
+
+					ImGui::NextColumn(); ImGui::Text(std::to_string(item->ID).c_str()); ImGui::NextColumn();
+				}
+				ImGui::TreePop();
+			} else {
+				ImGui::NextColumn(); ImGui::Text(std::to_string(item->ID).c_str()); ImGui::NextColumn();
 			}
+		}
+
+		static void ListItems_Hierarchial() {
+			if (itemMap.size() < 1) return;
+			ImGuiTreeNodeFlags baseFlag = ImGuiTreeNodeFlags_OpenOnArrow |
+										  ImGuiTreeNodeFlags_OpenOnDoubleClick |
+										  ImGuiTreeNodeFlags_SpanAvailWidth |
+										  ImGuiTreeNodeFlags_DefaultOpen;
+			auto iter = itemMap.begin();
+			ImGui::Indent(-10);
+			for (int i = 0; i < itemMap.size(); i++, iter++) {
+				baseFlag = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick |
+						   ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_DefaultOpen;
+				if (iter->second->selected) baseFlag |= ImGuiTreeNodeFlags_Selected;
+				if (SceneManager::GetSuperClass(SceneManager::GetType(iter->second))._Equal("MObject")) {
+					auto m = (MObject*)iter->second;
+					if (m->transform.parent == NULL) {
+						if (!m->transform.childs.size()) baseFlag |= ImGuiTreeNodeFlags_Leaf;
+						if (ImGui::TreeNodeEx((SceneManager::GetTypeIcon(m) + "  " + iter->first).c_str(), baseFlag)) {
+							if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(0)) MOON_InputManager::Select(m->ID);
+							// drag and drop
+							MakeDragAndDropWidget<MObject>(m, "MObject", (SceneManager::GetTypeIcon(m) + " " + m->name).c_str(),
+								[](MObject* &payload, MObject* &input) -> void { input->transform.SetParent(&payload->transform); });
+
+							ImGui::NextColumn(); ImGui::Text(std::to_string(m->ID).c_str()); ImGui::NextColumn();
+							ImGui::Indent(-10);
+							for (auto& child : m->transform.childs) ListItems_Recursively(child->mobject);
+							ImGui::Unindent(-10);
+							ImGui::TreePop();
+						} else {
+							if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(0)) MOON_InputManager::Select(m->ID);
+							// drag and drop
+							MakeDragAndDropWidget<MObject>(m, "MObject", (SceneManager::GetTypeIcon(m) + " " + m->name).c_str(),
+								[](MObject* &payload, MObject* &input) -> void { input->transform.SetParent(&payload->transform); });
+
+							ImGui::NextColumn(); ImGui::Text(std::to_string(m->ID).c_str()); ImGui::NextColumn();
+						}
+					}
+				} else {
+					if (ImGui::TreeNodeEx((SceneManager::GetTypeIcon(iter->second) + "  " + iter->first).c_str(), baseFlag | ImGuiTreeNodeFlags_Leaf)) {
+						if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(0)) MOON_InputManager::Select(iter->second->ID);
+						// drag and drop
+						MakeDragAndDropWidget(iter->second, SceneManager::GetType(iter->second).c_str(), 
+							(SceneManager::GetTypeIcon(iter->second) + " " + iter->second->name).c_str());
+
+						ImGui::NextColumn(); ImGui::Text(GetIDText(iter->second).c_str()); ImGui::NextColumn();
+						ImGui::TreePop();
+					} else {
+						if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(0)) MOON_InputManager::Select(iter->second->ID);
+						// drag and drop
+						MakeDragAndDropWidget(iter->second, SceneManager::GetType(iter->second).c_str(),
+							(SceneManager::GetTypeIcon(iter->second) + " " + iter->second->name).c_str());
+
+						ImGui::NextColumn(); ImGui::Text(GetIDText(iter->second).c_str()); ImGui::NextColumn();
+					}
+				}
+			}
+			ImGui::Unindent(-10);
+		}
+
+		static std::string GetIDText(ObjectBase* object) {
+			char label[32];
+			if (typeid(*object) == typeid(Texture))
+				sprintf_s(label, "%d-[T%d]", object->ID, dynamic_cast<Texture*>(object)->localID);
+			else if (typeid(*object) == typeid(Shader))
+				sprintf_s(label, "%d-[S%d]", object->ID, dynamic_cast<Shader*>(object)->localID);
+			else
+				sprintf_s(label, "%d", object->ID);
+			return label;
 		}
 
 		static void PrintAllItems() {
@@ -63,7 +155,7 @@ namespace MOON {
 				std::cout << "none object of this type in the scene!" << std::endl;
 				return;
 			}
-			std::cout << " " << SceneManager::GetType(itemMap.begin()->second) << "s in the scene: " << std::endl;
+			std::cout << " " << ClassOf(itemMap.begin()->second) << "s in the scene: " << std::endl;
 
 			auto end = itemMap.end();
 			std::cout << "-items(" << itemMap.size() << "):" << std::endl;
@@ -80,7 +172,7 @@ namespace MOON {
 			if (autoSizeFlag) {
 				std::cout << std::endl;
 				//auto iter = itemMap.end(); iter--;
-				std::cout << "------------------------------------------------ new " << SceneManager::GetType(item) << " added ------------------------------------------------" << std::endl;
+				std::cout << "------------------------------------------------ new " << ClassOf(item) << " added ------------------------------------------------" << std::endl;
 				//std::cout << "- name: \'" << iter->first << "\' added."; PrintID(iter->second);
 				std::cout << "- name: \'" << item->name << "\' added."; PrintID(item);
 				sizeFlag = true;
@@ -126,7 +218,7 @@ namespace MOON {
 			auto end = itemMap.end();
 			for (auto it = itemMap.begin(); it != end; it++) {
 				if (it->second->ID == ID) {
-					SceneManager::DelObject(ID);
+					SceneManager::RemoveObject(ID);
 					delete it->second;
 					itemMap.erase(it);
 
@@ -141,7 +233,7 @@ namespace MOON {
 			typename std::multimap<std::string, T*>::iterator beg, end;
 			if (GetItems(name, beg, end)) {
 				if (ID == MOON_FIRSTMATCH) {
-					SceneManager::DelObject(beg->second->ID);
+					SceneManager::RemoveObject(beg->second->ID);
 					delete beg->second;
 					itemMap.erase(beg);
 
@@ -149,7 +241,7 @@ namespace MOON {
 					return true;
 				} else for (; beg != end; beg++)
 					if (beg->second->ID == ID) {
-						SceneManager::DelObject(beg->second->ID);
+						SceneManager::RemoveObject(beg->second->ID);
 						delete beg->second;
 						itemMap.erase(beg);
 
@@ -171,7 +263,7 @@ namespace MOON {
 					if (itr->first == name) {
 						std::cout << "item: " << itr->first << "\t" << itr->second->name << " deleted." << std::endl;
 
-						SceneManager::DelObject(itr->second->ID);
+						SceneManager::RemoveObject(itr->second->ID);
 						delete itr->second;
 						itr = itemMap.erase(itr);
 
@@ -269,11 +361,13 @@ namespace MOON {
 		static unsigned int objectCounter;
 	public:
 		// global parameters
+		static Vector2 WND_SIZE;
 		static Vector2 SCR_SIZE;
 		static float aspect;
+		static SceneView activeView;
+		static ShadingMode splitShading[4];
 
-		static bool showbbox;
-		static bool wireMode;
+		static bool debug;
 		static bool exitFlag;
 
 		// all objects
@@ -281,15 +375,23 @@ namespace MOON {
 		static std::vector<ObjectBase*> objectList;
 		static std::vector<ObjectBase*> matchedList;
 
-		static void SetWndSize(unsigned int width, unsigned int height) {
-			SCR_SIZE.setValue(width, height);
-			aspect = (float)width / height;
+		static void SetWndSize(unsigned int width, unsigned int height, SceneView view) {
+			if (view == MOON_ActiveView) {
+				SCR_SIZE.setValue(width, height);
+				aspect = (float)width / height;
+			}
+			MOON_SceneCameras[view]->width = width / 25.0f;
+			MOON_SceneCameras[view]->height = height / 25.0f;
+			MOON_SceneCameras[view]->UpdateMatrix();
 		}
 
+		static void PrintAllObjects() {
+			std::cout << "total object num: " << GetObjectNum() << std::endl;
+			for (auto &iter : objectList) {
+				std::cout << "name: " << std::setw(18) << iter->name << " |type: " << std::setw(10) << GetType(iter) << " |id: " << iter->ID << std::endl;
+			}
+		}
 		// TODO
-		static void PrintAllObject() {
-
-		}
 		static void PrintTreeList() {
 
 		}
@@ -297,12 +399,34 @@ namespace MOON {
 
 		}
 
+		static void ListMatchedItems() {
+			if (matchedList.size() < 1) return;
+			ImGui::Indent(-10);
+			for (auto& item : matchedList) {
+				ImGuiTreeNodeFlags baseFlag = ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_Leaf;
+				if (item->selected) baseFlag |= ImGuiTreeNodeFlags_Selected;
+				if (ImGui::TreeNodeEx((SceneManager::GetTypeIcon(item) + "  " + item->name).c_str(), baseFlag)) {
+					if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(0)) MOON_InputManager::Select(item->ID);
+					// drag & drop
+					MakeDragAndDropWidget(item, "MObject", (SceneManager::GetTypeIcon(item) + " " + item->name).c_str());
+
+					ImGui::NextColumn(); ImGui::Text(std::to_string(item->ID).c_str()); ImGui::NextColumn();
+					ImGui::TreePop();
+				} else {
+					ImGui::NextColumn(); ImGui::Text(std::to_string(item->ID).c_str()); ImGui::NextColumn();
+				}
+			}
+			ImGui::Unindent(-10);
+		}
+
 		static void AddObject(ObjectBase* item) {
 			while (objectList.size() <= item->ID) objectList.push_back(item);
 			objectList[item->ID] = item;
 		}
-		static void DelObject(unsigned int ID) {
-			std::cout << "object deleted: " << objectList[ID]->name << std::endl;
+
+		// *only remove target object from objectList, but not remove it from manager
+		static void RemoveObject(unsigned int ID) {
+			std::cout << "object removed: " << objectList[ID]->name << std::endl;
 			objectList[ID] = NULL;
 			if (ID < delID) delID = ID;
 		}
@@ -317,15 +441,40 @@ namespace MOON {
 				return delID++;
 			}
 		}
+		// delete target object from both objectList and manager
+		static void DeleteObject(ObjectBase* obj) {
+			std::cout << "object deleted: " << obj->name << std::endl;
+			auto type = GetType(obj);
+			if (type._Equal("Shader")) {
+				ShaderManager::DeleteItem(obj->ID);
+			} else if (type._Equal("Texture")) {
+				TextureManager::DeleteItem(obj->ID);
+			} else if (type._Equal("Material")) {
+				MaterialManager::DeleteItem(obj->ID);
+			} else if (type._Equal("Light")) {
+				LightManager::DeleteItem(obj->ID);
+			} else if (type._Equal("Model")) {
+				ModelManager::DeleteItem(obj->ID);
+			} else if (type._Equal("Camera")) {
+				CameraManager::DeleteItem(obj->ID);
+			} else if (type._Equal("Shape")) {
+				ShapeManager::DeleteItem(obj->ID);
+			}
+		}
+
+		template<class T>
+		static std::string GetSuperClass(T* item) {
+			return GetSuperClass(GetType(item));
+		}
 
 		static std::string GetSuperClass(const std::string& _type) {
 			std::string type;
 			if (_type._Equal("Shader"))			type = "Shader";
 			else if (_type._Equal("Texture"))	type = "Texture";
 			else if (_type._Equal("Material"))	type = "Material";
-			else if (_type._Equal("Camera") ||
-					 _type._Equal("Model")  ||
-					 _type._Equal("Shape")  || 
+			else if (_type._Equal("Camera")		||
+					 _type._Equal("Model")		||
+					 _type._Equal("Shape")		|| 
 					 _type._Equal("Light"))		type = "MObject";
 			else type = "Unknown";
 			return type;
@@ -334,21 +483,32 @@ namespace MOON {
 		template<class T>
 		static std::string GetType(T* item) {
 			std::string type;
-			if (typeid(*item) == typeid(Shader)) type = "Shader";
-			else if (typeid(*item) == typeid(FrameBuffer) ||
-					 typeid(*item) == typeid(Texture)) type = "Texture";
-			else if (typeid(*item) == typeid(MoonMtl) || 
-					 typeid(*item) == typeid(LightMtl) || 
-					 typeid(*item) == typeid(Lambertian) ||
-					 typeid(*item) == typeid(Metal) ||
-					 typeid(*item) == typeid(Dielectric)) type = "Material";
-			else if (typeid(*item) == typeid(DirLight) ||
-					 typeid(*item) == typeid(PointLight) ||
-					 typeid(*item) == typeid(SpotLight) ||
-					 typeid(*item) == typeid(MoonLight) ||
-					 typeid(*item) == typeid(DomeLight)) type = "Light";
-			else if (typeid(*item) == typeid(Model)) type = "Model";
-			else if (typeid(*item) == typeid(Camera)) type = "Camera";
+			if (typeid(*item) == typeid(Shader))			type = "Shader";
+			else if (typeid(*item) == typeid(FrameBuffer)	||
+					 typeid(*item) == typeid(Texture))		type = "Texture";
+			else if (typeid(*item) == typeid(MoonMtl)		|| 
+					 typeid(*item) == typeid(LightMtl)		|| 
+					 typeid(*item) == typeid(Lambertian)	||
+					 typeid(*item) == typeid(Metal)			||
+					 typeid(*item) == typeid(Dielectric))	type = "Material";
+			else if (typeid(*item) == typeid(DirLight)		||
+					 typeid(*item) == typeid(PointLight)	||
+					 typeid(*item) == typeid(SpotLight)		||
+					 typeid(*item) == typeid(MoonLight)		||
+					 typeid(*item) == typeid(DomeLight))	type = "Light";
+			else if (typeid(*item) == typeid(Model)			||
+					 typeid(*item) == typeid(Sphere)		||
+					 typeid(*item) == typeid(Plane)			||
+					 typeid(*item) == typeid(Box)			||
+					 typeid(*item) == typeid(Cylinder)		||
+					 typeid(*item) == typeid(Ring)			||
+					 typeid(*item) == typeid(Capsule))		type = "Model";
+			else if (typeid(*item) == typeid(Camera))		type = "Camera";
+			else if (typeid(*item) == typeid(Shape)			||
+					 typeid(*item) == typeid(Line)			||
+					 typeid(*item) == typeid(Circle)		||
+					 typeid(*item) == typeid(Rectangle)		||
+					 typeid(*item) == typeid(NGone))		type = "Shape";
 			else type = "Unknown";
 			return type;
 		}
@@ -356,42 +516,57 @@ namespace MOON {
 		template<class T>
 		static std::string GetTypeIcon(T* item) {
 			std::string typeIcon;
-			if (typeid(*item) == typeid(Shader)) typeIcon = ICON_FA_FILE_CODE_O;
-			else if (typeid(*item) == typeid(Texture)) typeIcon = ICON_FA_FILE_IMAGE_O;
-			else if (typeid(*item) == typeid(FrameBuffer)) typeIcon = ICON_FA_PICTURE_O;
-			else if (typeid(*item) == typeid(MoonMtl) ||
-					 typeid(*item) == typeid(LightMtl) ||
-					 typeid(*item) == typeid(Lambertian) ||
-					 typeid(*item) == typeid(Metal) ||
-					 typeid(*item) == typeid(Dielectric)) typeIcon = ICON_FA_GLOBE;
-			else if (typeid(*item) == typeid(DirLight) ||
-					 typeid(*item) == typeid(PointLight) ||
-					 typeid(*item) == typeid(SpotLight) ||
-					 typeid(*item) == typeid(MoonLight) ||
-					 typeid(*item) == typeid(DomeLight)) typeIcon = ICON_FA_LIGHTBULB_O;
-			else if (typeid(*item) == typeid(Model)) typeIcon = ICON_FA_CUBE;
-			else if (typeid(*item) == typeid(Shape)) typeIcon = ICON_FA_SQUARE_O;
-			else if (typeid(*item) == typeid(Camera)) typeIcon = ICON_FA_VIDEO_CAMERA;
+			if (typeid(*item) == typeid(Shader))			typeIcon = ICON_FA_FILE_CODE_O;
+			else if (typeid(*item) == typeid(Texture))		typeIcon = ICON_FA_FILE_IMAGE_O;
+			else if (typeid(*item) == typeid(FrameBuffer))	typeIcon = ICON_FA_PICTURE_O;
+			else if (typeid(*item) == typeid(MoonMtl)		||
+					 typeid(*item) == typeid(LightMtl)		||
+					 typeid(*item) == typeid(Lambertian)	||
+					 typeid(*item) == typeid(Metal)			||
+					 typeid(*item) == typeid(Dielectric))	typeIcon = ICON_FA_GLOBE;
+			else if (typeid(*item) == typeid(DirLight)		||
+					 typeid(*item) == typeid(PointLight)	||
+					 typeid(*item) == typeid(SpotLight)		||
+					 typeid(*item) == typeid(MoonLight)		||
+					 typeid(*item) == typeid(DomeLight))	typeIcon = ICON_FA_LIGHTBULB_O;
+			else if (typeid(*item) == typeid(Model)			||
+					 typeid(*item) == typeid(Sphere)		||
+					 typeid(*item) == typeid(Plane)			||
+					 typeid(*item) == typeid(Box)			||
+					 typeid(*item) == typeid(Cylinder)		||
+					 typeid(*item) == typeid(Ring)			||
+					 typeid(*item) == typeid(Capsule))		typeIcon = ICON_FA_CUBE;
+			else if (typeid(*item) == typeid(Camera))		typeIcon = ICON_FA_VIDEO_CAMERA;
+			else if (typeid(*item) == typeid(Shape)			||
+					 typeid(*item) == typeid(Line)			||
+					 typeid(*item) == typeid(Circle)		||
+					 typeid(*item) == typeid(Rectangle)		||
+					 typeid(*item) == typeid(NGone))		typeIcon = ICON_FA_LEMON_O;
 			else typeIcon = ICON_FA_QUESTION;
 			return typeIcon;
 		}
 
 		template<class T>
 		static void RenameItem(T* item, const std::string &newName) {
-			if (typeid(*item) == typeid(Shader)) ShaderManager::RenameItem(item, newName);
-			else if (typeid(*item) == typeid(Texture)) TextureManager::RenameItem(item, newName);
-			else if (typeid(*item) == typeid(MoonMtl) ||
-					 typeid(*item) == typeid(LightMtl) ||
-					 typeid(*item) == typeid(Lambertian) ||
-					 typeid(*item) == typeid(Metal) ||
-					 typeid(*item) == typeid(Dielectric)) MaterialManager::RenameItem(item, newName);
-			else if (typeid(*item) == typeid(DirLight) ||
-					 typeid(*item) == typeid(PointLight) ||
-					 typeid(*item) == typeid(SpotLight) ||
-					 typeid(*item) == typeid(MoonLight) ||
-					 typeid(*item) == typeid(DomeLight)) LightManager::RenameItem(item, newName);
-			else if (typeid(*item) == typeid(Model)) ModelManager::RenameItem(item, newName);
-			else if (typeid(*item) == typeid(Camera)) CameraManager::RenameItem(item, newName);
+			if (typeid(*item) == typeid(Shader))			ShaderManager::RenameItem(item, newName);
+			else if (typeid(*item) == typeid(Texture))		TextureManager::RenameItem(item, newName);
+			else if (typeid(*item) == typeid(MoonMtl)		||
+					 typeid(*item) == typeid(LightMtl)		||
+					 typeid(*item) == typeid(Lambertian)	||
+					 typeid(*item) == typeid(Metal)			||
+					 typeid(*item) == typeid(Dielectric))	MaterialManager::RenameItem(item, newName);
+			else if (typeid(*item) == typeid(DirLight)		||
+					 typeid(*item) == typeid(PointLight)	||
+					 typeid(*item) == typeid(SpotLight)		||
+					 typeid(*item) == typeid(MoonLight)		||
+					 typeid(*item) == typeid(DomeLight))	LightManager::RenameItem(item, newName);
+			else if (typeid(*item) == typeid(Model))		ModelManager::RenameItem(item, newName);
+			else if (typeid(*item) == typeid(Camera))		CameraManager::RenameItem(item, newName);
+			else if (typeid(*item) == typeid(Shape)			||
+					 typeid(*item) == typeid(Line)			||
+					 typeid(*item) == typeid(Circle)		||
+					 typeid(*item) == typeid(Rectangle)		||
+					 typeid(*item) == typeid(NGone))		 ShapeManager::RenameItem(item, newName);
 			else std::cout << "Unknown type, rename failed!" << std::endl;
 		}
 
@@ -410,15 +585,19 @@ namespace MOON {
 		}
 
 		static void Clear() {
-			delete CameraManager::sceneCamera;
+			for (auto it = MOON_SceneCameras.begin(); it != MOON_SceneCameras.end(); it++) {
+				delete *it;
+			}
+			MOON_SceneCameras.clear();
 			objectList.clear();
 		}
 
 		static void DrawGizmos() {
 			ObjectBase* first = InputManager::GetFirstSelected();
-			if (!first) return; if (!GetType(first)._Equal("Model")) return;
+			if (!first) return; 
+			if (!SuperClassOf(first)._Equal("MObject")) return;
 
-			Gizmo::Manipulate(&dynamic_cast<Model*>(first)->transform, MOON_CurrentCamera->zFar);
+			Gizmo::Manipulate(&dynamic_cast<MObject*>(first)->transform, MOON_ActiveCamera->zFar);
 		}
 
 		static void Init() {
@@ -444,12 +623,20 @@ namespace MOON {
 		};
 
 		struct InputManager {
+			static GLFWwindow* window;
+
 			static Vector2 mousePos;
 			static Vector2 mouseOffset;
 			static Vector2 mouseScrollOffset;
+
 			static int mouseButton;
 			static int mouseAction;
 			static int mouseMods;
+
+			static int keyButton;
+			static int keyAction;
+			static int keyMods;
+
 			static bool isHoverUI;
 			static bool mouse_left_hold;
 			static bool mouse_middle_hold;
@@ -461,7 +648,49 @@ namespace MOON {
 
 			// selection
 			static unsigned int hoverID;
+			static bool lockSelection;
 			static std::vector<unsigned int> selection;
+
+			static void ResetKeyState() {
+				keyButton = -1;
+				keyAction = -1;
+				mouseButton = -1;
+				mouseAction = -1;
+			}
+
+			static bool IsMouseDown(const int& button) {
+				if (mouseAction == GLFW_PRESS && mouseButton == button) return true;
+				return false;
+			}
+
+			static bool IsMouseRelease(const int& button) {
+				if (mouseAction == GLFW_RELEASE && mouseButton == button) return true;
+				return false;
+			}
+
+			static bool IsMouseRepeat(const int& button) {
+				if (button == LEFT_MOUSE) return mouse_left_hold;
+				if (button == RIGHT_MOUSE) return mouse_right_hold;
+				if (button == MIDDLE_MOUSE) return mouse_middle_hold;
+			}
+
+			static bool IsKeyRepeat(const int& key) {
+				if (keyAction == GLFW_REPEAT && key == keyButton) {
+					return true;
+				} else return false;
+			}
+
+			static bool IsKeyDown(const int& key) {
+				if (keyAction == GLFW_PRESS && key == keyButton) {
+					return true;
+				} else return false;
+			}
+
+			static bool IsKeyRelease(const int& key) {
+				if (keyAction == GLFW_RELEASE && key == keyButton) {
+					return true;
+				} else return false;
+			}
 
 			static ObjectBase* GetFirstSelected() {
 				if (selection.size() < 1) return NULL;
@@ -481,13 +710,7 @@ namespace MOON {
 				}
 			}
 
-			static void Select(const unsigned int ID) {
-				if (!MOON_InputManager::left_ctrl_hold && !MOON_InputManager::right_ctrl_hold) {
-					MOON_InputManager::selection.clear();
-					//memset(MOON_InputManager::selection, 0, SceneManager::GetObjectNum() * sizeof(bool));
-					for (ObjectBase *obj : MOON_ObjectList) obj->selected = false;
-				}
-
+			static void Select_Append(const unsigned int ID) {
 				if (ID) {
 					if (MOON_ObjectList[ID]->selected ^= 1) {
 						MOON_InputManager::selection.push_back(ID);
@@ -502,13 +725,26 @@ namespace MOON {
 				}
 			}
 
+			static void ClearSelection() {
+				MOON_InputManager::selection.clear();
+				for (ObjectBase *obj : MOON_ObjectList) {
+					if (obj != nullptr) obj->selected = false;
+				}
+			}
+
+			static void Select(const unsigned int ID) {
+				if (!MOON_InputManager::left_ctrl_hold && !MOON_InputManager::right_ctrl_hold) {
+					ClearSelection();
+				}
+				Select_Append(ID);
+			}
+
 			static unsigned int GetIDFromLUT(const Vector2& screenPos) {
 				Vector4 col;
 
 				//glBindFramebuffer(GL_READ_FRAMEBUFFER, TextureManager::IDLUT->fbo);
 				glReadBuffer(GL_COLOR_ATTACHMENT0);
-				glReadPixels(screenPos.x, MOON_WndSize.y - screenPos.y - 1, 1, 1, 
-							 GL_RGBA, GL_FLOAT, &col[0]);
+				glReadPixels(screenPos.x, MOON_ScrSize.y - screenPos.y - 1, 1, 1, GL_RGBA, GL_FLOAT, &col[0]);
 				glReadBuffer(GL_NONE);
 				//glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 
@@ -518,6 +754,14 @@ namespace MOON {
 			}
 
 			static void Clear() {}
+
+			static Vector3 PickGroundPoint(const Vector2& mousePos) {
+				if (MoonMath::IsRayPlaneIntersect(MOON_ActiveCamera->GetMouseRayAccurate(),
+					Vector3::WORLD(UP), Vector3::ZERO())) {
+					return MoonMath::RayPlaneIntersect(MOON_ActiveCamera->GetMouseRayAccurate(),
+						Vector3::WORLD(UP), Vector3::ZERO());
+				} else return Vector3::ZERO();
+			}
 		};
 
 		struct LightManager : ObjectManager<Light> {
@@ -529,6 +773,16 @@ namespace MOON {
 
 			static void CreateDefaultMats() {
 				defaultMat = MaterialManager::CreateMaterial("MoonMtl", "default");
+			}
+
+			static Material* CreateMaterial(const MatType &type, const std::string &name) {
+				if (type == moonMtl) {
+					Material* newMat = new MoonMtl(name);
+					AddItem(newMat);
+					return newMat;
+				} else {
+
+				}
 			}
 
 			static Material* CreateMaterial(const std::string &type, const std::string &name) {
@@ -544,6 +798,7 @@ namespace MOON {
 
 		struct ShaderManager : ObjectManager<Shader> {
 			static Shader* lineShader;
+			static Shader* overlayShader;
 			static Shader* outlineShader;
 			static Shader* screenBufferShader;
 
@@ -552,6 +807,7 @@ namespace MOON {
 				lineShader = new Shader("ConstColor", "ConstColor.vs", "ConstColor.fs");
 				outlineShader = new Shader("Outline", "Outline.vs", "Outline.fs");
 				screenBufferShader = new Shader("ScreenBuffer", "ScreenBuffer.vs", "ScreenBuffer.fs");
+				AddItem(new Shader("FlatShader", "Flat.vs", "Flat.fs")); 
 				AddItem(lineShader);
 				AddItem(outlineShader);
 				AddItem(screenBufferShader);
@@ -579,8 +835,15 @@ namespace MOON {
 		struct TextureManager : ObjectManager<Texture> {
 			static Texture* SHADOWMAP;
 			static FrameBuffer* IDLUT;
+			static std::vector<FrameBuffer*> SCENEBUFFERS;
 
 			// create buffers
+			static void CreateBuffers() {
+				CreateIDLUT();
+				CreateShadowMap();
+				CreateSceneBuffer();
+			}
+
 			// TODO
 			static void CreateShadowMap() {
 
@@ -588,8 +851,18 @@ namespace MOON {
 
 			static void CreateIDLUT() {
 				// create IDLUT
-				IDLUT = new FrameBuffer(MOON_WndSize.x, MOON_WndSize.y, "IDLUT", MOON_AUTOID);
+				IDLUT = new FrameBuffer(MOON_ScrSize.x, MOON_ScrSize.y, "IDLUT", MOON_AUTOID);
 				AddItem(IDLUT);
+			}
+
+			static void CreateSceneBuffer() {
+				SCENEBUFFERS.push_back(new FrameBuffer(-1, -1, "PerspView", MOON_AUTOID));
+				SCENEBUFFERS.push_back(new FrameBuffer(-1, -1, "FrontView", MOON_AUTOID));
+				SCENEBUFFERS.push_back(new FrameBuffer(-1, -1, "LeftView", MOON_AUTOID));
+				SCENEBUFFERS.push_back(new FrameBuffer(-1, -1, "TopView", MOON_AUTOID));
+				for (auto it = SCENEBUFFERS.begin(); it != SCENEBUFFERS.end(); it++) {
+					AddItem(*it);
+				}
 			}
 
 			// load resources
@@ -620,7 +893,25 @@ namespace MOON {
 		};
 
 		struct ShapeManager : ObjectManager<Shape> {
+			static Shape* CreateShape(const ShapeType &type, const std::string &name) {
+				Shape* newShape = nullptr;
+				switch (type) {
+					case line:
+						newShape = new Line(name);
+						break;
+				}
+				if (newShape != nullptr) AddItem(newShape);
+				return newShape;
+			}
 
+			static bool Clear() {
+				auto end = itemMap.end();
+				for (auto itr = itemMap.begin(); itr != end; ) {
+					delete itr->second;
+					itr = itemMap.erase(itr);
+				}
+				return true;
+			}
 		};
 
 		struct ModelManager : ObjectManager<Model> {
@@ -640,47 +931,25 @@ namespace MOON {
 				return hitAnything;
 			}
 
-			static void DrawIDLUT() {
-				// encode id to color
-				for (auto &obj : itemMap) {
-					if (obj.second->visible) {
-						ShaderManager::lineShader->use();
-						ShaderManager::lineShader->setVec4("lineColor", Color::IDEncoder(obj.second->ID));
-
-						obj.second->Draw(ShaderManager::lineShader);
-					}
-				}
-			}
-
-			static void DrawModels() {
-				/*glEnable(GL_STENCIL_TEST);
-				glStencilFunc(GL_ALWAYS, 1, 0xFF);
-				glStencilMask(0xFF);*/
-
-				for (auto &obj : itemMap) {
-					if (obj.second->visible) {
-						obj.second->Draw();
-						if (SceneManager::showbbox) DEBUG::DrawBBox(obj.second);
-					}
-				}
-
-				//glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-				//glStencilMask(0x00);
-				////glDisable(GL_DEPTH_TEST);
-				//for (auto &obj : itemMap) {
-				//	if (obj.second->visible)
-				//		obj.second->Draw(ShaderManager::lineShader);
-				//}
-				//glStencilMask(0xFF);
-				////glEnable(GL_DEPTH_TEST);
-				//glDisable(GL_STENCIL_TEST);
-			}
-
-			static Model* CreateModel(const std::string &path, const std::string &name = "FILENAME") {
+			/*static Model* CreateModel(const std::string &path, const std::string &name = "FILENAME") {
 				Model* newModel = new Model(path, name);
 				AddItem(newModel);
 
 				return newModel;
+			}*/
+
+			static Model* CreateSmartMesh(const SmartMesh& type, const std::string &name, const bool& interactive = false) {
+				Model* model = nullptr;
+				switch (type) {
+					case sphere:
+						model = new Sphere(name, interactive);
+						break;
+					case plane:
+						model = new Plane(name, interactive);
+						break;
+				}
+				if (model != nullptr) AddItem(model);
+				return model;
 			}
 
 			static Model* LoadModel(const std::string &path, const std::string &name = "FILENAME") {
@@ -693,8 +962,8 @@ namespace MOON {
 		};
 
 		struct CameraManager : ObjectManager<Camera> {
-			static Camera* sceneCamera;
-			static Camera* currentCamera;
+			static std::vector<Camera*> sceneCameras;
+			static Camera* activeCamera;
 
 			static Camera* CreateCamera() {
 				Camera* newCam = new Camera();
@@ -710,9 +979,13 @@ namespace MOON {
 			}
 
 			static bool LoadSceneCamera() {
-				sceneCamera = new Camera("SceneCamera", Vector3(0.0f, 2.0f, 20.0f), 0.0f, MOON_UNSPECIFIEDID);
-				currentCamera = sceneCamera;
-				Renderer::targetCamera = sceneCamera;
+				sceneCameras.push_back(new Camera("PerspCamera", Vector3(0.0f, 2.0f, 20.0f), Vector3::WORLD(BACKWARD), false, 0.0f, MOON_UNSPECIFIEDID));
+				sceneCameras.push_back(new Camera("FrontCamera", Vector3(0.0f, 0.0f, 20.0f), Vector3::WORLD(BACKWARD), true, 0.0f, MOON_UNSPECIFIEDID));
+				sceneCameras.push_back(new Camera("LeftCamera", Vector3(20.0f, 0.0f, 0.0f), Vector3::WORLD(RIGHT), true, 0.0f, MOON_UNSPECIFIEDID));
+				sceneCameras.push_back(new Camera("TopCamera", Vector3(0.0f, 20.0f, 0.0f), Vector3::WORLD(DOWN), true, 0.0f, MOON_UNSPECIFIEDID));
+				//AddItem(sceneCameras[0]); AddItem(sceneCameras[1]); AddItem(sceneCameras[2]); AddItem(sceneCameras[3]);
+				activeCamera = sceneCameras[3];
+				Renderer::targetCamera = sceneCameras[0];
 				return true;
 			}
 		};

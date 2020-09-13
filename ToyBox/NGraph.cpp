@@ -2,7 +2,7 @@
 #include "NGraph.h"
 #include "NNManager.h"
 #include "Plotter.h"
-#include "IconsFontAwesome4.h"
+#include "Icons.h"
 
 using namespace ImNodes;
 

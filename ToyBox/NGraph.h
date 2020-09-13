@@ -229,15 +229,15 @@ namespace MOON {
 				RemoveElem(inputs, node);
 			}
 
-			void OnCreateNode(ImNodes::MyNode* node, const std::string& type) override {
-				if (type._Equal("Neuron")) {
+			void OnCreateNode(ImNodes::MyNode* node) override {
+				if (node->type._Equal("Neuron")) {
 					Neuron* neu = this->CreateNeuron(node->title);
 					node->attachment = neu;
 					if (node->title._Equal("Input")) inputs.push_back(node);
-				} else if (type._Equal("Optimizer")) {
+				} else if (node->type._Equal("Optimizer")) {
 					Optimizer* opt = this->CreateOptimizer(node->title);
 					node->attachment = opt;
-				} else if (type._Equal("Visualization")) {
+				} else if (node->type._Equal("Visualization")) {
 					if (node->title._Equal("BatchPlot")) {
 						node->attachment = this;
 					} else {
@@ -253,36 +253,54 @@ namespace MOON {
 			void OnDeleteConnection(const ImNodes::MyConnection &con,
 				ImNodes::MyNode* inNode, ImNodes::MyNode* outNode,
 				ImNodes::SlotInfo* inSlot, ImNodes::SlotInfo* outSlot) override {
-				if (outNode->attachment != nullptr) { // filter out data and operators
-					if (inNode->output_slots.size() < 1 ||
-						inNode->input_slots[0].title._Equal("prop")) {
-						if (inNode->input_slots.size() == 1) { // input is optimizer
-							Optimizer* opt = (Optimizer*)inNode->attachment;
-							opt->target = nullptr;
-						} else; // input is plotter
-					} else { // input and output are all neurons
-						Neuron* neuIn = (Neuron*)inNode->attachment;
-						Neuron* neuOut = (Neuron*)outNode->attachment;
-						neuIn->RemoveParent(neuOut);
-					}
+				//if (outNode->attachment != nullptr) { // filter out data and operators
+				//	if (inNode->output_slots.size() < 1 ||
+				//		inNode->input_slots[0].title._Equal("prop")) {
+				//		if (inNode->input_slots.size() == 1) { // input is optimizer
+				//			Optimizer* opt = (Optimizer*)inNode->attachment;
+				//			opt->target = nullptr;
+				//		} else; // input is plotter
+				//	} else { // input and output are all neurons
+				//		Neuron* neuIn = (Neuron*)inNode->attachment;
+				//		Neuron* neuOut = (Neuron*)outNode->attachment;
+				//		neuIn->RemoveParent(neuOut);
+				//	}
+				//}
+				if (inNode->type._Equal("Optimizer")) {
+					Optimizer* opt = (Optimizer*)inNode->attachment;
+					opt->target = nullptr;
+				}
+				if (inNode->type._Equal("Neuron") && outNode->type._Equal("Neuron")) {
+					Neuron* neuIn = (Neuron*)inNode->attachment;
+					Neuron* neuOut = (Neuron*)outNode->attachment;
+					neuIn->RemoveParent(neuOut);
 				}
 			}
 
 			void OnCreateConnection(const ImNodes::MyConnection &con,
 				ImNodes::MyNode* inNode, ImNodes::MyNode* outNode,
 				ImNodes::SlotInfo* inSlot, ImNodes::SlotInfo* outSlot) override {
-				if (outNode->attachment != nullptr) { // filter out data and operators
-					Neuron* neuOut = (Neuron*)outNode->attachment;
-					if (inNode->output_slots.size() < 1 || 
-						inNode->input_slots[0].title._Equal("prop")) {
-						if (inNode->input_slots.size() == 1) { // input is optimizer
-							Optimizer* opt = (Optimizer*)inNode->attachment;
-							opt->target = neuOut;
-						} else; // input is plotter
-					} else { // input and output are all neurons
-						Neuron* neuIn = (Neuron*)inNode->attachment;
-						neuIn->AddParent(neuOut);
-					}
+				//if (outNode->attachment != nullptr) { // filter out data and operators
+				//	Neuron* neuOut = (Neuron*)outNode->attachment;
+				//	if (inNode->output_slots.size() < 1 || 
+				//		inNode->input_slots[0].title._Equal("prop")) {
+				//		if (inNode->input_slots.size() == 1) { // input is optimizer
+				//			Optimizer* opt = (Optimizer*)inNode->attachment;
+				//			opt->target = neuOut;
+				//		} else; // input is plotter
+				//	} else { // input and output are all neurons
+				//		Neuron* neuIn = (Neuron*)inNode->attachment;
+				//		neuIn->AddParent(neuOut);
+				//	}
+				//}
+				Neuron* neuOut = (Neuron*)outNode->attachment;
+				if (inNode->type._Equal("Optimizer")) {
+					Optimizer* opt = (Optimizer*)inNode->attachment;
+					opt->target = neuOut;
+				}
+				if (inNode->type._Equal("Neuron") && outNode->type._Equal("Neuron")) {
+					Neuron* neuIn = (Neuron*)inNode->attachment;
+					neuIn->AddParent(neuOut);
 				}
 			}
 

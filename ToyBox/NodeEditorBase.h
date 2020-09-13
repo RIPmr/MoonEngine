@@ -4,15 +4,19 @@
 #include <string>
 #include <imgui.h>
 
+#include "MoonEnums.h"
+#include "FuzzyMatch.h"
 #include "Vector3.h"
 #include "Vector4.h"
 #include "Color.h"
 #include "Matrix4x4.h"
 #include "ImNodesEz.h"
-#include "IconsFontAwesome4.h"
+#include "Icons.h"
 
 namespace MOON {
+	#define Word						std::pair<unsigned int, void*>
 	#define Nodes						std::multimap<std::string, ImNodes::MyNode*(*)()>
+	#define Verbs						std::vector<Verb*(*)()>
 
 	#define DataSizeDef					ImNodes::SlotData
 	#define getSlot(type, name)			node->GetSlot(type, name)
@@ -34,8 +38,67 @@ namespace MOON {
 	#define outputMat(slotID)			(*node->output_slots[slotID].data.mat)
 	#define IMGUI_DEFINE_MATH_OPERATORS
 
+	struct Verb {
+		std::string str;
+		void(*execute)(Word&, Word&, void*);
+
+		~Verb() = default;
+
+		explicit Verb(const std::string& str, void(*execute)(Word&, Word&, void*)) {
+			this->str = str;
+			this->execute = execute;
+		}
+	};
+
 	class NodeEditor {
 	protected:
+		enum queryType {
+			node,
+			verb
+		};
+
+		struct Searcher {
+			bool enableFlowSense;
+			bool resetVerbViewScroll;
+			bool enableSearcher;
+			std::string searchWord;
+			ImVec2 mousePos;
+			int selection;
+			std::vector<ImNodes::MyNode*> resNodes;
+			std::vector<Verb*> resVerbs;
+			std::vector<Word> query;
+			ImVec2 childSize;
+			NodeEditor* parent;
+
+			Searcher(NodeEditor* parent) {
+				this->parent = parent;
+				enableFlowSense = true;
+				enableSearcher = false;
+				resetVerbViewScroll = false;
+				childSize.x = 170.0f;
+				searchWord = "";
+				selection = 0;
+			}
+
+			~Searcher() {
+				if (resNodes.size())
+					for (auto &node : resNodes) {
+						delete node;
+					}
+				if (resVerbs.size())
+					for (auto &verb : resVerbs) {
+						delete verb;
+					}
+				if (query.size())
+					for (auto &q : query) {
+						if (q.first == node) delete (ImNodes::MyNode*)q.second;
+						else if (q.first == verb) delete (Verb*)q.second;
+					}
+			}
+
+			void Draw();
+		};
+
 		void CleanUp() {
 			for (auto it = nodes.begin(); it != nodes.end(); it++) {
 				OnDeleteNode(*it);
@@ -54,16 +117,65 @@ namespace MOON {
 		ImNodes::MyNode* selectedNode;
 		bool anythingSelected;
 		bool blockMouseAction = false;
+		bool enableSearcher = false;
 
+		Verbs* available_verbs = NULL;
 		Nodes* available_nodes = NULL;
 		std::vector<ImNodes::MyNode*> nodes;
 
-		NodeEditor() = default;
+		Searcher searcher;
+
+		NodeEditor() : searcher(this) {
+			DefineDefaultVerbs();
+		}
 
 		virtual ~NodeEditor() {
 			CleanUp();
-			if (available_nodes != NULL) 
-				delete available_nodes;
+			if (available_nodes != NULL) delete available_nodes;
+			if (available_verbs != NULL) delete available_verbs;
+		}
+
+		void DefineDefaultVerbs();
+
+		std::vector<ImNodes::MyNode*> SearchNodes_Fuzzy(const std::string &typeName) {
+			std::map<int, ImNodes::MyNode*> fuzzyRes;
+
+			for (auto lower = available_nodes->begin(); lower != available_nodes->end(); lower++) {
+				int score = -INFINITY_INT;
+				auto node = (*lower).second();
+				node->type = lower->first;
+				std::string name = node->title;
+				MatchTool::fuzzy_match(typeName.c_str(), name.c_str(), score);
+				//std::cout << "name: " << node->title << " score: " << score << std::endl;
+				if (score > 0) fuzzyRes.insert(std::pair<int, ImNodes::MyNode*>(score, node));
+				else delete node;
+			}
+
+			std::vector<ImNodes::MyNode*> out;
+			for (auto it = fuzzyRes.rbegin(); it != fuzzyRes.rend(); it++) {
+				out.push_back((*it).second);
+			}
+
+			return out;
+		}
+
+		std::vector<Verb*> SearchVerbs_Fuzzy(const std::string &typeName) {
+			std::map<int, Verb*> fuzzyRes;
+
+			for (auto lower = available_verbs->begin(); lower != available_verbs->end(); lower++) {
+				int score = -INFINITY_INT;
+				auto verb = (*lower)();
+				MatchTool::fuzzy_match(typeName.c_str(), verb->str.c_str(), score);
+				if (score > 0) fuzzyRes.insert(std::pair<int, Verb*>(score, verb));
+				else delete verb;
+			}
+
+			std::vector<Verb*> out;
+			for (auto it = fuzzyRes.rbegin(); it != fuzzyRes.rend(); it++) {
+				out.push_back((*it).second);
+			}
+
+			return out;
 		}
 
 		virtual void PopMenu() {
@@ -99,151 +211,30 @@ namespace MOON {
 			return ImVec2(pos.x * scale.x + ImGui::GetWindowPos().x, pos.y * scale.y + ImGui::GetWindowPos().y);
 		}
 
-		void ListSlots(const std::string &typeName) {
-			auto lower = available_nodes->lower_bound(typeName);
-			auto upper = available_nodes->upper_bound(typeName);
+		void Instantiate(ImNodes::MyNode* node, const ImVec2& nodePos);
+		void ListSlots(const std::string &typeName);
+		void Draw();
 
-			for (; lower != upper; lower++) {
-				if (ImGui::MenuItem((*lower).second()->title.c_str())) {
-					nodes.push_back((*lower).second());
-					nodes.back()->parent = this;
-					OnCreateNode(nodes.back(), typeName);
-					ImNodes::AutoPositionNode(canvas, nodes.back());
-				}
-			}
-		}
+		ImNodes::MyConnection* CreateConnection(ImNodes::MyNode* inNode, ImNodes::MyNode* outNode,
+												const char* input_slot, const char* output_slot) {
+			ImNodes::MyConnection new_connection;
 
-		void Draw() {
-			/*
-				*NOTE: canvas must be created after ImGui initializes, because
-				constructor accesses ImGui style to configure default colors.
-			*/
-			//static ImNodes::CanvasState canvas{};
-			//const ImGuiStyle& style = ImGui::GetStyle();
-			if (this->canvas == NULL) this->canvas = new ImNodes::CanvasState();
+			new_connection.input_node = inNode;
+			new_connection.output_node = outNode;
+			new_connection.input_slot = input_slot;
+			new_connection.output_slot = output_slot;
 
-			ImNodes::BeginCanvas(canvas, blockMouseAction);
+			inNode->connections.push_back(new_connection);
+			outNode->connections.push_back(new_connection);
 
-			if (ImGui::IsWindowHovered() && !ImGui::IsWindowFocused() && 
-			   (ImGui::GetIO().MouseWheel != 0 || ImGui::IsMouseDown(2)))
-					ImGui::FocusWindow(ImGui::GetCurrentWindow());
+			/// store connection ptr to input slot and output slot
+			auto islot = inNode->GetSlot(ImNodes::In, new_connection.input_slot);
+			auto oslot = outNode->GetSlot(ImNodes::Out, new_connection.output_slot);
+			islot->con = oslot;
+			islot->parent = outNode;
+			oslot->childs.push_back(inNode);
 
-			// restore props
-			{
-				blockMouseAction = false;
-				selectedNode = NULL;
-				anythingSelected = false;
-			}
-
-			// loop all nodes
-			for (auto it = nodes.begin(); it != nodes.end();) {
-				ImNodes::MyNode* node = *it;
-				unsigned int anythingWrong = 0;
-
-				node->zoomFactor = canvas->zoom;
-
-				if (node->selected) {
-					anythingSelected = true;
-					selectedNode = node;
-					/*std::cout << "- Connection: -" << std::endl;
-					for (auto &iter : node->input_slots) {
-						if (iter.con != NULL)
-						std::cout << iter.title << " is con to: " << ((MyNode*)iter.parent)->title << std::endl;
-					}*/
-				}
-
-				// Start rendering node
-				if (ImNodes::BeginNodeEz(canvas, node, node->title.c_str(), &node->pos, &node->selected)) {
-
-					// Render input nodes first (order is important)
-					ImNodes::InputSlotsEz(canvas, node->input_slots.data(), node->input_slots.size());
-
-					ImGui::SetCursorPosY(ImGui::GetCursorPosY() - ImGui::GetStyle().ItemSpacing.y);
-
-					// node content go here
-					if (node->animCnt > 0) anythingWrong = 2;
-					try { node->ProcessContent(true); } 
-					catch (...) {
-						ImGui::TextUnformatted(ICON_FA_BAN);
-						anythingWrong = 1;
-					}
-
-					// Render output nodes first (order is important)
-					ImNodes::OutputSlotsEz(canvas, node->output_slots.data(), node->output_slots.size());
-
-					// Store new connections when they are created
-					ImNodes::MyConnection new_connection;
-					if (ImNodes::GetNewConnection(canvas, &new_connection.input_node, &new_connection.input_slot,
-						&new_connection.output_node, &new_connection.output_slot)) {
-						ImNodes::MyNode* conIn = (ImNodes::MyNode*)new_connection.input_node;
-						ImNodes::MyNode* conOut = (ImNodes::MyNode*)new_connection.output_node;
-
-						conIn->connections.push_back(new_connection);
-						conOut->connections.push_back(new_connection);
-
-						/// store connection ptr to input slot and output slot
-						auto islot = conIn->GetSlot(ImNodes::In, new_connection.input_slot);
-						auto oslot = conOut->GetSlot(ImNodes::Out, new_connection.output_slot);
-						islot->con = oslot;
-						islot->parent = (ImNodes::MyNode*)new_connection.output_node;
-						oslot->childs.push_back((ImNodes::MyNode*)new_connection.input_node);
-
-						try {
-							OnCreateConnection(new_connection, conIn, conOut, islot, oslot);
-							conOut->Backward();
-						} catch (...) {
-							anythingWrong = 1;
-						}
-					}
-
-					// Render output connections of this node
-					for (const ImNodes::MyConnection& connection : node->connections) {
-						/// Node contains all it's connections (both from output and to input slots). This means that multiple
-						/// nodes will have same connection. We render only output connections and ensure that each connection
-						/// will be rendered once.
-						if (connection.output_node != node) {
-							if (node->GetSlot(ImNodes::In, connection.input_slot)->hideSlot) {
-								DeleteConnection(connection);
-								break;
-							}
-						}
-
-						if (!ImNodes::Connection(canvas, connection.input_node, connection.input_slot,
-							connection.output_node, connection.output_slot)) {
-							DeleteConnection(connection);
-							break;
-						}
-					}
-				}
-				// Node rendering is done. This call will render node background based on size of content inside node.
-				ImNodes::EndNodeEz(canvas, blockMouseAction, anythingWrong);
-
-				if (node->selected && ImGui::IsKeyPressedMap(ImGuiKey_Delete)) {
-					if (anythingSelected && selectedNode == node) {
-						anythingSelected = false;
-						selectedNode = NULL;
-					}
-					DeleteNode(node);
-					it = nodes.erase(it);
-				} else ++it;
-			}
-
-			ImGui::SetWindowFontScale(1.f);
-			OnDrawGraph();
-
-			if (!blockMouseAction) {
-				const ImGuiIO& io = ImGui::GetIO();
-				if (ImGui::IsMouseReleased(1) && ImGui::IsWindowHovered() && !ImGui::IsMouseDragging(1)) {
-					this->canvas->lastMousePos = ImGui::GetMousePos();
-					ImGui::FocusWindow(ImGui::GetCurrentWindow());
-					ImGui::OpenPopup("NodesContextMenu");
-				}
-				if (ImGui::BeginPopup("NodesContextMenu")) {
-					PopMenu();
-					ImGui::EndPopup();
-				}
-			}
-			ImNodes::EndCanvas(canvas, blockMouseAction);
+			return &outNode->connections.back();
 		}
 
 		// delete connection ptr in input slot
@@ -295,7 +286,7 @@ namespace MOON {
 		// This callback method will be called after all nodes are drawn
 		virtual void OnDrawGraph() {}
 		// This callback method will be called when any node is created
-		virtual void OnCreateNode(ImNodes::MyNode* node, const std::string& type) {}
+		virtual void OnCreateNode(ImNodes::MyNode* node) {}
 		// This callback method will be called when any node is deleted
 		virtual void OnDeleteNode(ImNodes::MyNode* node) {}
 		// This callback method will be called when any connection is deleted
