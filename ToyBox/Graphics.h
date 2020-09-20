@@ -12,12 +12,14 @@ namespace MOON {
 	public:
 		static PipelineMode pipeline;
 		static ShadingMode shading;
+		static SystemProcess process;
 
 		// global parameters
 		static std::vector<float> ground;
 
 		static void DrawIDLUT();
 		static void DrawShadowMap();
+		static void SetDrawTarget(SceneView view, const bool& depthTest);
 		static void DrawSceneView(SceneView view);
 		
 		static void SetShadingMode(ShadingMode shading);

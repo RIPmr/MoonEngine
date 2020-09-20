@@ -54,28 +54,47 @@ namespace MOON {
 			translate.push_back(0); translate.push_back(1); translate.push_back(0);
 		}
 
-		// Gizmos
+	#pragma region Gizmos
 		static Vector3 Translate(const Ray& ray, const Direction& dir, Transform *trans, Vector3& cAxisPoint_O, bool& xActive, float maxCamRayLength);
 		static Quaternion Rotate(const Ray& ray, const Direction& dir, Matrix4x4& model, Transform *trans, Vector3& cAxisPoint_O, bool& xActive);
 		static Vector3 Scale(const Ray& ray, const Direction& dir, Transform *trans, Vector3& cAxisPoint_O, bool& xActive, float maxCamRayLength);
 		// screen space version
 		static Quaternion Rotate_SS(const Ray& ray, const Direction& dir, Matrix4x4& model, Transform *trans, Vector3& cAxisPoint_O, Vector2& screenPos_O, bool& xActive, float& deltaAngle);
 		static void Manipulate(void* transform, const float maxCamRayLength = 10000.0f);
+	#pragma endregion
 
-		// Prototypes
-		static void DrawPoint(const Vector3 &position, const Vector4 &color = Color::WHITE(), const float &pointSize = 1.0f, const Matrix4x4 model = Matrix4x4::identity());
-		static void DrawPoints(const std::vector<Vector3> &points, const Vector4 &color = Color::WHITE(), const float &pointSize = 1.0f, const Matrix4x4 model = Matrix4x4::identity());
-		static void DrawLine(const Vector3 &start, const Vector3 &end, const Vector4 &color = Color::WHITE(), const float &lineWidth = 1.0f, const Matrix4x4 model = Matrix4x4::identity());
-		static void DrawLines(const std::vector<Vector3> &lines, const Vector4 &color = Color::WHITE(), const float &lineWidth = 1.0f, const bool &isStrip = true, const Matrix4x4 model = Matrix4x4::identity(), const Shader* overrideShader = NULL);
-		static void DrawDashedLine(const Vector3 &start, const Vector3 &end, const Vector4 &color = Color::WHITE(), const float &lineWidth = 1.0f, const Matrix4x4 model = Matrix4x4::identity());
-		
+	#pragma region draw methods
+		static void DrawPointDirect(const Vector3 &position, const Vector4 &color = Color::WHITE(), const float &pointSize = 1.0f, const Matrix4x4 model = Matrix4x4::identity());
+		static void DrawPointsDirect(const std::vector<Vector3> &points, const Vector4 &color = Color::WHITE(), const float &pointSize = 1.0f, const Matrix4x4 model = Matrix4x4::identity());
+		static void DrawLineDirect(const Vector3 &start, const Vector3 &end, const Vector4 &color = Color::WHITE(), const float &lineWidth = 1.0f, const Matrix4x4 model = Matrix4x4::identity());
+		static void DrawLinesDirect(const std::vector<Vector3> &lines, const Vector4 &color = Color::WHITE(), const float &lineWidth = 1.0f, const bool &isStrip = true, const Matrix4x4 model = Matrix4x4::identity(), const Shader* overrideShader = NULL);
+		static void DrawDashedLineDirect(const Vector3 &start, const Vector3 &end, const Vector4 &color = Color::WHITE(), const float &lineWidth = 1.0f, const Matrix4x4 model = Matrix4x4::identity());
+	#pragma endregion
+
+	#pragma region draw methods Ex
+		static void DrawPoint(const Vector3 &position, const Vector4 &color = Color::WHITE(), const float &pointSize = 1.0f, const bool& depthTest = true, const Matrix4x4 model = Matrix4x4::identity(), const bool& drawActiveViewOnly = true);
+		static void DrawPoints(const std::vector<Vector3> &points, const Vector4 &color = Color::WHITE(), const float &pointSize = 1.0f, const bool& depthTest = true, const Matrix4x4 model = Matrix4x4::identity(), const bool& drawActiveViewOnly = true);
+		static void DrawPoints(const unsigned int& VAO, const size_t& pointNum, const Vector4 &color = Color::WHITE(), const float &pointSize = 1.0f, const bool& depthTest = true, const Matrix4x4 model = Matrix4x4::identity(), const bool& drawActiveViewOnly = true);
+		static void DrawLine(const Vector3 &start, const Vector3 &end, const Vector4 &color = Color::WHITE(), const float &lineWidth = 1.0f, const bool& depthTest = true, const Matrix4x4 model = Matrix4x4::identity(), const bool& drawActiveViewOnly = true);
+		static void DrawLines(const std::vector<Vector3> &lines, const Vector4 &color = Color::WHITE(), const float &lineWidth = 1.0f, const bool& depthTest = true, const bool &isStrip = true, const Matrix4x4 model = Matrix4x4::identity(), const Shader* overrideShader = NULL, const bool& drawActiveViewOnly = true);
+		static void DrawDashedLine(const Vector3 &start, const Vector3 &end, const Vector4 &color = Color::WHITE(), const float &lineWidth = 1.0f, const bool& depthTest = true, const Matrix4x4 model = Matrix4x4::identity(), const bool& drawActiveViewOnly = true);
+	#pragma endregion
+
+	#pragma region draw primitives
 		static void DrawCube(const Vector3& position, const Quaternion& rotation, const Vector3& scale);
 		static void DrawSphere(const Vector3& position, const Quaternion& rotation, const float& radius);
 		static void DrawCircle(const Vector3& position, const Quaternion& rotation, const float& radius);
 		static void DrawRectangle(const Vector3& position, const Quaternion& rotation, const Vector2& size);
+	#pragma endregion
 
-		static void DrawPointPrototype(std::vector<float> &data, const Vector4 &color = Color::WHITE(), const float &pointSize = 1.0f, const Matrix4x4 model = Matrix4x4::identity());
-		static void DrawLinePrototype(std::vector<float> &data, const Vector4 &color = Color::WHITE(), const float &lineWidth = 1.0f, const bool &isStrip = true, const Matrix4x4 model = Matrix4x4::identity(), const Shader* overrideShader = NULL);
+	#pragma region Prototypes
+		static void DrawPointPrototype(const std::vector<float> &data, const Vector4 &color = Color::WHITE(), const float &pointSize = 1.0f, const Matrix4x4 model = Matrix4x4::identity());
+		static void DrawPointPrototype(const std::vector<Vector3> &data, const Vector4 &color = Color::WHITE(), const float &pointSize = 1.0f, const Matrix4x4 model = Matrix4x4::identity());
+		static void DrawPointPrototype(const unsigned int& VAO, const size_t& pointNum, const Vector4 &color = Color::WHITE(), const float &pointSize = 1.0f, const Matrix4x4 model = Matrix4x4::identity());
+		static void DrawLinePrototype(const std::vector<float> &data, const Vector4 &color = Color::WHITE(), const float &lineWidth = 1.0f, const bool &isStrip = true, const Matrix4x4 model = Matrix4x4::identity(), const Shader* overrideShader = NULL);
+		static void DrawLinePrototype(const std::vector<Vector3> &data, const Vector4 &color = Color::WHITE(), const float &lineWidth = 1.0f, const bool &isStrip = true, const Matrix4x4 model = Matrix4x4::identity(), const Shader* overrideShader = NULL);
+	#pragma endregion
+
 	private:
 		static float threshold;
 

@@ -40,7 +40,7 @@ bool Renderer::PrepareVFB() {
 	// TODO: initialize new output image
 
 	// load init blank image
-	bool ret = LoadTextureFromMemory(OUTPUT_SIZE, outputImage, outputTexID);
+	bool ret = Utility::LoadTextureFromMemory(OUTPUT_SIZE, outputImage, outputTexID);
 	//IM_ASSERT(ret);
 
 	return ret;
@@ -161,7 +161,7 @@ bool Renderer::PrepareMatPrevRendering(Texture* target) {
 	matPrevImage = (GLubyte *)malloc(Material::PREVSIZE.x * Material::PREVSIZE.y * 3 * sizeof(GLubyte));
 
 	// load init blank image
-	return LoadTextureFromMemory(Material::PREVSIZE, matPrevImage, target->localID);
+	return Utility::LoadTextureFromMemory(Material::PREVSIZE, matPrevImage, target->localID);
 }
 Vector3 Renderer::SamplingColor_Simple(const Ray &r, int depth, const MSphere* ball, const MSphere* ground) {
 	HitRecord recB, recG;

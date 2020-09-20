@@ -38,8 +38,8 @@ namespace MOON {
 				p->child.push_back(this);
 			}
 			void RemoveParent(Neuron* target) {
-				RemoveElem<Neuron>(target->child, this);
-				RemoveElem<Neuron>(parent, target);
+				Utility::RemoveElem<Neuron>(target->child, this);
+				Utility::RemoveElem<Neuron>(parent, target);
 			}
 
 			void SetGraph(NGraph* g);

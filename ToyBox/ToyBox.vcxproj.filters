@@ -82,29 +82,14 @@
     <Filter Include="HeadFiles\Object\SmartMesh">
       <UniqueIdentifier>{b8eaf32a-391b-4923-a1e1-6c807d7fa280}</UniqueIdentifier>
     </Filter>
+    <Filter Include="HeadFiles\MOONCAKE\ExternalOps">
+      <UniqueIdentifier>{8cf4dd95-6433-448e-a813-077b9cada2e4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SourceFiles\MOONCAKE">
+      <UniqueIdentifier>{df5bf4d7-1ebc-414a-aa7a-e16cef463348}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="opengl\src\glad.c">
-      <Filter>ThirdParty</Filter>
-    </ClCompile>
-    <ClCompile Include="imgui\imgui.cpp">
-      <Filter>ThirdParty</Filter>
-    </ClCompile>
-    <ClCompile Include="imgui\imgui_demo.cpp">
-      <Filter>ThirdParty</Filter>
-    </ClCompile>
-    <ClCompile Include="imgui\imgui_draw.cpp">
-      <Filter>ThirdParty</Filter>
-    </ClCompile>
-    <ClCompile Include="imgui\imgui_impl_glfw.cpp">
-      <Filter>ThirdParty</Filter>
-    </ClCompile>
-    <ClCompile Include="imgui\imgui_impl_opengl3.cpp">
-      <Filter>ThirdParty</Filter>
-    </ClCompile>
-    <ClCompile Include="imgui\imgui_widgets.cpp">
-      <Filter>ThirdParty</Filter>
-    </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>SourceFiles\EnterPoint</Filter>
     </ClCompile>
@@ -224,6 +209,36 @@
     </ClCompile>
     <ClCompile Include="Ring.cpp">
       <Filter>SourceFiles\SmartMesh</Filter>
+    </ClCompile>
+    <ClCompile Include="HalfMesh.cpp">
+      <Filter>SourceFiles\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="opengl\src\glad.c">
+      <Filter>ThirdParty</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\imgui.cpp">
+      <Filter>ThirdParty</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\imgui_demo.cpp">
+      <Filter>ThirdParty</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\imgui_draw.cpp">
+      <Filter>ThirdParty</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\imgui_impl_glfw.cpp">
+      <Filter>ThirdParty</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\imgui_impl_opengl3.cpp">
+      <Filter>ThirdParty</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\imgui_widgets.cpp">
+      <Filter>ThirdParty</Filter>
+    </ClCompile>
+    <ClCompile Include="OperatorMgr.cpp">
+      <Filter>SourceFiles\MOONCAKE</Filter>
+    </ClCompile>
+    <ClCompile Include="NativeOperators.cpp">
+      <Filter>SourceFiles\MOONCAKE</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -413,19 +428,10 @@
     <ClInclude Include="MaterialEditor.h">
       <Filter>HeadFiles\Component</Filter>
     </ClInclude>
-    <ClInclude Include="PluginMgr.h">
-      <Filter>HeadFiles\MOONCAKE</Filter>
-    </ClInclude>
-    <ClInclude Include="NativeOperators.h">
-      <Filter>HeadFiles\MOONCAKE</Filter>
-    </ClInclude>
     <ClInclude Include="OperatorBase.h">
       <Filter>HeadFiles\MOONCAKE</Filter>
     </ClInclude>
     <ClInclude Include="OperatorMgr.h">
-      <Filter>HeadFiles\MOONCAKE</Filter>
-    </ClInclude>
-    <ClInclude Include="CakeParser.h">
       <Filter>HeadFiles\MOONCAKE</Filter>
     </ClInclude>
     <ClInclude Include="MatSphere.h">
@@ -481,6 +487,18 @@
     </ClInclude>
     <ClInclude Include="Ring.h">
       <Filter>HeadFiles\Object\SmartMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="FileManager.h">
+      <Filter>HeadFiles\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="CakeParser.h">
+      <Filter>HeadFiles\MOONCAKE\ExternalOps</Filter>
+    </ClInclude>
+    <ClInclude Include="PluginManager.h">
+      <Filter>HeadFiles\MOONCAKE\ExternalOps</Filter>
+    </ClInclude>
+    <ClInclude Include="Strutil.h">
+      <Filter>HeadFiles\Miscellaneous</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

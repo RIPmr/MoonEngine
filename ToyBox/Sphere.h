@@ -18,8 +18,10 @@ namespace MOON {
 			CreateProceduralMesh(interactive);
 		}
 
+		~Sphere() override {};
+
 		static void InteractiveCreate(void* arg);
-		static Mesh* GeneratePolySphere(float rad, int divs);
+		static Mesh* GenerateMesh(float rad, int divs);
 	};
 
 }

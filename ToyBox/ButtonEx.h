@@ -99,14 +99,15 @@ namespace MOON {
 		return switcher;
 	}
 
-	static void SwitchButtonEx(const char* ON_Label, const char* OFF_Label, const bool& switcher, 
-		void(*ON_Execute)(), void(*OFF_Execute)(), const ImVec2 btnSize = ImVec2(22, 22)) {
+	template <typename F1, typename F2>
+	static void SwitchButtonEx(const char* ON_Label, const char* OFF_Label, const bool switcher, 
+		F1 ON_Execute, F2 OFF_Execute, const ImVec2 btnSize = ImVec2(22, 22)) {
 		if (switcher) {
-			if (ImGui::Button(ON_Label, btnSize) && *ON_Execute != nullptr) (*ON_Execute)();
-		} else {
 			SetButtonClicked();
-			if (ImGui::Button(OFF_Label, btnSize) && *OFF_Execute != nullptr) (*OFF_Execute)();
+			if (ImGui::Button(ON_Label, btnSize)) ON_Execute();
 			ResetButtonColor();
+		} else {
+			if (ImGui::Button(OFF_Label, btnSize)) OFF_Execute();
 		}
 	}
 

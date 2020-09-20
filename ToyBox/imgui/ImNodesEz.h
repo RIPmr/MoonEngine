@@ -135,9 +135,30 @@ namespace ImNodes {
 				id = new int[itemCnt];
 				memset(id, 0, itemCnt * sizeof(unsigned int));
 			} else id = NULL;
+
 			if (colorCnt > 0) col = new MOON::Vector3[colorCnt];
 			else col = NULL;
+
 			if (hasMat) mat = new MOON::Matrix(1, 0);
+			else mat = NULL;
+		}
+
+		// constructor with initialization
+		SlotData(const unsigned int& itemCnt, const std::vector<int>& idList, 
+			const unsigned int& colorCnt, const std::vector<MOON::Vector3>& colorList,
+			const bool& matrixCnt, const MOON::Matrix& initMat) :
+			idSize(itemCnt), colSize(colorCnt), hasMat(matrixCnt) {
+			if (itemCnt > 0) {
+				id = new int[itemCnt];
+				for (int i = 0; i < itemCnt; i++) id[i] = idList[i];
+			} else id = NULL;
+
+			if (colorCnt > 0) {
+				col = new MOON::Vector3[colorCnt];
+				for (int i = 0; i < colorCnt; i++) col[i] = colorList[i];
+			} else col = NULL;
+
+			if (hasMat) mat = new MOON::Matrix(initMat);
 			else mat = NULL;
 		}
 

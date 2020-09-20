@@ -74,20 +74,19 @@ namespace MOON {
 		PROPERTY(Vector3, scale);
 		GET(scale) { 
 			if (parent != nullptr) {
-				auto mat = parent->localToWorldMat * parentMat;
-				Vector3 xSca = mat.multVec(_scale.x * GetNativeAxis(LEFT)),
-						ySca = mat.multVec(_scale.y * GetNativeAxis(UP)),
-						zSca = mat.multVec(_scale.z * GetNativeAxis(FORWARD));
-				return Vector3(xSca.magnitude(), ySca.magnitude(), zSca.magnitude());
+				Matrix4x4 M(localToWorldMat);
+				for (int i = 0; i < 3; ++i) M[i][3] = M[3][i] = 0; M[3][3] = 1;
+				Matrix4x4 sca = Matrix4x4::Rotate(M, rotation.Inverse());
+				return Vector3(sca[0][0], sca[1][1], sca[2][2]);
 			} else return _scale;
 		}
 		SET(scale) {
 			if (parent != nullptr) {
-				auto mat = (parent->localToWorldMat * parentMat).inverse();
-				Vector3 xSca = mat.multVec(value.x * GetLocalAxis(LEFT)),
-						ySca = mat.multVec(value.y * GetLocalAxis(UP)),
-						zSca = mat.multVec(value.z * GetLocalAxis(FORWARD));
-				_scale.setValue(xSca.magnitude(), ySca.magnitude(), zSca.magnitude());
+				Matrix4x4 sca; sca[0][0] = value.x; sca[1][1] = value.y; sca[2][2] = value.z;
+				Matrix4x4 M = (parent->localToWorldMat * parentMat).inverse() * Matrix4x4::Rotate(sca, rotation);
+				for (int i = 0; i < 3; ++i) M[i][3] = M[3][i] = 0; M[3][3] = 1;
+				Matrix4x4 res = Matrix4x4::Rotate(localToWorldMat, _rotation.Inverse());
+				_scale.setValue(sca[0][0], sca[1][1], sca[2][2]);
 			} else _scale = value;
 			UpdateMatrix();
 		}
@@ -124,7 +123,7 @@ namespace MOON {
 			this->worldToLocalMat = other.worldToLocalMat;
 			this->parent = other.parent;
 			//this->childs = other.childs;
-			//this->changeFlag = false;
+			this->changeFlag = true;
 			//this->mobject = nullptr;
 		}
 
@@ -154,6 +153,7 @@ namespace MOON {
 					} else tmp = tmp->parent;
 				}
 			}
+
 			if (this->parent != nullptr) this->parent->RemoveChild(this);
 			this->parent = parent;
 			if (parent != nullptr){
@@ -168,7 +168,7 @@ namespace MOON {
 			this->childs.push_back(child);
 		}
 		inline void RemoveChild(Transform* child) {
-			RemoveElem(this->childs, child);
+			Utility::RemoveElem(this->childs, child);
 		}
 
 		inline void Rotate(const Quaternion &deltaQ, const CoordSys coordinate = CoordSys::WORLD) {
@@ -217,6 +217,7 @@ namespace MOON {
 				localToWorldMat = parent->localToWorldMat * parentMat * localToWorldMat;
 
 			worldToLocalMat = localToWorldMat.inverse();
+			changeFlag = true;
 			UpdateChildTransform();
 		}
 

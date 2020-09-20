@@ -71,10 +71,10 @@ namespace MOON {
 			}
 
 			void RemoveNode(Neuron* node) {
-				RemoveElem<Neuron>(neurons, node);
+				Utility::RemoveElem<Neuron>(neurons, node);
 			}
 			void RemoveOpt(Optimizer* opt) {
-				RemoveElem<Optimizer>(optimizers, opt);
+				Utility::RemoveElem<Optimizer>(optimizers, opt);
 			}
 
 			Neuron* CreateActivation(const Activation &actType, Neuron* input) {
@@ -226,7 +226,7 @@ namespace MOON {
 			}
 
 			void OnDeleteNode(ImNodes::MyNode* node) override {
-				RemoveElem(inputs, node);
+				Utility::RemoveElem(inputs, node);
 			}
 
 			void OnCreateNode(ImNodes::MyNode* node) override {

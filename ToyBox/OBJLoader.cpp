@@ -352,28 +352,28 @@ namespace MOON {
 			switch (vtype) {
 				case 1: { // P
 					vVert.Position = getElement(iPositions, svert[0]);
-					vVert.TexCoords = Vector2(0, 0);
+					vVert.UV = Vector2(0, 0);
 					noNormal = true;
 					oVerts.push_back(vVert);
 					break;
 				}
 				case 2: { // P/T
 					vVert.Position = getElement(iPositions, svert[0]);
-					vVert.TexCoords = getElement(iTCoords, svert[1]);
+					vVert.UV = getElement(iTCoords, svert[1]);
 					noNormal = true;
 					oVerts.push_back(vVert);
 					break;
 				}
 				case 3: { // P//N
 					vVert.Position = getElement(iPositions, svert[0]);
-					vVert.TexCoords = Vector2(0, 0);
+					vVert.UV = Vector2(0, 0);
 					vVert.Normal = getElement(iNormals, svert[2]);
 					oVerts.push_back(vVert);
 					break;
 				}
 				case 4: { // P/T/N
 					vVert.Position = getElement(iPositions, svert[0]);
-					vVert.TexCoords = getElement(iTCoords, svert[1]);
+					vVert.UV = getElement(iTCoords, svert[1]);
 					vVert.Normal = getElement(iNormals, svert[2]);
 					oVerts.push_back(vVert);
 					break;
@@ -637,7 +637,7 @@ namespace MOON {
 
 	Texture* OBJLoader::LoadTexture(const TexType &type, const std::string &path) {
 		// if find corresponding texture in loaded textures
-		Texture* searchTex = MOON_TextureManager::GetItem(GetPathOrURLShortName(path));
+		Texture* searchTex = MOON_TextureManager::GetItem(Utility::GetPathOrURLShortName(path));
 		if (searchTex != NULL) return searchTex;
 
 		// else load that new texture

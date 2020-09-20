@@ -80,8 +80,8 @@ namespace MOON {
 			OPStack(const OPStack& other) {
 				this->enable = other.enable;
 				this->parent = other.parent;
-				this->deliver = new MObject(*other.deliver);
 				this->opList = other.opList;
+				this->deliver = new MObject(*other.deliver);
 			}
 			OPStack(MObject* parent) : parent(parent), enable(true), deliver(nullptr) {}
 			~OPStack() { ClearStack(); }
@@ -90,7 +90,10 @@ namespace MOON {
 			void ListStacks();
 			void UpdateFrom(const int& id);
 
-			void AddStack(Operator* op);
+			Operator* Begin() { return opList[0]; }
+			Operator* End() { return opList[opList.size() - 1]; }
+
+			void Add(Operator* op);
 			void RemoveStack(Operator* op);
 			void ClearStack();
 		};
@@ -121,7 +124,8 @@ namespace MOON {
 		// deliver is the result which have been processed by all operators
 		void DrawDeliver(Shader* overrideShader = NULL) {
 			if (opstack.deliver == nullptr) opstack.ExecuteAll();
-			opstack.deliver->Draw(overrideShader);
+			if (opstack.deliver == nullptr) Draw(overrideShader);
+			else opstack.deliver->Draw(overrideShader);
 		}
 
 		// draw base object

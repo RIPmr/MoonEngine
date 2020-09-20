@@ -4,24 +4,35 @@
 #include "MoonEnums.h"
 #include "Graphics.h"
 #include "SceneMgr.h"
+#include "HotkeyMgr.h"
 #include "UIController.h"
 
 namespace MOON {
-
-	void MOON_CoroutineLoop() {
-		auto poolSize = Coroutine::co_pool.size();
-		for (auto& it : Coroutine::co_pool) {
-			if (poolSize != Coroutine::co_pool.size()) {
-				MOON_CoroutineLoop(); break;
-			}
-			if (it.first && it.second->get_state() != CoroutineState::term) it.second->resume();
-		}
-	}
 
 	void Graphics::SetShadingMode(ShadingMode shading) {
 		Graphics::shading = shading;
 		if (shading == ShadingMode::WIRE) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		else glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
+
+	void Graphics::SetDrawTarget(SceneView view, const bool& depthTest = true) {
+		auto buffer = MOON_TextureManager::SCENEBUFFERS[view];
+		if (buffer->width == -1) return;
+
+		glViewport(0, 0, buffer->width, buffer->height);
+		//auto* cam = MOON_ActiveCamera;
+		MOON_ActiveCamera = MOON_SceneCameras[view];
+
+		Graphics::SetShadingMode(SceneManager::splitShading[view]);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, buffer->fbo);
+
+		glEnable(GL_BLEND);
+		glEnable(GL_LINE_SMOOTH);
+		if (depthTest) glEnable(GL_DEPTH_TEST);
+		else glDisable(GL_DEPTH_TEST);
+		glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 
 	void Graphics::DrawSceneView(SceneView view) {
@@ -76,9 +87,6 @@ namespace MOON {
 		}
 
 		// drawing Overlays ------------------------------------------------------------
-		// schedule all coroutines
-		if (view == MOON_ActiveView) MOON_CoroutineLoop();
-
 		// highlight selected
 		Graphics::HighlightSelection();
 
@@ -124,7 +132,7 @@ namespace MOON {
 
 	void Graphics::DrawCameras() {
 		for (auto &obj : MOON_CameraManager::itemMap) {
-			Gizmo::DrawPoint(obj.second->transform.position, Color::RED(), 6.0f);
+			Gizmo::DrawPointDirect(obj.second->transform.position, Color::RED(), 6.0f);
 		}
 	}
 
@@ -185,14 +193,16 @@ namespace MOON {
 
 		MOON_ShaderManager::lineShader->use();
 		MOON_ShaderManager::lineShader->setVec4("lineColor", Vector4(0.8, 0.8, 0.0, 0.2));
-		for (auto &id : MOON_SelectionID) {
+		for (auto &id : MOON_SelectionID) { // selected
 			if (SuperClassOf(MOON_ObjectList[id])._Equal("MObject")) {
 				dynamic_cast<MObject*>(MOON_ObjectList[id])->DrawDeliver(MOON_ShaderManager::lineShader);
 			}
 		}
-		MOON_ShaderManager::lineShader->setVec4("lineColor", Vector4(0.529, 0.808, 1.0, 0.25) * 0.8);
-		if (MOON_InputManager::hoverID > 0) {
-			dynamic_cast<MObject*>(MOON_ObjectList[MOON_InputManager::hoverID])->DrawDeliver(MOON_ShaderManager::lineShader);
+		if (HotKeyManager::state != EDIT) { // hovered
+			MOON_ShaderManager::lineShader->setVec4("lineColor", Vector4(0.529, 0.808, 1.0, 0.25) * 0.8);
+			if (MOON_InputManager::hoverID > 0) {
+				dynamic_cast<MObject*>(MOON_ObjectList[MOON_InputManager::hoverID])->DrawDeliver(MOON_ShaderManager::lineShader);
+			}
 		}
 		glDisable(GL_STENCIL_TEST);
 	}

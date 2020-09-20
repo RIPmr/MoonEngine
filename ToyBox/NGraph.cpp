@@ -147,7 +147,7 @@ namespace MOON {
 				if (IsInputSlotFull(node)) {
 					ImGui::TextUnformatted(("BS:" + std::to_string(opt->batchSize)).c_str());
 					ImGui::TextUnformatted(("Acc:" + std::to_string(opt->acc_cnt)).c_str());
-					ImGui::TextUnformatted(("LR:" + to_string_precision(opt->lr, 1, 3)).c_str());
+					ImGui::TextUnformatted(("LR:" + Strutil::to_string_precision(opt->lr, 1, 3)).c_str());
 					if (*preview != nullptr) (*preview)(node);
 				} else ImGui::TextUnformatted(ICON_FA_BAN);
 			}
@@ -170,6 +170,7 @@ namespace MOON {
 		void NGraph::DefineNodes() {
 			available_nodes = new Nodes{
 				// Data Nodes -----------------------------------------------------------------------
+				#pragma region Data_Nodes
 				{ "Data", []() -> MyNode* { return new MyNode("Random",
 					{	/// internal data
 						{ "range",  InnerData,   DataSizeDef(0, 1, 0), true },
@@ -194,7 +195,7 @@ namespace MOON {
 							ImGui::Separator(); ImGui::Text("data:");
 							if (ShowMatrix(outputMat(0), inputVec(1, 0).z)) node->Backward();
 						} else {
-							std::string tmp = "[" + to_string_precision(inputVec(0, 0).x, 1, 3) + ", " + to_string_precision(inputVec(0, 0).y, 1, 3) + "]";
+							std::string tmp = "[" + Strutil::to_string_precision(inputVec(0, 0).x, 1, 3) + ", " + Strutil::to_string_precision(inputVec(0, 0).y, 1, 3) + "]";
 							ImGui::TextUnformatted(tmp.c_str());
 							tmp = "(" + std::to_string((int)inputVec(1, 0).x) + u8"¡Á" + std::to_string((int)inputVec(1, 0).y) + ")";
 							ImGui::TextUnformatted(tmp.c_str());
@@ -235,9 +236,9 @@ namespace MOON {
 							ImGui::Text("data:");
 							if (ShowMatrix(outputMat(0), inputVec(1, 0).z)) node->Backward();
 						} else {
-							std::string tmp = "E: " + to_string_precision(inputVec(0, 0).x, 1, 3);
+							std::string tmp = "E: " + Strutil::to_string_precision(inputVec(0, 0).x, 1, 3);
 							ImGui::TextUnformatted(tmp.c_str());
-							tmp = "V: " + to_string_precision(inputVec(0, 0).y, 1, 3);
+							tmp = "V: " + Strutil::to_string_precision(inputVec(0, 0).y, 1, 3);
 							ImGui::TextUnformatted(tmp.c_str());
 							tmp = "(" + std::to_string((int)inputVec(1, 0).x) + u8"¡Á" + std::to_string((int)inputVec(1, 0).y) + ")";
 							ImGui::TextUnformatted(tmp.c_str());
@@ -275,7 +276,7 @@ namespace MOON {
 							ImGui::Separator(); ImGui::Text("data:");
 							if (ShowMatrix(outputMat(0), inputVec(1, 0).z)) node->Backward();
 						} else {
-							std::string tmp = "V: " + to_string_precision(inputVec(0, 0).x, 1, 3);
+							std::string tmp = "V: " + Strutil::to_string_precision(inputVec(0, 0).x, 1, 3);
 							ImGui::TextUnformatted(tmp.c_str());
 							tmp = "(" + std::to_string((int)inputVec(1, 0).x) + u8"¡Á" + std::to_string((int)inputVec(1, 0).y) + ")";
 							ImGui::TextUnformatted(tmp.c_str());
@@ -313,7 +314,7 @@ namespace MOON {
 							ImGui::Separator(); ImGui::Text("data:");
 							if (ShowMatrix(outputMat(0), inputVec(1, 0).z)) node->Backward();
 						} else {
-							std::string tmp = "D: " + to_string_precision(inputVec(0, 0).x, 1, 3);
+							std::string tmp = "D: " + Strutil::to_string_precision(inputVec(0, 0).x, 1, 3);
 							ImGui::TextUnformatted(tmp.c_str());
 							tmp = "(" + std::to_string((int)inputVec(1, 0).x) + u8"¡Á" + std::to_string((int)inputVec(1, 0).y) + ")";
 							ImGui::TextUnformatted(tmp.c_str());
@@ -351,9 +352,9 @@ namespace MOON {
 							if (ShowMatrix(outputMat(0), inputVec(1, 0).z)) node->Backward();
 						} else {
 							ImGui::TextUnformatted(tmp.c_str());
-							tmp = "R: (" + to_string_precision(inputVec(0, 0).x, 1, 3) + "," +
-								to_string_precision(inputVec(0, 0).y, 1, 3) + "," +
-								to_string_precision(inputVec(0, 0).z, 1, 3) + ")";
+							tmp = "R: (" + Strutil::to_string_precision(inputVec(0, 0).x, 1, 3) + "," +
+								Strutil::to_string_precision(inputVec(0, 0).y, 1, 3) + "," +
+								Strutil::to_string_precision(inputVec(0, 0).z, 1, 3) + ")";
 							ImGui::TextUnformatted(tmp.c_str());
 						}
 					},	/// process data
@@ -367,8 +368,9 @@ namespace MOON {
 						SyncFakeNode(node);
 					}
 				);}},
-
+				#pragma endregion
 				// Operators ------------------------------------------------------------------------
+				#pragma region Operators
 				{ "Operator", []() -> MyNode* { return new MyNode("Reshape", 
 					{	/// internal data
 						{ "shape",  InnerData,		DataSizeDef(0, 1, 0), true },
@@ -589,8 +591,9 @@ namespace MOON {
 						SyncFakeNode(node);
 					}
 				);}},
-
+				#pragma endregion
 				// Neurons --------------------------------------------------------------------------
+				#pragma region Neurons
 				{ "Neuron", []() -> MyNode* { return new MyNode("Input",
 					{	/// Input slots
 						{ "in",			Slot_Matrix,	DataSizeDef(0, 1, 1) }
@@ -707,7 +710,7 @@ namespace MOON {
 							if (ImGui::DragFloat("pow", &((NPow*)node->attachment)->n, 1.0f)) node->Backward();
 						});
 						if (hideInNode) 
-							ImGui::TextUnformatted(( "n: " + to_string_precision(((NPow*)node->attachment)->n, 1, 3) ).c_str());
+							ImGui::TextUnformatted(( "n: " + Strutil::to_string_precision(((NPow*)node->attachment)->n, 1, 3) ).c_str());
 					},
 					[](MyNode* node) {
 						Neuron* neu = (Neuron*)node->attachment;
@@ -840,8 +843,9 @@ namespace MOON {
 						SyncMatrix(node);
 					}
 				);} },
-
+				#pragma endregion
 				// Optimizer ------------------------------------------------------------------------
+				#pragma region Optimizer
 				{ "Optimizer", []() -> MyNode* { return new MyNode("GradDesc",
 					{	/// Input slots
 						{ "target",		Slot_Matrix,	DataSizeDef(0, 1, 1) }
@@ -865,7 +869,7 @@ namespace MOON {
 							ImGui::DragFloat("S", &opt->friction, 0.01f);
 						}, [](MyNode* node)-> void {
 							RMSProp* opt = (RMSProp*)node->attachment;
-							ImGui::TextUnformatted(("S: " + to_string_precision(opt->friction, 1, 3)).c_str());
+							ImGui::TextUnformatted(("S: " + Strutil::to_string_precision(opt->friction, 1, 3)).c_str());
 						});
 					},
 					[](MyNode* node) {
@@ -885,8 +889,8 @@ namespace MOON {
 							ImGui::DragFloat("V", &opt->friction.y, 0.01f);
 						}, [](MyNode* node)-> void {
 							Adam* opt = (Adam*)node->attachment;
-							ImGui::TextUnformatted(("S: " + to_string_precision(opt->friction.x, 1, 3)).c_str());
-							ImGui::TextUnformatted(("V: " + to_string_precision(opt->friction.y, 1, 3)).c_str());
+							ImGui::TextUnformatted(("S: " + Strutil::to_string_precision(opt->friction.x, 1, 3)).c_str());
+							ImGui::TextUnformatted(("V: " + Strutil::to_string_precision(opt->friction.y, 1, 3)).c_str());
 						});
 					},
 					[](MyNode* node) {
@@ -894,8 +898,9 @@ namespace MOON {
 						if (IsInputSlotFull(node)) opt->Forward();
 					}
 				);} },
-
+				#pragma endregion
 				// Vis Nodes ------------------------------------------------------------------------
+				#pragma region Visualization
 				{ "Visualization", []() -> MyNode* { return new MyNode("BatchPlot",
 					{	/// Input slots
 						{ "prop",		InnerData,		DataSizeDef(1, 1, 0),	true},
@@ -1014,6 +1019,7 @@ namespace MOON {
 						
 					}, [](MyNode* node) {}
 				);} }
+				#pragma endregion
 			};
 
 			std::cout << std::endl;

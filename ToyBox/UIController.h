@@ -36,7 +36,6 @@ namespace MOON {
 	public:
 		// parameters
 		static Vector4 clearColor;
-		static ObjectBase* drag_drop_payload;
 
 		// image resources
 		static Texture *icon, *logo, *logoFull;
@@ -697,9 +696,15 @@ namespace MOON {
 			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvailWidth() - (notEmpty ? 30 : 0));
 			if (ImGui::InputTextWithHint("search", "type to search", pattern, IM_ARRAYSIZE(pattern))) {
 				SceneManager::matchedList.clear();
-				FuzzySearch(pattern);
+				Utility::FuzzySearch(
+					pattern, MOON_ObjectList, 
+					[](ObjectBase* obj) -> std::string& {
+						return obj->name;
+					}, SceneManager::matchedList
+				);
 			}
-			/*if (ImGui::IsItemDeactivated() && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Enter))) {
+			/*if (ImGui::IsItemDeactivated() && 
+			ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Enter))) {
 
 			}*/
 
@@ -812,6 +817,9 @@ namespace MOON {
 											 ImGuiTreeNodeFlags_DefaultOpen, MOON_ObjectList[iter]->ID)) {
 					MOON_ObjectList[iter]->ListProperties();
 				}
+				// keep selection in edit mode
+				if (HotKeyManager::editTarget && HotKeyManager::editTarget->ID == iter) 
+					MOON_ObjectList[iter]->selected = true;
 
 				if (iter >= SceneManager::GetObjectNum()) break;
 				// remove ID in selection slot while click close button in the collapsing header
@@ -943,7 +951,9 @@ namespace MOON {
 				float width = ImGui::GetWindowWidth() / 3.5;
 				if (ImGui::BeginTabItem("Basic")) {
 					ImGui::Spacing();
-					if (ImGui::Button("Cube", ImVec2(width, 20.0))) {}
+					if (ImGui::Button("Cube", ImVec2(width, 20.0))) {
+						MOON_ModelManager::CreateSmartMesh(box, "box", true);
+					}
 					ImGui::SameLine();
 					if (ImGui::Button("Sphere", ImVec2(width, 20.0))) {
 						MOON_ModelManager::CreateSmartMesh(sphere, "sphere", true);
@@ -1210,21 +1220,6 @@ namespace MOON {
 		}
 
 	private:
-		static void FuzzySearch(const char* pattern) {
-			std::map<int, ObjectBase*> fuzzyRes;
-
-			for (auto lower = MOON_ObjectList.begin(); lower != MOON_ObjectList.end(); lower++) {
-				if ((*lower) == nullptr) continue;
-				int score = -INFINITY_INT;
-				MatchTool::fuzzy_match(pattern, (*lower)->name.c_str(), score);
-				if (score > 0) fuzzyRes.insert(std::pair<int, ObjectBase*>(score, (*lower)));
-				else ; // discard
-			}
-
-			for (auto it = fuzzyRes.rbegin(); it != fuzzyRes.rend(); it++) 
-				SceneManager::matchedList.push_back((*it).second);
-		}
-
 		static std::string OpenFile() {
 			TCHAR szBuffer[MAX_PATH] = { 0 };
 			BROWSEINFO bi;
@@ -1253,39 +1248,6 @@ namespace MOON {
 			return szBuffer;
 		}
 
-		/*static void DemoMenu() {
-			ImGui::MenuItem("(dummy menu)", NULL, false, false);
-			if (ImGui::BeginMenu("Options")) {
-				static bool enabled = true;
-				ImGui::MenuItem("Enabled", "", &enabled);
-				ImGui::BeginChild("child", ImVec2(0, 60), true);
-				for (int i = 0; i < 10; i++)
-					ImGui::Text("Scrolling Text %d", i);
-				ImGui::EndChild();
-				static float f = 0.5f;
-				static int n = 0;
-				static bool b = true;
-				ImGui::SliderFloat("Value", &f, 0.0f, 1.0f);
-				ImGui::InputFloat("Input", &f, 0.1f);
-				ImGui::Combo("Combo", &n, "Yes\0No\0Maybe\0\0");
-				ImGui::Checkbox("Check", &b);
-				ImGui::EndMenu();
-			}
-			if (ImGui::BeginMenu("Colors")) {
-				float sz = ImGui::GetTextLineHeight();
-				for (int i = 0; i < ImGuiCol_COUNT; i++) {
-					const char* name = ImGui::GetStyleColorName((ImGuiCol)i);
-					ImVec2 p = ImGui::GetCursorScreenPos();
-					ImGui::GetWindowDrawList()->AddRectFilled(p, ImVec2(p.x + sz, p.y + sz), ImGui::GetColorU32((ImGuiCol)i));
-					ImGui::Dummy(ImVec2(sz, sz));
-					ImGui::SameLine();
-					ImGui::MenuItem(name);
-				}
-				ImGui::EndMenu();
-			}
-			if (ImGui::BeginMenu("Disabled", false)) { IM_ASSERT(0); }
-			if (ImGui::MenuItem("Checked", NULL, true)) {}
-		}*/
 	};
 
 }

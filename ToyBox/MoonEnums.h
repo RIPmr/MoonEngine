@@ -14,7 +14,7 @@ namespace MOON {
 	#define MOON_SceneCameras			SceneManager::CameraManager::sceneCameras
 	#define MOON_ActiveCamera			SceneManager::CameraManager::activeCamera
 	#define MOON_MousePos				SceneManager::InputManager::mousePos
-	#define MOON_MousePosNormalized		NormalizedMousePos()
+	#define MOON_MousePosNormalized		Utility::NormalizedMousePos()
 	#define MOON_Clock					SceneManager::Clock
 
 	#define MOON_SceneManager			SceneManager
@@ -37,6 +37,8 @@ namespace MOON {
 	#define MOON_MouseDown(key)			SceneManager::InputManager::IsMouseDown(key)
 	#define MOON_MouseRelease(key)		SceneManager::InputManager::IsMouseRelease(key)
 	#define MOON_MouseRepeat(key)		SceneManager::InputManager::IsMouseRepeat(key)
+
+	#define CheckType(item, type)		SceneManager::GetType(item)._Equal(type)
 
 	enum MOON_MOUSE {
 		#define LEFT_MOUSE				0
@@ -211,12 +213,21 @@ namespace MOON {
 	};
 
 	enum SmartMesh {
-		cube,
+		box,
 		sphere,
 		cylinder,
 		plane,
 		capsule,
 		text
+	};
+
+	enum SystemProcess {
+		sys_init,
+		sys_draw_scene,
+		sys_coroutine,
+		sys_draw_ui,
+		sys_process_input,
+		sys_clean_up
 	};
 
 	enum ViewportState {

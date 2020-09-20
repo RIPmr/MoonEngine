@@ -28,7 +28,7 @@ namespace MOON {
 	}
 
 	void DEBUG::Line(const Vector3 &start, const Vector3 &end, const Vector4 &color, const float &lineWidth) {
-		Gizmo::DrawLine(start, end, color, lineWidth);
+		Gizmo::DrawLineDirect(start, end, color, lineWidth);
 	}
 
 }

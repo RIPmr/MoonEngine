@@ -7,21 +7,21 @@ namespace MOON {
 
 	class Box : public Model {
 	public:
-		Vector2 size;
-		Vector2 segment;
+		Vector3 size;
+		Vector3 segment;
 
 		void CreateProceduralMesh(const bool& interactive) override;
 		void ListProceduralProperties() override;
 
 		Box(const std::string &name, const bool& interactive = false,
-			Vector2 size = Vector2::ONE(), Vector2 segment = Vector2(3, 3),
+			Vector3 size = Vector3::ONE(), Vector3 segment = Vector3::ONE(),
 			const int id = MOON_AUTOID) :
 			Model(name, id), size(size), segment(segment) {
 			CreateProceduralMesh(interactive);
 		}
 
 		static void InteractiveCreate(void* arg);
-		static Mesh* GenerateMesh(Vector2 size, Vector2 segment);
+		static Mesh* GenerateMesh(Vector3 size, Vector3 segment);
 	};
 
 }

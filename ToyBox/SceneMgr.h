@@ -17,6 +17,7 @@
 #include "Material.h"
 #include "MatSphere.h"
 #include "Graphics.h"
+#include "HotkeyMgr.h"
 
 namespace MOON {
 	template <class T>
@@ -482,6 +483,8 @@ namespace MOON {
 
 		template<class T>
 		static std::string GetType(T* item) {
+			if (item == nullptr) return "Unknown";
+
 			std::string type;
 			if (typeid(*item) == typeid(Shader))			type = "Shader";
 			else if (typeid(*item) == typeid(FrameBuffer)	||
@@ -726,6 +729,8 @@ namespace MOON {
 			}
 
 			static void ClearSelection() {
+				if (HotKeyManager::state == EDIT) return;
+
 				MOON_InputManager::selection.clear();
 				for (ObjectBase *obj : MOON_ObjectList) {
 					if (obj != nullptr) obj->selected = false;
@@ -733,6 +738,8 @@ namespace MOON {
 			}
 
 			static void Select(const unsigned int ID) {
+				if (HotKeyManager::state == EDIT) return;
+
 				if (!MOON_InputManager::left_ctrl_hold && !MOON_InputManager::right_ctrl_hold) {
 					ClearSelection();
 				}
@@ -946,6 +953,9 @@ namespace MOON {
 						break;
 					case plane:
 						model = new Plane(name, interactive);
+						break;
+					case box:
+						model = new Box(name, interactive);
 						break;
 				}
 				if (model != nullptr) AddItem(model);

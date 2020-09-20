@@ -102,6 +102,7 @@ float Graphics::quadVertices[24] = {
 };
 PipelineMode Graphics::pipeline		= PipelineMode::FORWARD_SHADING;
 ShadingMode Graphics::shading		= ShadingMode::DEFAULT;
+SystemProcess Graphics::process		= SystemProcess::sys_init;
 unsigned int Graphics::quadVAO		= MOON_UNSPECIFIEDID;
 unsigned int Graphics::quadVBO		= MOON_UNSPECIFIEDID;
 
@@ -131,7 +132,6 @@ bool MainUI::show_nn_manager				= false;
 bool MainUI::show_right_click_menu			= false;
 
 ImGuiStyle*									  MainUI::style;
-ObjectBase* MainUI::drag_drop_payload		= MOON_UNSPECIFIEDID;
 Texture*	MainUI::icon					= MOON_UNSPECIFIEDID;
 Texture*	MainUI::logo					= MOON_UNSPECIFIEDID;
 Texture*	MainUI::logoFull				= MOON_UNSPECIFIEDID;
@@ -239,3 +239,4 @@ Operators* available_operators					= NULL;
 ViewportState HotKeyManager::state				= FREE;
 SnapMode HotKeyManager::snapType				= vertex;
 bool HotKeyManager::enableSnap					= false;
+MObject* HotKeyManager::editTarget				= nullptr;

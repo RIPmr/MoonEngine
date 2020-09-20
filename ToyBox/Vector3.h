@@ -99,7 +99,10 @@ namespace MOON {
 		static Vector3 Normalize(const Vector3 &v);
 		static Vector3 Cross(const Vector3 &v1, const Vector3 &v2);
 		static float Dot(const Vector3 &v1, const Vector3 &v2);
+
+		// return angle in radians
 		static float Angle(const Vector3 &v1, const Vector3 &v2);
+
 		// Projection Calculation of a onto b
 		static Vector3 Projection(const Vector3 &a, const Vector3 &b);
 		static Vector3 ONE();

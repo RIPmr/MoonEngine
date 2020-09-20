@@ -6,6 +6,7 @@
 //#include <glad/glad.h>
 //#include <glm/glm.hpp>
 //#include <glm/gtc/matrix_transform.hpp>
+//#include <glm/gtc/quaternion.hpp>
 
 #include "MathUtils.h"
 #include "Vector3.h"
@@ -490,41 +491,48 @@ namespace MOON {
 			return Vector3(a, b, c);
 		}
 
-		// * polar decomposition, NOT TESTED YET
-		void Decompose(Vector3& scale, Quaternion& rotation, Vector3& translation) {
+		// Polar Decomposition
+		void Decompose(Vector3& scale, Matrix4x4& rotation, Vector3& translation) {
 			translation.x = x[3][0];
 			translation.y = x[3][1];
 			translation.z = x[3][2];
 
-			float norm;
-			unsigned int iter = 0;
 			Matrix4x4 R(*this);
-			R[3][0] = 0; R[3][1] = 0; R[3][2] = 0;
+			for (int i = 0; i < 3; ++i) R[i][3] = R[3][i] = 0; R[3][3] = 1;
 			Matrix4x4 M(R);
 
+			float norm;
+			unsigned int iter = 0;
 			do {
 				Matrix4x4 Rnext;
-				Matrix4x4 Rit(R.transpose().inverse());
+				Matrix4x4 Rit(R.transposed().inverse());
 				for (int i = 0; i < 4; ++i)
 					for (int j = 0; j < 4; ++j)
-						Rnext[j][i] = 0.5f * (R[j][i] + Rit[j][i]);
+						Rnext[i][j] = 0.5f * (R[i][j] + Rit[i][j]);
 
 				norm = 0;
 				for (int i = 0; i < 3; ++i) {
-					float n = std::abs(R[0][i] - Rnext[0][i]) +
-						std::abs(R[1][i] - Rnext[1][i]) +
-						std::abs(R[2][i] - Rnext[2][i]);
+					float n = std::abs(R[i][0] - Rnext[i][0]) +
+							  std::abs(R[i][1] - Rnext[i][1]) +
+							  std::abs(R[i][2] - Rnext[i][2]);
 					norm = std::max(norm, n);
 				}
 				R = Rnext;
 			} while (++iter < 100 && norm > .0001);
 
+			rotation = R;
 			auto scaMat = R.inverse() * M;
-			rotation = Quaternion(R);
 
 			scale.x = scaMat[0][0];
 			scale.y = scaMat[1][1];
 			scale.z = scaMat[2][2];
+		}
+
+		// Polar Decomposition
+		void Decompose(Vector3& scale, Quaternion& rotation, Vector3& translation) {
+			Matrix4x4 tmp;
+			Decompose(scale, tmp, translation);
+			rotation = Quaternion(tmp);
 		}
 
 	};

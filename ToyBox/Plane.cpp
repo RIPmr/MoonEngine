@@ -30,7 +30,7 @@ namespace MOON {
 					std::fabs(sp->transform.position.x - newPoint.x),
 					std::fabs(sp->transform.position.z - newPoint.z)
 				);
-				ReleaseVector(sp->meshList);
+				Utility::ReleaseVector(sp->meshList);
 				sp->meshList.push_back(GenerateMesh(sp->size, sp->segment));
 			} else if (MOON_InputManager::IsMouseRelease(0)) {
 				return;
@@ -45,7 +45,7 @@ namespace MOON {
 		if (interactive) {
 			Coroutine::create_coroutine(InteractiveCreate, this);
 		} else {
-			ReleaseVector(meshList);
+			Utility::ReleaseVector(meshList);
 			meshList.push_back(GenerateMesh(size, segment));
 		}
 	}
@@ -79,7 +79,7 @@ namespace MOON {
 				float u = (float)x / segment.x;
 				verts.push_back(Vertex());
 				verts[verts.size() - 1].Position.setValue(u * size.x, 0, v * size.y);
-				verts[verts.size() - 1].TexCoords.setValue(u, v);
+				verts[verts.size() - 1].UV.setValue(u, v);
 				verts[verts.size() - 1].Normal.setValue(0, 1, 0);
 			}
 		}
@@ -107,6 +107,7 @@ namespace MOON {
 
 		Mesh* mesh = new Mesh("plane", verts, tris);
 		mesh->material = MOON_MaterialManager::GetItem("default");
+		mesh->UpdateBBox();
 		return mesh;
 	}
 

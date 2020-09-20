@@ -3,8 +3,11 @@
 #include "ObjectBase.h"
 #include "SceneMgr.h"
 #include "OperatorBase.h"
+#include "OperatorMgr.h"
 
 namespace MOON {
+#pragma region objectBase
+	#pragma region constructors
 	ObjectBase::ObjectBase(const int &_id) : visible(true), selected(false) {
 		if (_id == MOON_AUTOID) {
 			ID = SceneManager::GenUniqueID();
@@ -21,7 +24,9 @@ namespace MOON {
 	void ObjectBase::Rename(const std::string &newName) {
 		SceneManager::RenameItem(this, newName);
 	}
+	#pragma endregion
 
+	#pragma region UI
 	void ObjectBase::ListName() {
 		// list name
 		char buf[64]; strcpy(buf, name.c_str());
@@ -39,37 +44,90 @@ namespace MOON {
 		ListName();
 		ImGui::Spacing();
 	}
+	#pragma endregion
+#pragma endregion
 
+#pragma region MObject
+	#pragma region operation_stack
 	void MObject::OPStack::ExecuteAll() {
-		if (deliver == nullptr) deliver = parent;
 		if (!enable) return;
+		deliver = parent;
 		for (auto &iter : opList) {
+			if (iter->processed != nullptr) {
+				delete iter->processed;
+				iter->processed = nullptr;
+			}
 			deliver = iter->Execute(deliver);
 		}
 	}
 
 	void MObject::OPStack::UpdateFrom(const int& id) {
 		deliver = id ? opList[id - 1]->processed : parent;
+		if (id >= opList.size()) return;
 		for (int i = id; i < opList.size(); i++) {
+			if (i > id && opList[i]->processed != nullptr) {
+				delete opList[i]->processed;
+				opList[i]->processed = nullptr;
+			}
 			deliver = opList[i]->Execute(deliver);
+			//std::cout << "executed: " << opList[i]->name << std::endl;
 		}
 	}
 
 	void MObject::OPStack::ListStacks() {
 		static auto stackName = std::string(ICON_FA_WRENCH) + " OP-Stack";
+		ImVec2 listPos = ImGui::GetCursorPos(); listPos.y += 22;
 		ImGui::Checkbox(UniquePropNameFromParent("enableOPStack"), &enable, true); ImGui::SameLine();
-		ImGui::Button(ICON_FA_PLUS, ImVec2(22, 22), parent->ID); ImGui::SameLine();
+
+		// add operator to stack
+		if (ImGui::Button(ICON_FA_PLUS, ImVec2(22, 22), parent->ID)){
+			OperatorManager::showList = true;
+			OperatorManager::focusKey = true;
+			OperatorManager::parentID = parent->ID;
+		} ImGui::SameLine();
+
+		// show operator list
+		if (OperatorManager::showList) ImGui::SetNextItemOpen(true);
 		if (ImGui::CollapsingHeader(stackName.c_str(), ImGuiTreeNodeFlags_DefaultOpen, parent->ID)) {
+			if (OperatorManager::parentID == parent->ID) OperatorManager::ListOperators(listPos, *this);
+			ImGui::PushID(parent->ID);
 			for (int i = 0; i < opList.size(); i++) {
-				if (opList[i]->content(opList[i])) {
-					UpdateFrom(i);
+				ImGui::PushID(i);
+				ImGui::Checkbox("enableOp", &opList[i]->enabled, true); ImGui::SameLine();
+				ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.192f, 0.192f, 0.192f, 1.0f));
+
+				auto overlapPos = ImGui::GetCursorPos(); overlapPos.x += 25.0f;
+				if (ImGui::CollapsingHeader(opList[i]->name.c_str(), &opList[i]->opened, ImGuiTreeNodeFlags_DefaultOpen, i)) {
+					ImGui::Columns(2, "mycolumns");
+					ImGui::SetColumnWidth(-1, 18);
+					ImGui::NextColumn();
+					if (opList[i]->content(opList[i], i ? opList[i - 1]->processed : parent)) {
+						UpdateFrom(i);
+					}
+					ImGui::Columns(1);
 				}
+				auto endPos = ImGui::GetCursorPos();
+				ImGui::SetCursorPos(overlapPos);
+				opList[i]->ListName(i);
+				ImGui::SetCursorPos(endPos);
+
+				ImGui::PopStyleColor();
+				if (!opList[i]->opened) {
+					delete opList[i];
+					Utility::RemoveElem(opList, opList[i]);
+					UpdateFrom(i);
+					ImGui::PopID();
+					break;
+				}
+				ImGui::PopID();
 			}
+			ImGui::PopID();
 		}
 	}
 
-	void MObject::OPStack::AddStack(Operator* op) {
+	void MObject::OPStack::Add(Operator* op) {
 		opList.push_back(op);
+		UpdateFrom(opList.size() - 1);
 	}
 	void MObject::OPStack::RemoveStack(Operator* op) {
 		auto end = opList.end();
@@ -82,13 +140,11 @@ namespace MOON {
 		}
 	}
 	void MObject::OPStack::ClearStack() {
-		auto end = opList.end();
-		for (auto iter = opList.begin(); iter != end;) {
-			delete *iter;
-			iter = opList.erase(iter);
-		}
+		Utility::ReleaseVector(opList);
 	}
+	#pragma endregion
 
+	#pragma region UI
 	void MObject::ListName() {
 		// list name
 		char buf[64]; strcpy(buf, name.c_str());
@@ -125,7 +181,7 @@ namespace MOON {
 			}
 		} 
 		/*else if (ImGui::Button("test")) {
-			Quaternion quat(Matrix4x4(transform.rotation));
+			uaternion quat(Matrix4x4(transform.rotation));
 			std::cout << "rot:" << quat.EulerAngle() << std::endl;
 		}*/
 
@@ -174,4 +230,6 @@ namespace MOON {
 		opstack.ListStacks();
 		ImGui::Spacing();
 	}
+	#pragma endregion
+#pragma endregion
 }

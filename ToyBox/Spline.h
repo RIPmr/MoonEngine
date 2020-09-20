@@ -143,7 +143,7 @@ namespace MOON {
 			}
 
 			if (ImGui::InputInt("knotNum", &knotNum, 1, 1)) {
-				Constraint(knotNum, 2, INFINITY_INT);
+				Utility::Constraint(knotNum, 2, INFINITY_INT);
 				Update();
 			}
 			ImGui::DragFloat("width", &width, 0.1f, 1.0f, 10.0f);
@@ -158,7 +158,8 @@ namespace MOON {
 				ImGui::PushItemWidth(130.0f);
 				for (int i = 0; i < knotList.size(); i++) {
 					Vector3 oldPos = knotList[i];
-					if (ImGui::DragFloat3(to_string_precision(i, 0, 3).c_str(), (float*)&knotList[i], 0.1f)) {
+					if (ImGui::DragFloat3(Strutil::to_string_precision(i, 0, 3).c_str(), 
+						(float*)&knotList[i], 0.1f)) {
 						Update();
 						Vector3 deltaPos = knotList[i] - oldPos;
 						if (i == 0) {
@@ -205,7 +206,7 @@ namespace MOON {
 
 		void Draw(const Matrix4x4 &model, const Vector4 &color = Color::WHITE(), const Shader *overrideShader = NULL) {
 			if (knotList.size() < 1) return;
-			Gizmo::DrawLines(type ? interpKnots : knotList, color, overrideShader == NULL ? width : std::max(5.0f, width), true, model, overrideShader);
+			Gizmo::DrawLinesDirect(type ? interpKnots : knotList, color, overrideShader == NULL ? width : std::max(5.0f, width), true, model, overrideShader);
 			/*if (overrideShader == NULL) {
 				Gizmo::DrawPoints(knotList, Color::BLUE(), 5.0f, model);
 				if (type == BEZIER) {
@@ -217,7 +218,7 @@ namespace MOON {
 						controlLines.push_back(controllerList[ctrl + 1]);
 						ctrl += 2;
 					}
-					Gizmo::DrawLines(controlLines, Color::RED(), 1.0f, false, model);
+					Gizmo::DrawLinesDirect(controlLines, Color::RED(), 1.0f, false, model);
 					Gizmo::DrawPoints(controllerList, Color::RED(), 5.0f, model);
 				}
 			}*/
@@ -225,7 +226,7 @@ namespace MOON {
 
 		void DrawHandles(const Matrix4x4 &model, const Vector4 &color = Color::WHITE()) {
 			if (knotList.size() < 1) return;
-			Gizmo::DrawPoints(knotList, Color::BLUE(), 5.0f, model);
+			Gizmo::DrawPointsDirect(knotList, Color::BLUE(), 5.0f, model);
 			if (type == BEZIER) {
 				std::vector<float> controlLines;
 				for (int i = 0, ctrl = 0; i < knotNum - 1; i++) {
@@ -245,7 +246,7 @@ namespace MOON {
 					ctrl += 2;
 				}
 				Gizmo::DrawLinePrototype(controlLines, Color::RED(), 1.0f, false, model);
-				Gizmo::DrawPoints(controllerList, Color::RED(), 5.0f, model);
+				Gizmo::DrawPointsDirect(controllerList, Color::RED(), 5.0f, model);
 			}
 		}
 
@@ -258,9 +259,9 @@ namespace MOON {
 				tan.push_back(list[i]); tan.push_back(list[i] + tangentList[i] * 0.5f);
 				bitan.push_back(list[i]); bitan.push_back(list[i] + bitangentList[i] * 0.5f);
 			}
-			Gizmo::DrawLines(norm, Color::BLUE(), 1.0f, false, model);
-			Gizmo::DrawLines(tan, Color::RED(), 1.0f, false, model);
-			Gizmo::DrawLines(bitan, Color::GREEN(), 1.0f, false, model);
+			Gizmo::DrawLinesDirect(norm, Color::BLUE(), 1.0f, false, model);
+			Gizmo::DrawLinesDirect(tan, Color::RED(), 1.0f, false, model);
+			Gizmo::DrawLinesDirect(bitan, Color::GREEN(), 1.0f, false, model);
 		}
 	};
 }

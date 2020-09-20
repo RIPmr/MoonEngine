@@ -26,8 +26,8 @@ namespace MOON {
 		while (!pickFlag && HotKeyManager::state == CREATE) {
 			if (MOON_InputManager::mouse_left_hold) {
 				sp->radius = sp->transform.position.distance(MOON_InputManager::PickGroundPoint(MOON_MousePos));
-				ReleaseVector(sp->meshList);
-				sp->meshList.push_back(GeneratePolySphere(sp->radius, sp->segment));
+				Utility::ReleaseVector(sp->meshList);
+				sp->meshList.push_back(GenerateMesh(sp->radius, sp->segment));
 			} else if (MOON_InputManager::IsMouseRelease(0)) {
 				return;
 			}
@@ -41,8 +41,8 @@ namespace MOON {
 		if (interactive) {
 			Coroutine::ptr co = Coroutine::create_coroutine(InteractiveCreate, this);
 		} else {
-			ReleaseVector(meshList);
-			meshList.push_back(GeneratePolySphere(radius, segment));
+			Utility::ReleaseVector(meshList);
+			meshList.push_back(GenerateMesh(radius, segment));
 		}
 	}
 
@@ -52,15 +52,17 @@ namespace MOON {
 		ImGui::Text("Radius"); ImGui::SameLine(80);
 		if (ImGui::DragFloat(UniquePropName("radius"), &radius, 0.1f, 0, INFINITY, "%.3f", 1.0f, true)) {
 			CreateProceduralMesh(false);
+			opstack.ExecuteAll();
 		}
 		ImGui::Text("Segment"); ImGui::SameLine(80);
 		if (ImGui::DragInt(UniquePropName("segment"), &segment, 1.0f, 3, 255, "%d", true)) {
 			CreateProceduralMesh(false);
+			opstack.ExecuteAll();
 		}
 		ImGui::Unindent(10.0f);
 	}
 
-	Mesh* Sphere::GeneratePolySphere(float rad, int divs) {
+	Mesh* Sphere::GenerateMesh(float rad, int divs) {
 		std::vector<Vertex> verts;
 		std::vector<unsigned int> tris;
 
@@ -78,7 +80,7 @@ namespace MOON {
 
 			float u = x / n;
 			float v = y / m;
-			verts[i].TexCoords.setValue(u, v);
+			verts[i].UV.setValue(u, v);
 		}
 
 		for (int i = 0; i < 2 * m * n; i++) {
@@ -108,6 +110,7 @@ namespace MOON {
 
 		Mesh* mesh = new Mesh("sphere", verts, tris);
 		mesh->material = MOON_MaterialManager::GetItem("default");
+		mesh->UpdateBBox();
 		return mesh;
 	}
 

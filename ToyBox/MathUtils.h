@@ -208,6 +208,11 @@ namespace MOON {
 			return p;
 		}
 
+		template <typename T>
+		inline static int GetSign(const T& number) {
+			return number / std::fabs(number);
+		}
+
 		// left + (right - left) * percent
 		// percent: [0,1]
 		inline static double lerp(const double &left, const double &right, const double &percent) {

@@ -33,12 +33,17 @@ int main() {
 	//Model* teapot = MOON_ModelManager::LoadModel("Assets\\Models\\teapot.obj");
 	//teapot->transform.Scale(Vector3(0.2f, 0.2f, 0.2f));
 
-	/*Model* rabbit = MOON_ModelManager::LoadModel("Assets\\Models\\bunny.obj");
-	rabbit->transform.Scale(Vector3::ONE() * 5.0f);
-	rabbit->transform.Translate(Vector3::WORLD(LEFT) * 2.0f);*/
+	//Model* rabbit = MOON_ModelManager::LoadModel("Assets\\Models\\bunny.obj");
+	//rabbit->transform.Scale(Vector3::ONE() * 5.0f);
+	//rabbit->transform.Translate(Vector3::WORLD(LEFT) * 2.0f);
 
 	Model* sphere = MOON_ModelManager::CreateSmartMesh(SmartMesh::sphere, "sphere");
 	sphere->transform.Translate(Vector3::WORLD(UP) + Vector3::WORLD(LEFT) * 2.0f);
+
+	// test half mesh
+	/*HalfMesh* edMesh = new HalfMesh(sphere->meshList[0]);
+	ReleaseVector(sphere->meshList);
+	sphere->meshList.push_back(edMesh);*/
 
 	Model* boxes = MOON_ModelManager::LoadModel("Assets\\Models\\box_stack.obj");
 	boxes->transform.Translate(Vector3::WORLD(UP));
@@ -65,10 +70,6 @@ int main() {
 		// per-frame time logic
 		MOON_UpdateClock();
 
-		// schedule all coroutines
-		// *moved to: Graphics Module
-		//MOON_CoroutineLoop();
-
 		// configure global opengl state ------------------------------------------
 		//glEnable(GL_CULL_FACE);
 		glEnable(GL_DEPTH_TEST);
@@ -81,10 +82,15 @@ int main() {
 		ImGui::NewFrame();
 
 		// draw Scene View ----------------------------------------------------------
+		Graphics::process = sys_draw_scene;
 		Graphics::DrawSceneView(persp);
 		Graphics::DrawSceneView(front);
 		Graphics::DrawSceneView(top);
 		Graphics::DrawSceneView(left);
+
+		// schedule all coroutines --------------------------------------------------
+		Graphics::process = sys_coroutine;
+		MOON_CoroutineLoop();
 
 		// clear background
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -92,6 +98,7 @@ int main() {
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		// draw main UI ------------------------------------------------------------
+		Graphics::process = sys_draw_ui;
 		MOON_DrawMainUI();
 
 		// process user input ------------------------------------------------------
@@ -428,4 +435,6 @@ void MOON_InitEngine() {
 	MOON_GenerateGround(1.0, 5);
 	MOON_TextureManager::CreateBuffers();
 	std::cout << "- IDLUT Created." << std::endl;
+	OperatorManager::LoadNativeOperators();
+	std::cout << "- Native Operators Loaded." << std::endl;
 }

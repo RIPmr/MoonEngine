@@ -1,7 +1,9 @@
 #include "Gizmo.h"
+#include "Graphics.h"
 #include "SceneMgr.h"
 
 namespace MOON {
+#pragma region manipulator
 	Vector3 Gizmo::Translate(const Ray& ray, const Direction& dir, Transform *trans, Vector3& cAxisPoint_O, bool& xActive, float maxCamRayLength) {
 		float		scrDist = MOON_ActiveCamera->isortho ? 2.0f : Vector3::Distance(ray.pos, trans->position) / 15.0f;
 		Vector3		cRayPoint, cAxisPoint, deltaVec;
@@ -195,7 +197,9 @@ namespace MOON {
 			if (deltaSca.magnitude() > 0) trans->Scale(deltaSca + trans->localScale);
 		}
 	}
+#pragma endregion
 
+#pragma region prototypes
 	void Gizmo::DrawTransPrototype(const Matrix4x4& mat, const Vector4& color) {
 		if (gizmoMode == GizmoMode::none) return;
 		// TODO : link line
@@ -235,7 +239,7 @@ namespace MOON {
 		glDeleteBuffers(1, &VBO);
 	}
 
-	void Gizmo::DrawLinePrototype(std::vector<float> &data, const Vector4 &color, const float &lineWidth, const bool &isStrip, const Matrix4x4 model, const Shader* overrideShader) {
+	void Gizmo::DrawLinePrototype(const std::vector<float> &data, const Vector4 &color, const float &lineWidth, const bool &isStrip, const Matrix4x4 model, const Shader* overrideShader) {
 		// configure shader
 		if (overrideShader == NULL) {
 			overrideShader = MOON_ShaderManager::lineShader;
@@ -271,7 +275,43 @@ namespace MOON {
 		glDeleteBuffers(1, &VBO);
 	}
 
-	void Gizmo::DrawPointPrototype(std::vector<float> &data, const Vector4 &color, const float &pointSize, const Matrix4x4 model) {
+	void Gizmo::DrawLinePrototype(const std::vector<Vector3> &data, const Vector4 &color, const float &lineWidth, const bool &isStrip, const Matrix4x4 model, const Shader* overrideShader) {
+		// configure shader
+		if (overrideShader == NULL) {
+			overrideShader = MOON_ShaderManager::lineShader;
+			overrideShader->use();
+			overrideShader->setVec4("lineColor", color);
+		} else overrideShader->use();
+		overrideShader->setMat4("model", model);
+		overrideShader->setMat4("view", MOON_ActiveCamera->view);
+		overrideShader->setMat4("projection", MOON_ActiveCamera->projection);
+
+		// vertex array object
+		unsigned int VAO;
+		glGenVertexArrays(1, &VAO);
+		// vertex buffer object
+		unsigned int VBO;
+		glGenBuffers(1, &VBO);
+		// bind buffers
+		glBindVertexArray(VAO);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		// line width
+		glLineWidth(lineWidth);
+		// copy data
+		glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(Vector3), &data[0], GL_STATIC_DRAW);
+		// vertex data format
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vector3), (void*)0);
+		glEnableVertexAttribArray(0);
+		// unbind buffers
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glDrawArrays(isStrip ? GL_LINE_STRIP : GL_LINES, 0, data.size());
+		glBindVertexArray(0);
+		// delete buffer object
+		glDeleteVertexArrays(1, &VAO);
+		glDeleteBuffers(1, &VBO);
+	}
+
+	void Gizmo::DrawPointPrototype(const std::vector<float> &data, const Vector4 &color, const float &pointSize, const Matrix4x4 model) {
 		// configure shader
 		MOON_ShaderManager::lineShader->use();
 		MOON_ShaderManager::lineShader->setVec4("lineColor", color);
@@ -304,35 +344,173 @@ namespace MOON {
 		glDeleteBuffers(1, &VBO);
 	}
 
-	void Gizmo::DrawPoint(const Vector3 &position, const Vector4 &color, const float &pointSize, const Matrix4x4 model) {
+	void Gizmo::DrawPointPrototype(const std::vector<Vector3> &data, const Vector4 &color, const float &pointSize, const Matrix4x4 model) {
+		// configure shader
+		MOON_ShaderManager::lineShader->use();
+		MOON_ShaderManager::lineShader->setVec4("lineColor", color);
+		MOON_ShaderManager::lineShader->setMat4("model", model);
+		MOON_ShaderManager::lineShader->setMat4("view", MOON_ActiveCamera->view);
+		MOON_ShaderManager::lineShader->setMat4("projection", MOON_ActiveCamera->projection);
+
+		// vertex array object
+		unsigned int VAO;
+		glGenVertexArrays(1, &VAO);
+		// vertex buffer object
+		unsigned int VBO;
+		glGenBuffers(1, &VBO);
+		// bind buffers
+		glBindVertexArray(VAO);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		// point size
+		glPointSize(pointSize);
+		// copy data
+		glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(Vector3), &data[0], GL_STATIC_DRAW);
+		// vertex data format
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vector3), (void*)0);
+		glEnableVertexAttribArray(0);
+		// unbind buffers
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glDrawArrays(GL_POINTS, 0, data.size());
+		glBindVertexArray(0);
+		// delete buffer object
+		glDeleteVertexArrays(1, &VAO);
+		glDeleteBuffers(1, &VBO);
+	}
+
+	void Gizmo::DrawPointPrototype(const unsigned int& VAO, const size_t& size, const Vector4 &color, const float &pointSize, const Matrix4x4 model) {
+		// configure shader
+		MOON_ShaderManager::lineShader->use();
+		MOON_ShaderManager::lineShader->setVec4("lineColor", color);
+		MOON_ShaderManager::lineShader->setMat4("model", model);
+		MOON_ShaderManager::lineShader->setMat4("view", MOON_ActiveCamera->view);
+		MOON_ShaderManager::lineShader->setMat4("projection", MOON_ActiveCamera->projection);
+
+		// bind buffers
+		glBindVertexArray(VAO);
+		// point size
+		glPointSize(pointSize);
+		// unbind buffers
+		glDrawArrays(GL_POINTS, 0, size);
+		glBindVertexArray(0);
+	}
+#pragma endregion
+
+#pragma region drawers
+	void Gizmo::DrawPointDirect(const Vector3 &position, const Vector4 &color, const float &pointSize, const Matrix4x4 model) {
 		std::vector<float> data;
 		data.push_back(position[0]); data.push_back(position[1]); data.push_back(position[2]);
+
 		DrawPointPrototype(data, color, pointSize, model);
 	}
 
-	void Gizmo::DrawPoints(const std::vector<Vector3> &points, const Vector4 &color, const float &pointSize, const Matrix4x4 model) {
+	void Gizmo::DrawPointsDirect(const std::vector<Vector3> &points, const Vector4 &color, const float &pointSize, const Matrix4x4 model) {
 		if (points.size() < 1) return;
-		std::vector<float> data;
-		for (auto p : points) {
-			data.push_back(p.x); data.push_back(p.y); data.push_back(p.z);
-		}
-		DrawPointPrototype(data, color, pointSize, model);
+
+		DrawPointPrototype(points, color, pointSize, model);
 	}
 
-	void Gizmo::DrawLine(const Vector3 &start, const Vector3 &end, const Vector4 &color, const float &lineWidth, const Matrix4x4 model) {
+	void Gizmo::DrawLineDirect(const Vector3 &start, const Vector3 &end, const Vector4 &color, const float &lineWidth, const Matrix4x4 model) {
 		std::vector<float> data;
 		data.push_back(start[0]); data.push_back(start[1]); data.push_back(start[2]);
 		data.push_back(end[0]); data.push_back(end[1]); data.push_back(end[2]);
+
 		DrawLinePrototype(data, color, lineWidth, false, model);
 	}
 
-	void Gizmo::DrawLines(const std::vector<Vector3> &lines, const Vector4 &color, const float &lineWidth, const bool &isStrip, const Matrix4x4 model, const Shader* overrideShader) {
+	void Gizmo::DrawLinesDirect(const std::vector<Vector3> &lines, const Vector4 &color, const float &lineWidth, const bool &isStrip, const Matrix4x4 model, const Shader* overrideShader) {
 		if (lines.size() < 1) return;
+
+		DrawLinePrototype(lines, color, lineWidth, isStrip, model, overrideShader);
+	}
+#pragma endregion
+
+#pragma region drawers_adv
+	void Gizmo::DrawPoint(const Vector3 &position, const Vector4 &color, const float &pointSize, const bool& depthTest, const Matrix4x4 model, const bool& drawActiveViewOnly) {
 		std::vector<float> data;
-		for (auto p : lines) {
-			data.push_back(p.x); data.push_back(p.y); data.push_back(p.z);
+		data.push_back(position[0]); data.push_back(position[1]); data.push_back(position[2]);
+
+		if (!drawActiveViewOnly) {
+			for (int i = 0; i < 4; i++) {
+				if (i != MOON_ActiveView) {
+					Graphics::SetDrawTarget((SceneView)i, depthTest);
+					DrawPointPrototype(data, color, pointSize, model);
+				}
+			}
 		}
-		DrawLinePrototype(data, color, lineWidth, isStrip, model, overrideShader);
+		Graphics::SetDrawTarget(MOON_ActiveView, depthTest);
+		DrawPointPrototype(data, color, pointSize, model);
+
+		if (Graphics::process == sys_draw_ui) glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
+	void Gizmo::DrawPoints(const std::vector<Vector3> &points, const Vector4 &color, const float &pointSize, const bool& depthTest, const Matrix4x4 model, const bool& drawActiveViewOnly) {
+		if (points.size() < 1) return;
+
+		if (!drawActiveViewOnly) {
+			for (int i = 0; i < 4; i++) {
+				if (i != MOON_ActiveView) {
+					Graphics::SetDrawTarget((SceneView)i, depthTest);
+					DrawPointPrototype(points, color, pointSize, model);
+				}
+			}
+		}
+		Graphics::SetDrawTarget(MOON_ActiveView, depthTest);
+		DrawPointPrototype(points, color, pointSize, model);
+
+		if (Graphics::process == sys_draw_ui) glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
+
+	void Gizmo::DrawPoints(const unsigned int& VAO, const size_t& pointNum, const Vector4 &color, const float &pointSize, const bool& depthTest, const Matrix4x4 model, const bool& drawActiveViewOnly) {
+		if (pointNum < 1) return;
+
+		if (!drawActiveViewOnly) {
+			for (int i = 0; i < 4; i++) {
+				if (i != MOON_ActiveView) {
+					Graphics::SetDrawTarget((SceneView)i, depthTest);
+					DrawPointPrototype(VAO, pointNum, color, pointSize, model);
+				}
+			}
+		}
+		Graphics::SetDrawTarget(MOON_ActiveView, depthTest);
+		DrawPointPrototype(VAO, pointNum, color, pointSize, model);
+
+		if (Graphics::process == sys_draw_ui) glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
+
+	void Gizmo::DrawLine(const Vector3 &start, const Vector3 &end, const Vector4 &color, const float &lineWidth, const bool& depthTest, const Matrix4x4 model, const bool& drawActiveViewOnly) {
+		std::vector<float> data;
+		data.push_back(start[0]); data.push_back(start[1]); data.push_back(start[2]);
+		data.push_back(end[0]); data.push_back(end[1]); data.push_back(end[2]);
+
+		if (!drawActiveViewOnly) {
+			for (int i = 0; i < 4; i++) {
+				if (i != MOON_ActiveView) {
+					Graphics::SetDrawTarget((SceneView)i, depthTest);
+					DrawLinePrototype(data, color, lineWidth, false, model);
+				}
+			}
+		}
+		Graphics::SetDrawTarget(MOON_ActiveView, depthTest);
+		DrawLinePrototype(data, color, lineWidth, false, model);
+
+		if (Graphics::process == sys_draw_ui) glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
+
+	void Gizmo::DrawLines(const std::vector<Vector3> &lines, const Vector4 &color, const float &lineWidth, const bool& depthTest, const bool &isStrip, const Matrix4x4 model, const Shader* overrideShader, const bool& drawActiveViewOnly) {
+		if (lines.size() < 1) return;
+
+		if (!drawActiveViewOnly) {
+			for (int i = 0; i < 4; i++) {
+				if (i != MOON_ActiveView) {
+					Graphics::SetDrawTarget((SceneView)i, depthTest);
+					DrawLinePrototype(lines, color, lineWidth, isStrip, model, overrideShader);
+				}
+			}
+		}
+		Graphics::SetDrawTarget(MOON_ActiveView, depthTest);
+		DrawLinePrototype(lines, color, lineWidth, isStrip, model, overrideShader);
+
+		if (Graphics::process == sys_draw_ui) glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
+#pragma endregion
 }

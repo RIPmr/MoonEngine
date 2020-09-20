@@ -38,7 +38,7 @@ namespace MOON {
 
 		Texture(const std::string & _path, const std::string &_name = "FILENAME", const TexType &_type = TexType::defaultType, const TexFormat &_format = TexFormat::twoD) :
 				format(_format), type(_type), path(_path), ObjectBase(MOON_AUTOID), gammaCorrection(false) {
-			LoadTextureFromFile(_path, name, localID, width, height);
+			Utility::LoadTextureFromFile(_path, name, localID, width, height);
 			if (!_name._Equal("FILENAME")) name = _name;
 		}
 		// for procedural texture

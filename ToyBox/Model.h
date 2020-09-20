@@ -7,6 +7,7 @@
 #include "Transform.h"
 #include "Material.h"
 #include "Mesh.h"
+#include "HalfMesh.h"
 #include "OBJMgr.h"
 #include "Utility.h"
 #include "Hitable.h"
@@ -25,19 +26,31 @@ namespace MOON {
 		// for procedural mesh
 		Model(const std::string &name, const int id = MOON_AUTOID) : gammaCorrection(false), MObject(name, id), path("[PROCEDURAL]") {}
 
+		Model(const Model& other) {
+			this->meshList.resize(other.meshList.size());
+			for (int i = 0; i < meshList.size(); i++) {
+				meshList[i] = new HalfMesh(other.meshList[i]);
+			}
+			this->transform = other.transform;
+			this->path = other.path;
+			this->bbox = other.bbox;
+			this->bbox_world = other.bbox_world;
+			this->gammaCorrection = other.gammaCorrection;
+		}
+
 		// for mesh in OBJ file
 		Model(const std::string &path, const std::string &name = "FILENAME", const int id = MOON_AUTOID, const bool gamma = false) :
 			path(path), gammaCorrection(gamma), MObject(id) {
 			if (!name._Equal("FILENAME")) this->name = name;
-			else this->name = GetPathOrURLShortName(path);
+			else this->name = Utility::GetPathOrURLShortName(path);
 
 			OBJLoader::progress = 0;
 			ThreadPool::CreateThread(&Model::LoadModel, this, path);
 			//LoadModel(path);
 		}
-		~Model() override {
-			for (auto &iter : meshList) delete iter;
-			meshList.clear();
+
+		virtual ~Model() override {
+			Utility::ReleaseVector(meshList);
 		}
 
 		void Draw(Shader* overrideShader = NULL) override;
@@ -83,6 +96,14 @@ namespace MOON {
 				vertNum += iter->vertices.size();
 			}
 			return vertNum;
+		}
+
+		unsigned int CountFaces() {
+			unsigned int faceNum = 0;
+			for (auto &iter : meshList) {
+				faceNum += iter->triangles.size() / 3;
+			}
+			return faceNum;
 		}
 
 		void ListProperties() override;
