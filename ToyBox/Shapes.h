@@ -9,7 +9,7 @@ namespace MOON {
 		std::vector<Spline> splineList;
 
 		Shape(const std::string &name, const int id = MOON_AUTOID) : MObject(name, id) { }
-		~Shape() override = default;
+		virtual ~Shape() override = default;
 
 		void ListProperties() override {
 			// list name ----------------------------------------------------------------------
@@ -21,7 +21,7 @@ namespace MOON {
 			ImGui::Separator();
 
 			// list Splines -------------------------------------------------------------------
-			ListSplines();
+			ListSplinePropties();
 			ImGui::Separator();
 
 			// list operators -----------------------------------------------------------------
@@ -47,8 +47,7 @@ namespace MOON {
 			}
 		}
 
-	private:
-		void ListSplines() {
+		virtual void ListSplinePropties() {
 			ImGui::Text("Spline:");
 			if (ImGui::TreeNodeEx((std::to_string(splineList.size()) + " spline(s)").c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
 				for (auto &iter : splineList) {

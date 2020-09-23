@@ -72,4 +72,16 @@ namespace MOON {
 		ImGui::Spacing();
 	}
 
+	void Model::ClearSelection() {
+		MOON_InputManager::Selector::ClearSelectionPrototype(meshList, selected_meshes);
+	}
+
+	void Model::Select(const unsigned int ID) {
+		MOON_InputManager::Selector::SelectPrototype(meshList, selected_meshes, ID);
+	}
+
+	void Model::Select_Append(unsigned int ID, const bool& autoInvertSelect) {
+		MOON_InputManager::Selector::Select_AppendPrototype(meshList, selected_meshes, ID, autoInvertSelect);
+	}
+
 }

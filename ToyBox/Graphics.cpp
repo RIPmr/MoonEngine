@@ -5,6 +5,8 @@
 #include "Graphics.h"
 #include "SceneMgr.h"
 #include "HotkeyMgr.h"
+#include "ObjectBase.h"
+#include "OperatorBase.h"
 #include "UIController.h"
 
 namespace MOON {
@@ -49,10 +51,14 @@ namespace MOON {
 			glEnable(GL_DEPTH_TEST);
 			if (MOON_TextureManager::IDLUT->width != buffer->width || MOON_TextureManager::IDLUT->height != buffer->height)
 				MOON_TextureManager::IDLUT->Reallocate(buffer->width, buffer->height);
-			Graphics::DrawIDLUT();
-			MOON_InputManager::GetIDFromLUT(MOON_MousePos);
-			if (!MOON_InputManager::isHoverUI && MOON_InputManager::IsMouseDown(0) && !Gizmo::hoverGizmo)
-				MOON_InputManager::Select(MOON_InputManager::hoverID);
+			if (MOON_ViewportState == EDIT) {
+				Graphics::DrawIDLUT_EditMode();
+			} else {
+				Graphics::DrawIDLUT();
+				MOON_InputManager::GetIDFromLUT(MOON_MousePos);
+				if (!MOON_InputManager::isHoverUI && MOON_InputManager::IsMouseDown(0) && !Gizmo::hoverGizmo)
+					MOON_InputManager::Select(MOON_InputManager::hoverID);
+			}
 		}
 
 		// clear background of framebuffer
@@ -73,6 +79,7 @@ namespace MOON {
 		// draw objects
 		Graphics::DrawModels();
 		Graphics::DrawShapes();
+		Graphics::DrawHelpers();
 		Graphics::DrawCameras();
 		if (Graphics::shading == DEFWIRE) {
 			Graphics::SetShadingMode(WIRE);
@@ -123,6 +130,42 @@ namespace MOON {
 
 				dynamic_cast<MObject*>(obj)->DrawDeliver(MOON_ShaderManager::lineShader);
 			}
+		}
+	}
+
+	void Graphics::DrawIDLUT_EditMode() {
+		if (MOON_EditTarget == nullptr) return;
+
+		// clear background of framebuffer
+		glBindFramebuffer(GL_FRAMEBUFFER, MOON_TextureManager::IDLUT->fbo);
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		// encode element id to color
+		/// draw model depth first (ignore background verts)
+		MOON_ShaderManager::lineShader->use();
+		MOON_ShaderManager::lineShader->setVec4("lineColor", Vector4(0.0f, 0.0f, 0.0f, 1.0f));
+		MOON_EditTarget->Draw(MOON_ShaderManager::lineShader);
+
+		/// then draw point id
+		auto shader = MOON_ShaderManager::GetItem("VertexID");
+		shader->use();
+		shader->setMat4("model", MOON_EditTarget->transform.localToWorldMat);
+		shader->setMat4("view", MOON_ActiveCamera->view);
+		shader->setMat4("projection", MOON_ActiveCamera->projection);
+
+		if (CheckType(MOON_EditTarget, "Model")) {
+			Model* md = dynamic_cast<Model*>(MOON_EditTarget);
+			for (int i = 0, base = 0; i < md->meshList.size(); i++) {
+				shader->setInt("offset", base);
+				base += md->meshList[i]->vertices.size();
+				glBindVertexArray(md->meshList[i]->VAO);
+				glPointSize(edit_mode_point_size);
+				glDrawArrays(GL_POINTS, 0, md->meshList[i]->vertices.size());
+				glBindVertexArray(0);
+			}
+		} else if (CheckType(MOON_EditTarget, "Shape")) {
+			
 		}
 	}
 
@@ -182,6 +225,12 @@ namespace MOON {
 				obj.second->DrawDeliver();
 				if (SceneManager::debug) obj.second->DebugVectors();
 			}
+		}
+	}
+
+	void Graphics::DrawHelpers() {
+		for (auto &obj : MOON_HelperManager::itemMap) {
+			if (obj.second->visible) obj.second->DrawDeliver();
 		}
 	}
 

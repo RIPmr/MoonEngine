@@ -18,11 +18,13 @@ namespace MOON {
 	class Model : public MObject, public Hitable {
 	public:
 		std::vector<Mesh*> meshList;
+		std::vector<unsigned int> selected_meshes;
 		std::string path;
 		BoundingBox bbox;
 		BoundingBox bbox_world;
 		bool gammaCorrection;
 
+		#pragma region constructor
 		// for procedural mesh
 		Model(const std::string &name, const int id = MOON_AUTOID) : gammaCorrection(false), MObject(name, id), path("[PROCEDURAL]") {}
 
@@ -53,6 +55,10 @@ namespace MOON {
 			Utility::ReleaseVector(meshList);
 		}
 
+		void LoadModel(const std::string& path);
+		#pragma endregion
+
+		#pragma region operations
 		void Draw(Shader* overrideShader = NULL) override;
 
 		void UpdateBBox() {
@@ -70,8 +76,6 @@ namespace MOON {
 				bbox_world.join(transform.localToWorldMat.multVec(iter));
 			}
 		}
-
-		void LoadModel(const std::string& path);
 
 		bool Hit(const Ray &r, HitRecord &rec) const {
 			HitRecord tempRec;
@@ -105,11 +109,21 @@ namespace MOON {
 			}
 			return faceNum;
 		}
+		#pragma endregion
 
 		void ListProperties() override;
 
+		// select mesh
+		#pragma region select
+		void ClearSelection();
+		void Select(const unsigned int ID);
+		void Select_Append(unsigned int ID, const bool& autoInvertSelect = true);
+		#pragma endregion
+
 		// procedural mesh
+		#pragma region procedural_mesh
 		virtual void CreateProceduralMesh(const bool& interactive) {}
 		virtual void ListProceduralProperties() {}
+		#pragma endregion
 	};
 }

@@ -26,9 +26,11 @@ namespace MOON {
 	#define MOON_ModelManager			SceneManager::ModelManager
 	#define MOON_CameraManager			SceneManager::CameraManager
 	#define MOON_ShapeManager			SceneManager::ShapeManager
+	#define MOON_HelperManager			SceneManager::HelperManager
 	#define MOON_InputManager			SceneManager::InputManager
 	#define MOON_Selection(x)			SceneManager::objectList[SceneManager::InputManager::selection[x]]
 	#define MOON_SelectionID			SceneManager::InputManager::selection
+	#define MOON_SelectionChanged		SceneManager::InputManager::isSelectionChanged
 	
 	#define MOON_KeyDown(key)			SceneManager::InputManager::IsKeyDown(key)
 	#define MOON_KeyRelease(key)		SceneManager::InputManager::IsKeyRelease(key)
@@ -39,6 +41,11 @@ namespace MOON {
 	#define MOON_MouseRepeat(key)		SceneManager::InputManager::IsMouseRepeat(key)
 
 	#define CheckType(item, type)		SceneManager::GetType(item)._Equal(type)
+	#define MOON_ViewportState			HotKeyManager::state
+
+	// current target in edit mode
+	#define MOON_EditTarget				HotKeyManager::globalEditTarget
+	#define MOON_EditElem				HotKeyManager::globalEditElem
 
 	enum MOON_MOUSE {
 		#define LEFT_MOUSE				0

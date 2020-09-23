@@ -467,6 +467,7 @@ namespace MOON {
 			}
 			if (focus) ImGui::SetWindowFocus();
 			DrawScene(wndSize, view);
+			if (view == MOON_ActiveView) HotKeyManager::SelectRegion();
 
 			// overlay options
 			ImGui::SetCursorPos(ImVec2(10.0f, 10.0f));
@@ -685,8 +686,8 @@ namespace MOON {
 			SwitchButton(ICON_FA_VIDEO_CAMERA, ICON_FA_VIDEO_CAMERA, showCam);
 			SwitchButton(ICON_FA_FILE_CODE_O, ICON_FA_FILE_CODE_O, showShader);
 			SwitchButton(ICON_FA_LEMON_O, ICON_FA_LEMON_O, showShape);
+			SwitchButton(ICON_FA_THUMB_TACK, ICON_FA_THUMB_TACK, showHelper);
 			SwitchButton("FX", "FX", showFX);
-			SwitchButton("H", "H", showHelper);
 
 			ImGui::EndChild();
 			ImGui::NextColumn();
@@ -760,6 +761,7 @@ namespace MOON {
 				if (showCam) MOON_CameraManager::ListItems_Hierarchial();
 				if (showShader) MOON_ShaderManager::ListItems_Hierarchial();
 				if (showShape) MOON_ShapeManager::ListItems_Hierarchial();
+				if (showHelper) MOON_HelperManager::ListItems_Hierarchial();
 			}
 
 			if (!ImGui::IsAnyItemHovered() && ImGui::IsWindowHovered()) {
@@ -818,7 +820,7 @@ namespace MOON {
 					MOON_ObjectList[iter]->ListProperties();
 				}
 				// keep selection in edit mode
-				if (HotKeyManager::editTarget && HotKeyManager::editTarget->ID == iter) 
+				if (MOON_EditTarget && MOON_EditTarget->ID == iter)
 					MOON_ObjectList[iter]->selected = true;
 
 				if (iter >= SceneManager::GetObjectNum()) break;
@@ -1014,6 +1016,12 @@ namespace MOON {
 					if (ImGui::Button("Dummy", ImVec2(width, 20.0))) {}
 					ImGui::SameLine();
 					if (ImGui::Button("Bone", ImVec2(width, 20.0))) {}
+					ImGui::SameLine();
+					if (ImGui::Button("Tape", ImVec2(width, 20.0))) {}
+
+					if (ImGui::Button("Volumn", ImVec2(width, 20.0))) {}
+					ImGui::SameLine();
+					if (ImGui::Button("Proxy", ImVec2(width, 20.0))) {}
 
 					ImGui::EndTabItem();
 				}
@@ -1048,7 +1056,7 @@ namespace MOON {
 						[]() { Gizmo::manipCoord = CoordSys::LOCAL; },
 						[]() { Gizmo::manipCoord = CoordSys::WORLD; }); ImGui::SameLine();
 			SwitchButton(ICON_FA_MAGNET, ICON_FA_MAGNET, HotKeyManager::enableSnap, ImVec2(22, 22)); ImGui::SameLine();
-			SwitchButtonEx("P", "C", Gizmo::gizmoPos == GizmoPos::pivot,
+			SwitchButtonEx(ICON_FA_DOT_CIRCLE_O, ICON_FA_LIFE_RING, Gizmo::gizmoPos == GizmoPos::pivot,
 				[]() { Gizmo::gizmoPos = GizmoPos::center; },
 				[]() { Gizmo::gizmoPos = GizmoPos::pivot; });
 			ImGui::SameLine();

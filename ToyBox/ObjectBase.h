@@ -19,6 +19,7 @@
 #define Icon_Name_To_ID(x, y) (std::string(x) + y).c_str()
 
 namespace MOON {
+#pragma region ObjectBase
 	extern class SceneManager;
 	class ObjectBase {
 	public:
@@ -66,7 +67,9 @@ namespace MOON {
 		virtual void ListName();
 		virtual void ListProperties();
 	};
+#pragma endregion
 
+#pragma region MObject
 	extern class Shader;
 	extern class Operator;
 	class MObject : public ObjectBase {
@@ -99,9 +102,9 @@ namespace MOON {
 		};
 
 		bool freezed;
+		Vector4 wireColor;
 		Transform transform;
 		OPStack opstack;
-		Vector4 wireColor;
 
 		MObject() : ObjectBase(MOON_AUTOID), transform(this), opstack(this), wireColor(Color::WHITE()), freezed(false) { name = "MObject_" + ID; }
 		MObject(const int &_id) : 
@@ -122,10 +125,13 @@ namespace MOON {
 		}
 
 		// deliver is the result which have been processed by all operators
-		void DrawDeliver(Shader* overrideShader = NULL) {
-			if (opstack.deliver == nullptr) opstack.ExecuteAll();
+		inline void DrawDeliver(Shader* overrideShader = NULL) {
+			if (opstack.deliver == nullptr && opstack.opList.size()) opstack.ExecuteAll();
 			if (opstack.deliver == nullptr) Draw(overrideShader);
-			else opstack.deliver->Draw(overrideShader);
+			else {
+				opstack.deliver->transform = this->transform;
+				opstack.deliver->Draw(overrideShader);
+			}
 		}
 
 		// draw base object
@@ -134,4 +140,6 @@ namespace MOON {
 		virtual void ListTransform();
 		virtual void ListProperties() override;
 	};
+#pragma endregion
+
 }

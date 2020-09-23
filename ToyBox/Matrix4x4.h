@@ -51,6 +51,14 @@ namespace MOON {
 
 		const float* operator[](uint8_t i) const { return x[i]; }
 		float* operator[](uint8_t i) { return x[i]; }
+		friend bool operator==(const Matrix4x4 &m1, const Matrix4x4 &m2) {
+			for (int x = 0; x < 4; x++) {
+				for (int y = 0; y < 4; y++) {
+					if (m1[x][y] != m2[x][y]) return false;
+				}
+			}
+			return true;
+		}
 
 		// Multiply the current matrix with another matrix (rhs)
 		Matrix4x4 operator*(const Matrix4x4& v) const {

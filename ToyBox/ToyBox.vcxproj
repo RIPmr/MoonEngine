@@ -189,6 +189,7 @@
     <ClCompile Include="Vector4.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Bone.h" />
     <ClInclude Include="BoundingBox.h" />
     <ClInclude Include="Box.h" />
     <ClInclude Include="ButtonEx.h" />
@@ -202,6 +203,7 @@
     <ClInclude Include="Curves.h" />
     <ClInclude Include="Cylinder.h" />
     <ClInclude Include="Debugger.h" />
+    <ClInclude Include="Dummy.h" />
     <ClInclude Include="FileManager.h" />
     <ClInclude Include="FlowMenu.h" />
     <ClInclude Include="FNN.h" />
@@ -210,6 +212,7 @@
     <ClInclude Include="fontHeaders\IconsMaterialDesign.h" />
     <ClInclude Include="GNN.h" />
     <ClInclude Include="HalfMesh.h" />
+    <ClInclude Include="HelperBase.h" />
     <ClInclude Include="Icons.h" />
     <ClInclude Include="imgui\ImPlot.h" />
     <ClInclude Include="ImPie.h" />
@@ -219,7 +222,7 @@
     <ClInclude Include="FuzzyMatch.h" />
     <ClInclude Include="Gizmo.h" />
     <ClInclude Include="NGraph.h" />
-    <ClInclude Include="Helper.h" />
+    <ClInclude Include="Helpers.h" />
     <ClInclude Include="Hitable.h" />
     <ClInclude Include="HotkeyMgr.h" />
     <ClInclude Include="imgui\ImNodes.h" />
@@ -249,6 +252,7 @@
     <ClInclude Include="Plotter.h" />
     <ClInclude Include="PluginManager.h" />
     <ClInclude Include="PMapGen.h" />
+    <ClInclude Include="Proxy.h" />
     <ClInclude Include="Ring.h" />
     <ClInclude Include="SmartMeshes.h" />
     <ClInclude Include="Sphere.h" />
@@ -265,6 +269,7 @@
     <ClInclude Include="Spline.h" />
     <ClInclude Include="StackWindow.h" />
     <ClInclude Include="Strutil.h" />
+    <ClInclude Include="Tape.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="ThreadPool.h" />
     <ClInclude Include="Transform.h" />
@@ -274,6 +279,7 @@
     <ClInclude Include="Vector3.h" />
     <ClInclude Include="ObjectBase.h" />
     <ClInclude Include="Vector4.h" />
+    <ClInclude Include="Volume.h" />
     <ClInclude Include="WideNDeep.h" />
   </ItemGroup>
   <ItemGroup>
@@ -290,6 +296,8 @@
     <None Include="ScreenBuffer.vs" />
     <None Include="SimplePhong.fs" />
     <None Include="SimplePhong.vs" />
+    <None Include="VertexID.fs" />
+    <None Include="VertexID.vs" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Resources\Icon.jpg" />

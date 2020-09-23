@@ -30,4 +30,42 @@ namespace MOON {
 		glBindVertexArray(0);
 	}
 
+	void HalfMesh::ClearSelection(const int& type) {
+		if (type == VERT)
+			MOON_InputManager::Selector::ClearSelectionPrototype(vertices, selected_verts);
+		else if (type == EDGE)
+			MOON_InputManager::Selector::ClearSelectionPrototype(edges, selected_edges);
+		else if (type == FACE)
+			MOON_InputManager::Selector::ClearSelectionPrototype(faces, selected_faces);
+		else {
+			MOON_InputManager::Selector::ClearSelectionPrototype(vertices, selected_verts);
+			MOON_InputManager::Selector::ClearSelectionPrototype(edges, selected_edges);
+			MOON_InputManager::Selector::ClearSelectionPrototype(faces, selected_faces);
+		}
+	}
+
+	void HalfMesh::Select(const Element& type, const unsigned int ID) {
+		if (type == VERT)
+			MOON_InputManager::Selector::SelectPrototype(vertices, selected_verts, ID);
+		else if (type == EDGE)
+			MOON_InputManager::Selector::SelectPrototype(edges, selected_edges, ID);
+		else if (type == FACE)
+			MOON_InputManager::Selector::SelectPrototype(faces, selected_faces, ID);
+	}
+
+	void HalfMesh::Select_Append(const Element& type, unsigned int ID, const bool& autoInvertSelect) {
+		if (type == VERT)
+			MOON_InputManager::Selector::Select_AppendPrototype(
+				vertices, selected_verts, ID, autoInvertSelect
+			);
+		else if (type == EDGE)
+			MOON_InputManager::Selector::Select_AppendPrototype(
+				edges, selected_edges, ID, autoInvertSelect
+			);
+		else if (type == FACE)
+			MOON_InputManager::Selector::Select_AppendPrototype(
+				faces, selected_faces, ID, autoInvertSelect
+			);
+	}
+
 }

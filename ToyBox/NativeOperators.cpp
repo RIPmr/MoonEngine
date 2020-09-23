@@ -13,12 +13,19 @@
 #include "ObjectBase.h"
 #include "OperatorMgr.h"
 #include "HotkeyMgr.h"
+#include "Graphics.h"
 
 
 namespace MOON {
 	#define GetSingle(i)		node->dataHolder.id[i]
 	#define GetVec(i)			node->dataHolder.col[i]
 	#define GetMatrix()			node->dataHolder.mat
+
+	// return: model/result
+	#define ProcessInput()\
+			auto model = dynamic_cast<Model*>(input);\
+			if (node->processed == nullptr) node->processed = new Model(*model);\
+			Model* result = dynamic_cast<Model*>(node->processed);\
 
 	Operators* OperatorManager::DefineNativeOperators() {
 		return new Operators{
@@ -38,53 +45,67 @@ namespace MOON {
 						#pragma region buttons
 						SwitchButtonEx(
 							ICON_MD_GRAIN, ICON_MD_GRAIN, editMode == VERT,
-							[&editMode]() -> void { editMode = -1; HotKeyManager::state = FREE; HotKeyManager::editTarget = nullptr; },
-							[&editMode, &input]() -> void { editMode = VERT; HotKeyManager::editTarget = input; }, 
+							[&editMode]() -> void { editMode = -1; HotKeyManager::state = FREE; MOON_EditTarget = nullptr; },
+							[&editMode, &node]() -> void { editMode = VERT; MOON_EditElem = VERT; MOON_EditTarget = node->processed; },
 							ImVec2(22, 20)
 						); ImGui::SameLine();
 						SwitchButtonEx(
 							ICON_MD_SHOW_CHART, ICON_MD_SHOW_CHART, editMode == EDGE,
-							[&editMode]() -> void { editMode = -1; HotKeyManager::state = FREE; HotKeyManager::editTarget = nullptr; },
-							[&editMode, &input]() -> void { editMode = EDGE; HotKeyManager::editTarget = input; },
+							[&editMode]() -> void { editMode = -1; HotKeyManager::state = FREE; MOON_EditTarget = nullptr; },
+							[&editMode, &node]() -> void { editMode = EDGE;  MOON_EditElem = EDGE; MOON_EditTarget = node->processed; },
 							ImVec2(22, 20)
 						); ImGui::SameLine();
 						SwitchButtonEx(
 							ICON_MD_MULTILINE_CHART, ICON_MD_MULTILINE_CHART, editMode == LOOP,
-							[&editMode]() -> void { editMode = -1; HotKeyManager::state = FREE; HotKeyManager::editTarget = nullptr; },
-							[&editMode, &input]() -> void { editMode = LOOP; HotKeyManager::editTarget = input; },
+							[&editMode]() -> void { editMode = -1; HotKeyManager::state = FREE; MOON_EditTarget = nullptr; },
+							[&editMode, &node]() -> void { editMode = LOOP;  MOON_EditElem = LOOP; MOON_EditTarget = node->processed; },
 							ImVec2(22, 20)
 						); ImGui::SameLine();
 						SwitchButtonEx(
 							ICON_MD_SIGNAL_CELLULAR_NULL, ICON_MD_SIGNAL_CELLULAR_NULL, editMode == FACE,
-							[&editMode]() -> void { editMode = -1; HotKeyManager::state = FREE; HotKeyManager::editTarget = nullptr; },
-							[&editMode, &input]() -> void { editMode = FACE; HotKeyManager::editTarget = input; },
+							[&editMode]() -> void { editMode = -1; HotKeyManager::state = FREE; MOON_EditTarget = nullptr; },
+							[&editMode, &node]() -> void { editMode = FACE;  MOON_EditElem = FACE; MOON_EditTarget = node->processed; },
 							ImVec2(22, 20)
 						); ImGui::SameLine();
 						SwitchButtonEx(
 							ICON_MD_WIDGETS, ICON_MD_WIDGETS, editMode == ELEM,
-							[&editMode]() -> void { editMode = -1; HotKeyManager::state = FREE; HotKeyManager::editTarget = nullptr; },
-							[&editMode, &input]() -> void { editMode = ELEM; HotKeyManager::editTarget = input; },
+							[&editMode]() -> void { editMode = -1; HotKeyManager::state = FREE; MOON_EditTarget = nullptr; },
+							[&editMode, &node]() -> void { editMode = ELEM;  MOON_EditElem = ELEM; MOON_EditTarget = node->processed; },
 							ImVec2(22, 20)
 						);
 						#pragma endregion
 
 						if (editMode >= 0) {
 							HotKeyManager::state = EDIT;
-							if (HotKeyManager::editTarget != input) editMode = -1;
+							if (MOON_EditTarget != node->processed) editMode = -1;
 						} else if (HotKeyManager::state != EDIT) {
 							editMode = -1;
 						}
 
-						if (editMode == VERT) {
-							for (int i = 0; i < model->meshList.size(); i++) {
-								Gizmo::DrawPoints(
-									model->meshList[i]->VAO,
-									model->meshList[i]->vertices.size(),
-									Color::BLUE(), 4.0f, true,
-									model->transform.localToWorldMat
-								);
+						if (node->processed != nullptr) {
+							Model* pmodel = dynamic_cast<Model*>(node->processed);
+							
+							glDepthMask(GL_FALSE);
+							if (editMode == VERT) {
+								for (int i = 0; i < pmodel->meshList.size(); i++) {
+									Gizmo::DrawPoints(
+										pmodel->meshList[i]->VAO,
+										pmodel->meshList[i]->vertices.size(),
+										Color::BLUE(), Graphics::edit_mode_point_size, 
+										true, pmodel->transform.localToWorldMat
+									);
+									// selected points
+									HalfMesh* pmesh = dynamic_cast<HalfMesh*>(pmodel->meshList[i]);
+									Gizmo::DrawPoints(
+										pmesh->GetSelectedPoints(), Color::RED(),
+										Graphics::edit_mode_point_size,
+										true, pmodel->transform.localToWorldMat
+									);
+								}
 							}
+							glDepthMask(GL_TRUE);
 						}
+						
 					} else {
 						ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0, 0, 1.0f));
 						ImGui::Text("Incorrect input type.");
@@ -96,9 +117,7 @@ namespace MOON {
 				[](Operator* node, MObject* input) -> MObject* {
 					if (input == nullptr) return nullptr;
 					else {
-						auto model = dynamic_cast<Model*>(input);
-						if (node->processed == nullptr) node->processed = new Model(*model);
-						Model* result = dynamic_cast<Model*>(node->processed);
+						ProcessInput();
 
 						return result;
 					}
@@ -124,9 +143,7 @@ namespace MOON {
 				[](Operator* node, MObject* input) -> MObject* {
 					if (input == nullptr) return nullptr;
 					else {
-						auto model = dynamic_cast<Model*>(input);
-						if (node->processed == nullptr) node->processed = new Model(*model);
-						Model* result = dynamic_cast<Model*>(node->processed);
+						ProcessInput();
 
 						for (int i = 0; i < result->meshList.size(); i++) {
 							HalfMesh* mesh = dynamic_cast<HalfMesh*>(result->meshList[i]);
@@ -138,6 +155,20 @@ namespace MOON {
 						}
 						return result;
 					}
+				}
+			); } },
+
+			{ "Model", []() -> Operator* { return new Operator("Tessellation",
+				{	/// data holder: int[], Vector3[], Matrix
+					0, 0, 0
+				}, /// content renderer
+				[](Operator* node, MObject* input) -> bool {
+
+					return false;
+				},	/// process
+				[](Operator* node, MObject* input) -> MObject* {
+
+					return nullptr;
 				}
 			); } },
 
@@ -186,6 +217,20 @@ namespace MOON {
 				}
 			); } },
 
+			{ "Spline", []() -> Operator* { return new Operator("SplineMesher",
+				{	/// data holder: int[], Vector3[], Matrix
+					0, 0, 0
+				}, /// content renderer
+				[](Operator* node, MObject* input) -> bool {
+
+					return false;
+				},	/// process
+				[](Operator* node, MObject* input) -> MObject* {
+
+					return nullptr;
+				}
+			); } },
+
 			{ "Spline", []() -> Operator* { return new Operator("Conform",
 				{	/// data holder: int[], Vector3[], Matrix
 					0, 0, 0
@@ -213,7 +258,7 @@ namespace MOON {
 					return nullptr;
 				}
 			); } },
-		#pragma endregion
+			#pragma endregion
 
 			// Shape Operators ----------------------------------------------------------------------
 			#pragma region shape_operators

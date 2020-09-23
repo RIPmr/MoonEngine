@@ -11,6 +11,7 @@
 namespace MOON {
 
 	struct Edge {
+		unsigned int ID;
 		Edge* e_pair;		// ∂‘≈º±ﬂ
 		Edge* e_succ;		// ∫ÛºÃ±ﬂ
 		Face* e_face;		// ”“≤‡√Ê
@@ -24,6 +25,11 @@ namespace MOON {
 			e_face = nullptr;
 			e_vert = nullptr;
 		}
+
+		bool operator==(Edge& o) {
+			if (ID == o.ID && e_pair == o.e_pair) return true;
+			else return false;
+		}
 	};
 
 	struct Face {
@@ -36,6 +42,11 @@ namespace MOON {
 		Face() {
 			f_edge = nullptr;
 		}
+
+		bool operator==(Face& o) {
+			if (ID == o.ID) return true;
+			else return false;
+		}
 	};
 
 	// half-edge data structure
@@ -45,10 +56,10 @@ namespace MOON {
 		std::vector<Edge> edges;
 		std::vector<Face> faces;
 
-		/*#define vpair std::pair<Vertex*, Vertex*>
-		vpair vert_pair(Vertex* v1, Vertex* v2) {
-			return std::make_pair(v1, v2);
-		}*/
+		std::vector<unsigned int> selected_verts;
+		std::vector<unsigned int> selected_edges;
+		std::vector<unsigned int> selected_faces;
+
 		unsigned int Pair(Vertex* v1, Vertex* v2) const {
 			return v1->ID * 10 + v2->ID;
 		}
@@ -61,15 +72,6 @@ namespace MOON {
 			ConvertFromMesh(mesh);
 		}
 
-		void UpdateMesh() override {
-			glBindVertexArray(VAO);
-			glBindBuffer(GL_ARRAY_BUFFER, VBO);
-			glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_DYNAMIC_DRAW);
-
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, triangles.size() * sizeof(unsigned int), &triangles[0], GL_DYNAMIC_DRAW);
-		}
-
 		void ConvertFromMesh(Mesh* mesh) {
 			// get properties
 			this->material = mesh->material;
@@ -78,7 +80,7 @@ namespace MOON {
 			// convert vertex
 			this->vertices = mesh->vertices;
 			for (int i = 0; i < mesh->vertices.size(); i++) {
-				mesh->vertices[i].ID = i;
+				this->vertices[i].ID = i;
 			}
 
 			// convert faces
@@ -106,9 +108,12 @@ namespace MOON {
 			vertices.push_back(vert);
 		}
 
+		void DeleteVertexDirect(Vertex& vert) {
+			Utility::RemoveElem(vertices, vert);
+		}
+
 		void DeleteVertex(Vertex& vert) {
 			Utility::RemoveElem(vertices, vert);
-
 
 		}
 
@@ -134,6 +139,10 @@ namespace MOON {
 			return edge;
 		}
 
+		void DeleteEdgeDirect(Edge& edge) {
+			Utility::RemoveElem(edges, edge);
+		}
+
 		void DeleteEdge(Edge& edge) {
 
 		}
@@ -155,6 +164,10 @@ namespace MOON {
 			face.f_verts = face_v;
 			face.ID = faces.size();
 			faces.push_back(face);
+		}
+
+		void DeleteFaceDirect(Face& face) {
+			Utility::RemoveElem(faces, face);
 		}
 
 		void DeleteFace(Face& face) {
@@ -245,9 +258,43 @@ namespace MOON {
 	#pragma region editable_mesh
 		void SetupMesh() override;
 
+		void UpdateMesh() override {
+			glBindVertexArray(VAO);
+			glBindBuffer(GL_ARRAY_BUFFER, VBO);
+			glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_DYNAMIC_DRAW);
+
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, triangles.size() * sizeof(unsigned int), &triangles[0], GL_DYNAMIC_DRAW);
+		}
+
 		void Edit_Vertex() {
 			// draw vertex
 			Gizmo::DrawPointPrototype(VAO, vertices.size(), Color::BLUE(), 1.0f);
+		}
+	#pragma endregion
+
+	#pragma region select
+		std::vector<Vector3> GetSelectedPoints() {
+			std::vector<Vector3> result;
+			for (auto& id : selected_verts) {
+				result.push_back(vertices[id].Position);
+			}
+			return result;
+		}
+
+		void ClearSelection(const int& type = -1);
+		void Select(const Element& type, const unsigned int ID);
+		void Select_Append(const Element& type, unsigned int ID, const bool& autoInvertSelect = true);
+	#pragma endregion
+
+	#pragma region functions
+		// TODO
+		void RecalculateNormal() {
+
+		}
+
+		void RecalculateTangent() {
+
 		}
 	#pragma endregion
 

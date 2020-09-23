@@ -23,6 +23,7 @@ namespace MOON {
 		Matrix4x4 nativeMat;
 
 	public:
+		#pragma region propties
 		PROPERTY(Vector3, position);
 		GET(position) { 
 			if (parent != nullptr) 
@@ -100,6 +101,7 @@ namespace MOON {
 			else _scale = value;
 			UpdateMatrix();
 		}
+		#pragma endregion
 
 		Matrix4x4 localToWorldMat; // model matrix
 		Matrix4x4 worldToLocalMat; // transform matrix (Axis)
@@ -134,7 +136,9 @@ namespace MOON {
 			UpdateMatrix();
 		}
 
-		~Transform() {}
+		~Transform() {
+			if (parent != nullptr) parent->RemoveChild(this);
+		}
 
 		inline void SetParent(Transform* parent) {
 			if (parent == this->parent) return;

@@ -26,6 +26,11 @@ int main() {
 	GLFWwindow* window = InitWnd();
 	if (window == NULL) return -1;
 
+	std::cout << Color::IDEncoder(1) << std::endl;
+	std::cout << Color::IDEncoder(2) << std::endl;
+	std::cout << Color::IDEncoder(3) << std::endl;
+	std::cout << Color::IDEncoder(4) << std::endl;
+
 	// engine resources initialization
 	MOON_InitEngine();
 
@@ -62,6 +67,9 @@ int main() {
 
 	//sp->transform.SetParent(&boxes->transform);
 	//rabbit->transform.SetParent(&sp->transform);
+
+	Helper* dum = MOON_HelperManager::CreateHelper(dummy, "dummy");
+	dum->transform.Translate(Vector3(0, 2, -3));
 	// -------------------------------------------------------------------------------------
 	std::cout << "done." << std::endl;
 
@@ -321,6 +329,9 @@ void MOON_CleanUp() {
 	ThreadPool::WaitAllThreadExit();
 	ThreadPool::Clean();
 	std::cout << "All thread exit." << std::endl;
+	Gizmo::ReleaseDummyMap();
+	Gizmo::DeleteVirtualDummy();
+	std::cout << "Virtual dummy deleted." << std::endl;
 	MOON_PlotManager::Release();
 	std::cout << "PlotManager cleared." << std::endl;
 	MOON_NeuralNetworkManager::Release();
@@ -337,6 +348,8 @@ void MOON_CleanUp() {
 	std::cout << "TextureManager cleared." << std::endl;
 	MOON_ShapeManager::Clear();
 	std::cout << "ShapeManager cleared." << std::endl;
+	MOON_HelperManager::Clear();
+	std::cout << "HelperManager cleared." << std::endl;
 	MOON_ModelManager::Clear();
 	std::cout << "ModelManager cleared." << std::endl;
 	MOON_CameraManager::Clear();
@@ -437,4 +450,6 @@ void MOON_InitEngine() {
 	std::cout << "- IDLUT Created." << std::endl;
 	OperatorManager::LoadNativeOperators();
 	std::cout << "- Native Operators Loaded." << std::endl;
+	Gizmo::CreateVirtualDummy();
+	std::cout << "- Virtual Dummy Created." << std::endl;
 }

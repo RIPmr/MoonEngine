@@ -5,6 +5,7 @@
 
 #include "MathUtils.h"
 #include "Vector3.h"
+#include "properties.h"
 #include "Ray.h"
 
 namespace MOON {
@@ -14,6 +15,11 @@ namespace MOON {
 		Vector3 max;
 		//Vector3 center;
 		//Vector3 extend;
+
+		PROPERTY(Vector3, center);
+		GET(center) {
+			return (min + max) / 2.0f;
+		}
 
 		BoundingBox() {
 			min = Vector3(INFINITY, INFINITY, INFINITY);

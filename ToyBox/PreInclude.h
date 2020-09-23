@@ -54,6 +54,8 @@
 #include "Camera.h"
 #include "MatSphere.h"
 #include "Transform.h"
+#include "Shapes.h"
+#include "Helpers.h"
 #include "Model.h"
 #include "Light.h"
 #include "OBJMgr.h"
@@ -89,6 +91,7 @@ void MOON_CleanUp();
 
 // global parameters
 std::vector<float> Graphics::ground;
+int Graphics::edit_mode_point_size = 4;
 
 // init Pipe Mgr
 float Graphics::quadVertices[24] = {
@@ -177,6 +180,7 @@ std::multimap<std::string, Texture*>		  MOON_TextureManager::itemMap;
 std::multimap<std::string, Model*>			  MOON_ModelManager::itemMap;
 std::multimap<std::string, Camera*>			  MOON_CameraManager::itemMap;
 std::multimap<std::string, Shape*>			  MOON_ShapeManager::itemMap;
+std::multimap<std::string, Helper*>			  MOON_HelperManager::itemMap;
 
 // init Managers
 bool MOON_LightManager::sizeFlag				= true;
@@ -186,7 +190,9 @@ bool MOON_TextureManager::sizeFlag				= true;
 bool MOON_ModelManager::sizeFlag				= true;
 bool MOON_CameraManager::sizeFlag				= true;
 bool MOON_ShapeManager::sizeFlag				= true;
+bool MOON_HelperManager::sizeFlag				= true;
 bool MOON_InputManager::lockSelection			= false;
+bool MOON_InputManager::isSelectionChanged		= false;
 unsigned int MOON_InputManager::hoverID			= MOON_UNSPECIFIEDID;
 Shader* MOON_ShaderManager::lineShader			= MOON_UNSPECIFIEDID;
 Shader* MOON_ShaderManager::outlineShader		= MOON_UNSPECIFIEDID;
@@ -225,6 +231,8 @@ std::vector<float>								  Gizmo::translate;
 bool Gizmo::isActive							= true;
 bool Gizmo::hoverGizmo							= false;
 float Gizmo::threshold							= 0.1f;
+Dummy* Gizmo::globalVirtualDummy				= nullptr;
+DummyMap Gizmo::globalDummyMap					= DummyMap();
 
 // NN params
 unsigned int NN::NNM::graphCnt					= 0;
@@ -238,5 +246,6 @@ Operators* available_operators					= NULL;
 // init Hotkey Mgr
 ViewportState HotKeyManager::state				= FREE;
 SnapMode HotKeyManager::snapType				= vertex;
-bool HotKeyManager::enableSnap					= false;
-MObject* HotKeyManager::editTarget				= nullptr;
+Element  HotKeyManager::globalEditElem			= VERT;
+bool	 HotKeyManager::enableSnap				= false;
+MObject* HotKeyManager::globalEditTarget		= nullptr;

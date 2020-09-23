@@ -1,6 +1,7 @@
 #include "Gizmo.h"
 #include "Graphics.h"
 #include "SceneMgr.h"
+#include "BoundingBox.h"
 
 namespace MOON {
 #pragma region manipulator
@@ -24,7 +25,7 @@ namespace MOON {
 		bool lineDist = MoonMath::closestDistanceBetweenLines(ray, axis, cRayPoint, cAxisPoint, maxCamRayLength, maxCamRayLength * 2) < threshold * scrDist;
 		Vector3 axisProjection = cAxisPoint - trans->position;
 		xActive = MOON_InputManager::mouse_left_hold ? xActive : lineDist && (axisProjection.magnitude() <= scrDist) && Vector3::DirectionSign(axisProjection, axis.dir) > 0;
-
+		
 		// draw gizmo
 		DrawTransPrototype(Matrix4x4::Translate(model, trans->position), ColorByDir(dir, !isActive, xActive));
 
@@ -87,6 +88,7 @@ namespace MOON {
 
 		// draw gizmo
 		bool disableWorldScale = !manipCoord == CoordSys::WORLD;
+
 		DrawTransPrototype(Matrix4x4::Translate(model, trans->position), ColorByDir(dir, !(isActive && disableWorldScale), xActive));
 
 		// get delta vector
@@ -134,10 +136,12 @@ namespace MOON {
 			deltaRot = Quaternion::Rotate(axis.dir, deltaAngle);
 		}
 
+		//DrawTransPrototype(Matrix4x4::Translate(model, trans->position), ColorByDir(dir, !isActive, xActive));
+
 		return deltaRot;
 	}
 
-	void Gizmo::Manipulate(void* transform, const float maxCamRayLength) {
+	Matrix4x4 Gizmo::Manipulate(void* transform, const float maxCamRayLength) {
 		static Vector2 screenPos;
 		static Vector3 cAxisPoint_X, cAxisPoint_Y, cAxisPoint_Z;
 		static bool	   xActive, yActive, zActive;
@@ -150,6 +154,12 @@ namespace MOON {
 		Ray ray = MOON_ActiveCamera->GetMouseRayAccurate();
 
 		hoverGizmo = xActive | yActive | zActive;
+
+		// offset if using center mode
+		/*auto offset = Vector3::ZERO();
+		if (Gizmo::gizmoPos == center && CheckType(trans->mobject, "Model"))
+			offset = dynamic_cast<Model*>(trans->mobject)->bbox_world.center - trans->position;
+		Transform* tmpTrans = new Transform(*trans); tmpTrans->position += offset;*/
 
 		auto translate = [&]() {
 			deltaVec += Translate(ray, Direction::UP, trans, cAxisPoint_Y, yActive, maxCamRayLength);
@@ -190,12 +200,22 @@ namespace MOON {
 			case GizmoMode::scale:		scale(); break;
 		}
 
+		Matrix4x4 deltaMat;
 		if (isActive && MOON_InputManager::mouse_left_hold) {
-			if (deltaVec.magnitude() > 0) trans->Translate(deltaVec);
-			if (deltaRot.eulerAngles.magnitude() || deltaRotLocal.eulerAngles.magnitude())
+			if (deltaVec.magnitude() > 0) {
+				trans->Translate(deltaVec);
+				deltaMat = Matrix4x4::Translate(deltaMat, deltaVec);
+			}
+			if (deltaRot.eulerAngles.magnitude() || deltaRotLocal.eulerAngles.magnitude()) {
 				trans->Rotate(Gizmo::manipCoord == WORLD ? deltaRot : deltaRotLocal, Gizmo::manipCoord);
-			if (deltaSca.magnitude() > 0) trans->Scale(deltaSca + trans->localScale);
+				deltaMat = Matrix4x4::Rotate(deltaMat, Gizmo::manipCoord == WORLD ? deltaRot : deltaRotLocal);
+			}
+			if (deltaSca.magnitude() > 0) {
+				deltaMat = Matrix4x4::Scale(deltaMat, (deltaSca + trans->localScale) / trans->localScale);
+				trans->Scale(deltaSca + trans->localScale);
+			}
 		}
+		return deltaMat;
 	}
 #pragma endregion
 
@@ -409,6 +429,12 @@ namespace MOON {
 		DrawPointPrototype(points, color, pointSize, model);
 	}
 
+	void Gizmo::DrawPointsDirect(const unsigned int& VAO, const size_t& pointNum, const Vector4 &color, const float &pointSize, const Matrix4x4 model) {
+		if (pointNum < 1) return;
+
+		DrawPointPrototype(VAO, pointNum, color, pointSize, model);
+	}
+
 	void Gizmo::DrawLineDirect(const Vector3 &start, const Vector3 &end, const Vector4 &color, const float &lineWidth, const Matrix4x4 model) {
 		std::vector<float> data;
 		data.push_back(start[0]); data.push_back(start[1]); data.push_back(start[2]);
@@ -511,6 +537,110 @@ namespace MOON {
 		DrawLinePrototype(lines, color, lineWidth, isStrip, model, overrideShader);
 
 		if (Graphics::process == sys_draw_ui) glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
+#pragma endregion
+
+#pragma region manipulate_massive
+	void Gizmo::CreateVirtualDummy() {
+		DeleteVirtualDummy();
+		globalVirtualDummy = new Dummy("vDum");
+		//globalVirtualDummy = (Dummy*)MOON_HelperManager::CreateHelper(dummy, "vDum");
+	}
+
+	void Gizmo::InitDummyMap() {
+		// reset dummy
+		globalVirtualDummy->transform.position = MOON_EditTarget->transform.position;
+		globalVirtualDummy->transform.rotation = Quaternion::identity();
+		globalVirtualDummy->transform.scale = Vector3::ONE();
+
+		globalDummyMap.clear();
+		if (MOON_ViewportState == EDIT) {
+			if (MOON_EditTarget == nullptr) return;
+			if (CheckType(MOON_EditTarget, "Model")) {
+				Model* md = dynamic_cast<Model*>(MOON_EditTarget);
+				BoundingBox bbox;
+				// calculate center
+				for (int i = 0; i < md->meshList.size(); i++) {
+					auto select = dynamic_cast<HalfMesh*>(md->meshList[i])->selected_verts;
+					for (auto& p : select) bbox.join(md->meshList[i]->vertices[p].Position);
+				}
+				// update dummy position
+				globalVirtualDummy->transform.position = md->transform.localToWorldMat.multVec(bbox.center);
+
+				// genereate dummy map
+				/*for (int i = 0, base = 0; i < md->meshList.size(); i++) {
+					auto select = dynamic_cast<HalfMesh*>(md->meshList[i])->selected_verts;
+					for (auto& p : select) {
+						globalDummyMap.insert(
+							std::pair<unsigned int, Matrix4x4>(
+								md->meshList[i]->vertices[p].ID + base, 
+								Matrix4x4::TranslateMat(bbox.center - 
+									md->transform.localToWorldMat.multVec(
+										md->meshList[i]->vertices[p].Position
+									)
+								)
+							)
+						);
+					}
+					base += md->meshList[i]->vertices.size();
+				}*/
+			} else if (CheckType(MOON_EditTarget, "Shape")) {
+
+			}
+		} else {
+
+		}
+
+	}
+
+	void Gizmo::ManipulateMassive(const float maxCamRayLength) {
+		if (globalVirtualDummy == nullptr) return;
+		if (MOON_SelectionChanged) {
+			InitDummyMap();
+			MOON_SelectionChanged = false;
+		}
+		Matrix4x4 dum_worldToLocalMat(globalVirtualDummy->transform.worldToLocalMat);
+		Matrix4x4 dum_localToWorldMat(globalVirtualDummy->transform.localToWorldMat);
+		auto trans = Manipulate(&globalVirtualDummy->transform, maxCamRayLength);
+		if (trans == Matrix4x4::identity()) return;
+
+		if (MOON_ViewportState == EDIT) {
+			if (MOON_EditTarget == nullptr) return;
+			if (CheckType(MOON_EditTarget, "Model")) {
+				Model* md = dynamic_cast<Model*>(MOON_EditTarget);
+				// update vertex position
+				for (int i = 0; i < md->meshList.size(); i++) {
+					auto select = dynamic_cast<HalfMesh*>(md->meshList[i])->selected_verts;
+					for (auto& p : select) {
+						auto localP = dum_worldToLocalMat.multVec(
+							md->transform.localToWorldMat.multVec(
+								md->meshList[i]->vertices[p].Position
+							)
+						);
+						md->meshList[i]->vertices[p].Position = md->transform.worldToLocalMat.multVec(
+							dum_localToWorldMat.multVec(trans.multVec(localP))
+						);
+					}
+					md->meshList[i]->UpdateMesh();
+				}
+			} else if (CheckType(MOON_EditTarget, "Shape")) {
+
+			}
+		} else {
+
+		}
+	}
+
+	void Gizmo::ReleaseDummyMap() {
+		globalDummyMap.clear();
+	}
+
+	void Gizmo::DeleteVirtualDummy() {
+		if (globalVirtualDummy != nullptr) {
+			//MOON_HelperManager::DeleteItem(globalVirtualDummy);
+			delete globalVirtualDummy;
+			globalVirtualDummy = nullptr;
+		}
 	}
 #pragma endregion
 }

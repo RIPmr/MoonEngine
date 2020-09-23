@@ -1,3 +1,8 @@
+#include <imgui.h>
+#include <imgui_internal.h>
+
+#include "Vector2.h"
+#include "MoonEnums.h"
 #include "HotkeyMgr.h"
 #include "SceneMgr.h"
 #include "UIController.h"
@@ -86,5 +91,102 @@ namespace MOON {
 
 		// exit ---------------------------------------------------------------------------
 		if (SceneManager::exitFlag) glfwSetWindowShouldClose(window, true);
+	}
+
+	void HotKeyManager::SelectRegion(const SelectType& type) {
+		static ImVec2 start{ -1, -1 }, end{ -1, -1 };
+
+		if (MOON_InputManager::isHoverUI || Gizmo::hoverGizmo || HotKeyManager::state == CREATE) {
+			start = end = ImVec2{ -1, -1 };
+			return;
+		}
+
+		auto draw_list = ImGui::GetWindowDrawList();
+
+		if (MOON_MouseDown(0)) {
+			start.x = ImGui::GetWindowPos().x + MOON_MousePos.x + 7;
+			start.y = ImGui::GetWindowPos().y + MOON_MousePos.y + 7;
+		} else if (MOON_MouseRepeat(0)) {
+			if (start.x < 0) return;
+			end.x = ImGui::GetWindowPos().x + MOON_MousePos.x + 7;
+			end.y = ImGui::GetWindowPos().y + MOON_MousePos.y + 7;
+			if (start.x != end.x && start.y != end.y)
+				ConvertRegionToSelection(
+					Vector2(
+						start.x - ImGui::GetWindowPos().x - 7,
+						start.y - ImGui::GetWindowPos().y - 7
+					), MOON_MousePos
+				);
+		} else if (MOON_MouseRelease(0)) {
+			start = end = ImVec2{ -1, -1 };
+		}
+
+		// draw select region (rectangle)
+		if (start.x > 0 && end.x > 0) {
+			draw_list->AddRectFilled(
+				start, end, ImColor(255, 255, 255, 50)
+			);
+		}
+	}
+
+	void HotKeyManager::ConvertRegionToSelection(const Vector2& start, const Vector2& end) {
+		Vector2 size(std::fabs(end.x - start.x), std::fabs(end.y - start.y));
+		GLfloat* col = new GLfloat[size.x * size.y * 4];
+		auto minX = std::min(start.x, end.x);
+		auto minY = std::max(start.y, end.y);
+
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, MOON_TextureManager::IDLUT->fbo);
+		glReadBuffer(GL_COLOR_ATTACHMENT0);
+		glReadPixels(
+			minX, MOON_ScrSize.y - minY - 1,
+			size.x, size.y,
+			GL_RGBA, GL_FLOAT, col
+		);
+		glReadBuffer(GL_NONE);
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+
+		if (!MOON_InputManager::left_ctrl_hold) {
+			if (state == EDIT) {
+				Model* md = dynamic_cast<Model*>(MOON_EditTarget);
+				for (int i = 0; i < md->meshList.size(); i++) {
+					dynamic_cast<HalfMesh*>(md->meshList[i])->ClearSelection();
+				}
+			} else MOON_InputManager::ClearSelection();
+		}
+
+		for (int x = 0; x < size.x * size.y; x++) {
+			auto x4 = x * 4;
+			if (x > 0 && (col[x4] == col[x4 - 4] &&
+				col[x4 + 1] == col[x4 - 3] &&
+				col[x4 + 2] == col[x4 - 2] &&
+				col[x4 + 3] == col[x4 - 1])) continue;
+
+			if (state == EDIT) {
+				Model* md = dynamic_cast<Model*>(MOON_EditTarget);
+				auto id = Color::IDDecoder(
+					col[x4], col[x4 + 1],
+					col[x4 + 2], col[x4 + 3]
+				) - 1;
+
+				for (int i = 0, base = 0; i < md->meshList.size(); i++) {
+					if (id >= base + md->meshList[i]->vertices.size()) {
+						base += md->meshList[i]->vertices.size();
+						continue;
+					} else {
+						dynamic_cast<HalfMesh*>(md->meshList[i])->Select_Append(
+							MOON_EditElem, id - base, false);
+						break;
+					}
+				}
+			} else {
+				MOON_InputManager::Select_Append(
+					Color::IDDecoder(
+						col[x4], col[x4 + 1],
+						col[x4 + 2], col[x4 + 3]
+					), false
+				);
+			}
+		}
+		delete[] col;
 	}
 }

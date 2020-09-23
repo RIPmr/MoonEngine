@@ -7,6 +7,7 @@
 
 namespace MOON {
 
+#pragma region searcher
 	void NodeEditor::Searcher::Draw() {
 		// press 'S' to show searcher
 		if (!enableSearcher && MOON_KeyDown(KEY_S)) {
@@ -161,7 +162,9 @@ namespace MOON {
 			searchWord = "";
 		}
 	}
+#pragma endregion
 
+#pragma region node_editor
 	void NodeEditor::Instantiate(ImNodes::MyNode* node, const ImVec2& nodePos = ImVec2(0, 0)) {
 		nodes.push_back(node);
 		nodes.back()->parent = this;
@@ -384,5 +387,6 @@ namespace MOON {
 			); }
 		};
 	}
+#pragma endregion
 
 }

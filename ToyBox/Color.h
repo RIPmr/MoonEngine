@@ -47,6 +47,8 @@ namespace MOON {
 						   data.size() > 2 ? data[2] : 0, 
 						   255 - (data.size() > 3 ? data[3] : 0)) / 255.0f;
 		}
+
+		/// *NOTE: alpha is start from 1 to 0, while r,g,b is start from 0 to 1
 		// convert object color to object ID
 		inline static unsigned int IDDecoder(Vector4 Color) {
 			if (Color == Vector4::ZERO()) {
@@ -56,6 +58,17 @@ namespace MOON {
 
 			Color *= 255;
 			return (255 - Color[3]) * 256 * 256 * 256 + Color[2] * 256 * 256 + Color[1] * 256 + Color[0];
+		}
+
+		// convert object color to object ID
+		inline static unsigned int IDDecoder(float r, float g, float b, float a) {
+			if (!r && !g && !b && !a) {
+				//std::cout << "ERROR: ID can not be 0!" << std::endl;
+				return 0;
+			}
+
+			r *= 255; g *= 255; b *= 255; a *= 255;
+			return (255 - a) * 256 * 256 * 256 + b * 256 * 256 + g * 256 + r;
 		}
 	};
 }

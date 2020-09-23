@@ -50,11 +50,15 @@ namespace MOON {
 		BoundingBox bbox;
 		unsigned int VAO;
 
+		bool selected;
+
 		Mesh() {}
-		Mesh(const Mesh &mesh) : vertices(mesh.vertices), triangles(mesh.triangles), material(mesh.material), VAO(mesh.VAO), bbox(mesh.bbox) {}
+		Mesh(const Mesh &mesh) : vertices(mesh.vertices), triangles(mesh.triangles), 
+			material(mesh.material), VAO(mesh.VAO), bbox(mesh.bbox), selected(false) {}
 		Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> triangles) : ObjectBase("Mesh", MOON_UNSPECIFIEDID), VAO(0) {
 			this->vertices = vertices;
 			this->triangles = triangles;
+			this->selected = false;
 
 			// set the vertex buffers and its attribute pointers
 			//setupMesh();

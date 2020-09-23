@@ -16,8 +16,10 @@ namespace MOON {
 
 		// global parameters
 		static std::vector<float> ground;
+		static int edit_mode_point_size;
 
 		static void DrawIDLUT();
+		static void DrawIDLUT_EditMode();
 		static void DrawShadowMap();
 		static void SetDrawTarget(SceneView view, const bool& depthTest);
 		static void DrawSceneView(SceneView view);
@@ -25,6 +27,7 @@ namespace MOON {
 		static void SetShadingMode(ShadingMode shading);
 		static void DrawModels();
 		static void DrawShapes();
+		static void DrawHelpers();
 		static void DrawCameras();
 		static void HighlightSelection();
 

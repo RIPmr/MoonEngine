@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 #include <vector>
 #include <iostream>
+#include <unordered_map>
 #include <cmath>
 
 #include "MoonEnums.h"
@@ -18,14 +19,20 @@
 #include "Ray.h"
 
 namespace MOON {
+	extern class Dummy;
 	class Gizmo {
 	public:
+		#define DummyMap	std::unordered_map<unsigned int, Matrix4x4>
+
 		static bool hoverGizmo;
 		static bool isActive;
 
 		static CoordSys  manipCoord;
 		static GizmoPos  gizmoPos;
 		static GizmoMode gizmoMode;
+
+		static Dummy*	globalVirtualDummy;
+		static DummyMap globalDummyMap;
 
 		// Set parameters
 		inline static void SetMode(const GizmoMode& mode) { gizmoMode = mode; }
@@ -60,12 +67,13 @@ namespace MOON {
 		static Vector3 Scale(const Ray& ray, const Direction& dir, Transform *trans, Vector3& cAxisPoint_O, bool& xActive, float maxCamRayLength);
 		// screen space version
 		static Quaternion Rotate_SS(const Ray& ray, const Direction& dir, Matrix4x4& model, Transform *trans, Vector3& cAxisPoint_O, Vector2& screenPos_O, bool& xActive, float& deltaAngle);
-		static void Manipulate(void* transform, const float maxCamRayLength = 10000.0f);
+		static Matrix4x4 Manipulate(void* transform, const float maxCamRayLength = 10000.0f);
 	#pragma endregion
 
 	#pragma region draw methods
 		static void DrawPointDirect(const Vector3 &position, const Vector4 &color = Color::WHITE(), const float &pointSize = 1.0f, const Matrix4x4 model = Matrix4x4::identity());
 		static void DrawPointsDirect(const std::vector<Vector3> &points, const Vector4 &color = Color::WHITE(), const float &pointSize = 1.0f, const Matrix4x4 model = Matrix4x4::identity());
+		static void DrawPointsDirect(const unsigned int& VAO, const size_t& pointNum, const Vector4 &color = Color::WHITE(), const float &pointSize = 1.0f, const Matrix4x4 model = Matrix4x4::identity());
 		static void DrawLineDirect(const Vector3 &start, const Vector3 &end, const Vector4 &color = Color::WHITE(), const float &lineWidth = 1.0f, const Matrix4x4 model = Matrix4x4::identity());
 		static void DrawLinesDirect(const std::vector<Vector3> &lines, const Vector4 &color = Color::WHITE(), const float &lineWidth = 1.0f, const bool &isStrip = true, const Matrix4x4 model = Matrix4x4::identity(), const Shader* overrideShader = NULL);
 		static void DrawDashedLineDirect(const Vector3 &start, const Vector3 &end, const Vector4 &color = Color::WHITE(), const float &lineWidth = 1.0f, const Matrix4x4 model = Matrix4x4::identity());
@@ -93,6 +101,14 @@ namespace MOON {
 		static void DrawPointPrototype(const unsigned int& VAO, const size_t& pointNum, const Vector4 &color = Color::WHITE(), const float &pointSize = 1.0f, const Matrix4x4 model = Matrix4x4::identity());
 		static void DrawLinePrototype(const std::vector<float> &data, const Vector4 &color = Color::WHITE(), const float &lineWidth = 1.0f, const bool &isStrip = true, const Matrix4x4 model = Matrix4x4::identity(), const Shader* overrideShader = NULL);
 		static void DrawLinePrototype(const std::vector<Vector3> &data, const Vector4 &color = Color::WHITE(), const float &lineWidth = 1.0f, const bool &isStrip = true, const Matrix4x4 model = Matrix4x4::identity(), const Shader* overrideShader = NULL);
+	#pragma endregion
+
+	#pragma region manipulate_massive
+		static void CreateVirtualDummy();
+		static void InitDummyMap();
+		static void DeleteVirtualDummy();
+		static void ReleaseDummyMap();
+		static void ManipulateMassive(const float maxCamRayLength = 10000.0f);
 	#pragma endregion
 
 	private:

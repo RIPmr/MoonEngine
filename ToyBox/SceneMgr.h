@@ -12,6 +12,7 @@
 #include "Model.h"
 #include "Light.h"
 #include "Shapes.h"
+#include "Helpers.h"
 #include "Texture.h"
 #include "MShader.h"
 #include "Material.h"
@@ -460,6 +461,8 @@ namespace MOON {
 				CameraManager::DeleteItem(obj->ID);
 			} else if (type._Equal("Shape")) {
 				ShapeManager::DeleteItem(obj->ID);
+			} else if (type._Equal("Helper")) {
+				HelperManager::DeleteItem(obj->ID);
 			}
 		}
 
@@ -475,7 +478,8 @@ namespace MOON {
 			else if (_type._Equal("Material"))	type = "Material";
 			else if (_type._Equal("Camera")		||
 					 _type._Equal("Model")		||
-					 _type._Equal("Shape")		|| 
+					 _type._Equal("Shape")		||
+					 _type._Equal("Helper")		||
 					 _type._Equal("Light"))		type = "MObject";
 			else type = "Unknown";
 			return type;
@@ -512,6 +516,10 @@ namespace MOON {
 					 typeid(*item) == typeid(Circle)		||
 					 typeid(*item) == typeid(Rectangle)		||
 					 typeid(*item) == typeid(NGone))		type = "Shape";
+			else if (typeid(*item) == typeid(Dummy)			||
+					 typeid(*item) == typeid(Tape)			||
+					 typeid(*item) == typeid(Volume)		||
+					 typeid(*item) == typeid(Proxy))		type = "Helper";
 			else type = "Unknown";
 			return type;
 		}
@@ -519,57 +527,31 @@ namespace MOON {
 		template<class T>
 		static std::string GetTypeIcon(T* item) {
 			std::string typeIcon;
-			if (typeid(*item) == typeid(Shader))			typeIcon = ICON_FA_FILE_CODE_O;
-			else if (typeid(*item) == typeid(Texture))		typeIcon = ICON_FA_FILE_IMAGE_O;
+			std::string type = GetType(item);
+			if (typeid(*item) == typeid(Texture))			typeIcon = ICON_FA_FILE_IMAGE_O;
 			else if (typeid(*item) == typeid(FrameBuffer))	typeIcon = ICON_FA_PICTURE_O;
-			else if (typeid(*item) == typeid(MoonMtl)		||
-					 typeid(*item) == typeid(LightMtl)		||
-					 typeid(*item) == typeid(Lambertian)	||
-					 typeid(*item) == typeid(Metal)			||
-					 typeid(*item) == typeid(Dielectric))	typeIcon = ICON_FA_GLOBE;
-			else if (typeid(*item) == typeid(DirLight)		||
-					 typeid(*item) == typeid(PointLight)	||
-					 typeid(*item) == typeid(SpotLight)		||
-					 typeid(*item) == typeid(MoonLight)		||
-					 typeid(*item) == typeid(DomeLight))	typeIcon = ICON_FA_LIGHTBULB_O;
-			else if (typeid(*item) == typeid(Model)			||
-					 typeid(*item) == typeid(Sphere)		||
-					 typeid(*item) == typeid(Plane)			||
-					 typeid(*item) == typeid(Box)			||
-					 typeid(*item) == typeid(Cylinder)		||
-					 typeid(*item) == typeid(Ring)			||
-					 typeid(*item) == typeid(Capsule))		typeIcon = ICON_FA_CUBE;
-			else if (typeid(*item) == typeid(Camera))		typeIcon = ICON_FA_VIDEO_CAMERA;
-			else if (typeid(*item) == typeid(Shape)			||
-					 typeid(*item) == typeid(Line)			||
-					 typeid(*item) == typeid(Circle)		||
-					 typeid(*item) == typeid(Rectangle)		||
-					 typeid(*item) == typeid(NGone))		typeIcon = ICON_FA_LEMON_O;
+			else if (type._Equal("Shader"))					typeIcon = ICON_FA_FILE_CODE_O;
+			else if (type._Equal("Material"))				typeIcon = ICON_FA_GLOBE;
+			else if (type._Equal("Light"))					typeIcon = ICON_FA_LIGHTBULB_O;
+			else if (type._Equal("Model"))					typeIcon = ICON_FA_CUBE;
+			else if (type._Equal("Camera"))					typeIcon = ICON_FA_VIDEO_CAMERA;
+			else if (type._Equal("Shape"))					typeIcon = ICON_FA_LEMON_O;
+			else if (type._Equal("Helper"))					typeIcon = ICON_FA_THUMB_TACK;
 			else typeIcon = ICON_FA_QUESTION;
 			return typeIcon;
 		}
 
 		template<class T>
 		static void RenameItem(T* item, const std::string &newName) {
-			if (typeid(*item) == typeid(Shader))			ShaderManager::RenameItem(item, newName);
-			else if (typeid(*item) == typeid(Texture))		TextureManager::RenameItem(item, newName);
-			else if (typeid(*item) == typeid(MoonMtl)		||
-					 typeid(*item) == typeid(LightMtl)		||
-					 typeid(*item) == typeid(Lambertian)	||
-					 typeid(*item) == typeid(Metal)			||
-					 typeid(*item) == typeid(Dielectric))	MaterialManager::RenameItem(item, newName);
-			else if (typeid(*item) == typeid(DirLight)		||
-					 typeid(*item) == typeid(PointLight)	||
-					 typeid(*item) == typeid(SpotLight)		||
-					 typeid(*item) == typeid(MoonLight)		||
-					 typeid(*item) == typeid(DomeLight))	LightManager::RenameItem(item, newName);
-			else if (typeid(*item) == typeid(Model))		ModelManager::RenameItem(item, newName);
-			else if (typeid(*item) == typeid(Camera))		CameraManager::RenameItem(item, newName);
-			else if (typeid(*item) == typeid(Shape)			||
-					 typeid(*item) == typeid(Line)			||
-					 typeid(*item) == typeid(Circle)		||
-					 typeid(*item) == typeid(Rectangle)		||
-					 typeid(*item) == typeid(NGone))		 ShapeManager::RenameItem(item, newName);
+			std::string type = GetType(item);
+			if (type._Equal("Shader"))				ShaderManager::RenameItem(item, newName);
+			else if (type._Equal("Texture"))		TextureManager::RenameItem(item, newName);
+			else if (type._Equal("Material"))		MaterialManager::RenameItem(item, newName);
+			else if (type._Equal("Light"))			LightManager::RenameItem(item, newName);
+			else if (type._Equal("Model"))			ModelManager::RenameItem(item, newName);
+			else if (type._Equal("Camera"))			CameraManager::RenameItem(item, newName);
+			else if (type._Equal("Shape"))			ShapeManager::RenameItem(item, newName);
+			else if (type._Equal("Helper"))			HelperManager::RenameItem(item, newName);
 			else std::cout << "Unknown type, rename failed!" << std::endl;
 		}
 
@@ -583,6 +565,8 @@ namespace MOON {
 			count += CameraManager::CountItem();
 			count += ShaderManager::CountItem();
 			count += MaterialManager::CountItem();
+			count += ShapeManager::CountItem();
+			count += HelperManager::CountItem();
 
 			return count;
 		}
@@ -596,11 +580,16 @@ namespace MOON {
 		}
 
 		static void DrawGizmos() {
-			ObjectBase* first = InputManager::GetFirstSelected();
-			if (!first) return; 
-			if (!SuperClassOf(first)._Equal("MObject")) return;
+			if (MOON_ViewportState == EDIT) {
+				Gizmo::ManipulateMassive(MOON_ActiveCamera->zFar);
+			} else {
+				ObjectBase* first = InputManager::GetFirstSelected();
+				if (!first) return;
+				if (!SuperClassOf(first)._Equal("MObject")) return;
 
-			Gizmo::Manipulate(&dynamic_cast<MObject*>(first)->transform, MOON_ActiveCamera->zFar);
+				MObject* object = dynamic_cast<MObject*>(first);
+				Gizmo::Manipulate(&object->transform, MOON_ActiveCamera->zFar);
+			}
 		}
 
 		static void Init() {
@@ -652,7 +641,81 @@ namespace MOON {
 			// selection
 			static unsigned int hoverID;
 			static bool lockSelection;
+			static bool isSelectionChanged;
 			static std::vector<unsigned int> selection;
+
+			class Selector {
+			public:
+				template<class T>
+				static void ClearSelectionPrototype(std::vector<T>& list, std::vector<unsigned int>& selected) {
+					selected.clear();
+					for (auto& item : list) item.selected = false;
+					MOON_SelectionChanged = true;
+				}
+
+				template<class T>
+				static void ClearSelectionPrototype(std::vector<T*>& list, std::vector<unsigned int>& selected) {
+					selected.clear();
+					for (auto& item : list) {
+						if (item != nullptr) item->selected = false;
+					}
+					MOON_SelectionChanged = true;
+				}
+
+				template<class T>
+				static void SelectPrototype(std::vector<T>& list, std::vector<unsigned int>& selected, const unsigned int ID, const bool& canIDZero = true) {
+					if (!InputManager::left_ctrl_hold && !InputManager::right_ctrl_hold) {
+						ClearSelectionPrototype(list, selected);
+					}
+					Select_AppendPrototype(list, selected, ID, true, canIDZero);
+				}
+
+				template<class T>
+				static void SelectPrototype(std::vector<T*>& list, std::vector<unsigned int>& selected, const unsigned int ID, const bool& canIDZero = true) {
+					if (!InputManager::left_ctrl_hold && !InputManager::right_ctrl_hold) {
+						ClearSelectionPrototype(list, selected);
+					}
+					Select_AppendPrototype(list, selected, ID, true, canIDZero);
+				}
+
+				template<class T>
+				static void Select_AppendPrototype(std::vector<T>& list, std::vector<unsigned int>& selected,
+					unsigned int ID, const bool& autoInvertSelect = true, const bool& canIDZero = true) {
+					if (ID >= (1 - canIDZero) && ID < list.size()) {
+						if (autoInvertSelect) {
+							if (list[ID].selected ^= 1) selected.push_back(ID);
+							else Utility::RemoveElem(selected, ID);
+							MOON_SelectionChanged = true;
+						} else {
+							if (list[ID].selected) return;
+							else {
+								list[ID].selected = true;
+								selected.push_back(ID);
+								MOON_SelectionChanged = true;
+							}
+						}
+					}
+				}
+
+				template<class T>
+				static void Select_AppendPrototype(std::vector<T*>& list, std::vector<unsigned int>& selected,
+					unsigned int ID, const bool& autoInvertSelect = true, const bool& canIDZero = true) {
+					if (ID >= (1 - canIDZero) && ID < list.size()) {
+						if (autoInvertSelect) {
+							if (list[ID]->selected ^= 1) selected.push_back(ID);
+							else Utility::RemoveElem(selected, ID);
+							MOON_SelectionChanged = true;
+						} else {
+							if (list[ID]->selected) return;
+							else {
+								list[ID]->selected = true;
+								selected.push_back(ID);
+								MOON_SelectionChanged = true;
+							}
+						}
+					}
+				}
+			};
 
 			static void ResetKeyState() {
 				keyButton = -1;
@@ -713,37 +776,48 @@ namespace MOON {
 				}
 			}
 
-			static void Select_Append(const unsigned int ID) {
-				if (ID) {
-					if (MOON_ObjectList[ID]->selected ^= 1) {
-						MOON_InputManager::selection.push_back(ID);
-					} else {
-						auto end = MOON_InputManager::selection.end();
-						for (auto it = MOON_InputManager::selection.begin(); it != end; it++)
-							if (*it == ID) {
-								it = MOON_InputManager::selection.erase(it);
-								return;
-							}
-					}
-				}
-			}
-
 			static void ClearSelection() {
-				if (HotKeyManager::state == EDIT) return;
+				if (MOON_ViewportState == EDIT) return;
 
-				MOON_InputManager::selection.clear();
+				Selector::ClearSelectionPrototype(MOON_ObjectList, selection);
+				/*MOON_InputManager::selection.clear();
 				for (ObjectBase *obj : MOON_ObjectList) {
 					if (obj != nullptr) obj->selected = false;
-				}
+				}*/
 			}
 
 			static void Select(const unsigned int ID) {
-				if (HotKeyManager::state == EDIT) return;
+				if (MOON_ViewportState == EDIT) return;
 
-				if (!MOON_InputManager::left_ctrl_hold && !MOON_InputManager::right_ctrl_hold) {
+				Selector::SelectPrototype(MOON_ObjectList, selection, ID, false);
+				/*if (!MOON_InputManager::left_ctrl_hold && !MOON_InputManager::right_ctrl_hold) {
 					ClearSelection();
 				}
-				Select_Append(ID);
+				Select_Append(ID);*/
+			}
+
+			static void Select_Append(const unsigned int ID, const bool& autoInvertSelect = true) {
+				Selector::Select_AppendPrototype(MOON_ObjectList, selection, ID, autoInvertSelect, false);
+				/*if (ID > 0 && ID < MOON_ObjectList.size()) {
+					if (autoInvertSelect) {
+						if (MOON_ObjectList[ID]->selected ^= 1) {
+							MOON_InputManager::selection.push_back(ID);
+						} else {
+							auto end = MOON_InputManager::selection.end();
+							for (auto it = MOON_InputManager::selection.begin(); it != end; it++)
+								if (*it == ID) {
+									it = MOON_InputManager::selection.erase(it);
+									return;
+								}
+						}
+					} else {
+						if (MOON_ObjectList[ID]->selected) return;
+						else {
+							MOON_ObjectList[ID]->selected = true;
+							MOON_InputManager::selection.push_back(ID);
+						}
+					}
+				}*/
 			}
 
 			static unsigned int GetIDFromLUT(const Vector2& screenPos) {
@@ -757,6 +831,7 @@ namespace MOON {
 
 				hoverID = isHoverUI ? 0 : Color::IDDecoder(col);
 				//std::cout << hoverID << std::endl;
+				//std::cout << col << std::endl;
 				return hoverID;
 			}
 
@@ -815,6 +890,7 @@ namespace MOON {
 				outlineShader = new Shader("Outline", "Outline.vs", "Outline.fs");
 				screenBufferShader = new Shader("ScreenBuffer", "ScreenBuffer.vs", "ScreenBuffer.fs");
 				AddItem(new Shader("FlatShader", "Flat.vs", "Flat.fs")); 
+				AddItem(new Shader("VertexID", "VertexID.vs", "VertexID.fs")); 
 				AddItem(lineShader);
 				AddItem(outlineShader);
 				AddItem(screenBufferShader);
@@ -911,14 +987,14 @@ namespace MOON {
 				return newShape;
 			}
 
-			static bool Clear() {
+			/*static bool Clear() {
 				auto end = itemMap.end();
 				for (auto itr = itemMap.begin(); itr != end; ) {
 					delete itr->second;
 					itr = itemMap.erase(itr);
 				}
 				return true;
-			}
+			}*/
 		};
 
 		struct ModelManager : ObjectManager<Model> {
@@ -997,6 +1073,19 @@ namespace MOON {
 				activeCamera = sceneCameras[3];
 				Renderer::targetCamera = sceneCameras[0];
 				return true;
+			}
+		};
+
+		struct HelperManager : ObjectManager<Helper> {
+			static Helper* CreateHelper(const HelperType &type, const std::string &name) {
+				Helper* newHelper = nullptr;
+				switch (type) {
+					case dummy:
+						newHelper = new Dummy(name);
+						break;
+				}
+				if (newHelper != nullptr) AddItem(newHelper);
+				return newHelper;
 			}
 		};
 
