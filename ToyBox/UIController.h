@@ -27,6 +27,7 @@
 #include "ButtonEx.h"
 #include "Icons.h"
 #include "StackWindow.h"
+#include "WinDiagHandler.h"
 #include "AssetLoader.h"
 #include "MaterialEditor.h"
 #pragma warning(disable:4996)
@@ -116,23 +117,23 @@ namespace MOON {
 				ImGui::Separator();
 				if (ImGui::BeginMenu("Import")) {
 					if (ImGui::MenuItem("Model...")) {
-						std::string path = OpenFile();
+						std::string path = WinDiagMgr::FileDialog();
 						std::cout << "Selected file: " << path << std::endl;
 						MOON_ModelManager::LoadModel(path);
 						RegistStackWnd("Loading", StackWndType::PROGRESS);
 					}
 					if (ImGui::MenuItem("Scene...")) {
-						std::cout << "Selected file: " << OpenFolder() << std::endl;
+						std::cout << "Selected file: " << WinDiagMgr::OpenFolder() << std::endl;
 					}
 					ImGui::EndMenu();
 				}
 
 				if (ImGui::BeginMenu("Export")) {
 					if (ImGui::MenuItem("Export All...")) {
-						std::cout << "Selected folder: " << OpenFolder() << std::endl;
+						std::cout << "Selected folder: " << WinDiagMgr::OpenFolder() << std::endl;
 					}
 					if (ImGui::MenuItem("Export Selected...")) {
-						std::cout << "Selected folder: " << OpenFolder() << std::endl;
+						std::cout << "Selected folder: " << WinDiagMgr::OpenFolder() << std::endl;
 					}
 					ImGui::EndMenu();
 				}
@@ -318,14 +319,6 @@ namespace MOON {
 		static void ControlPanel() {
 			ImGui::Begin(Icon_Name_To_ID(ICON_FA_COGS, " ControlPanel"));
 
-			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvailWidth());
-			ImGui::ColorEdit3("", (float*)&clearColor);
-
-			ImGui::Spacing();
-
-			ImGui::Text("Debug:"); ImGui::SameLine();
-			ImGui::Checkbox("BBox", &SceneManager::debug, true);
-
 			if (ImGui::Button("Test Btn")) {
 				
 			}
@@ -381,6 +374,7 @@ namespace MOON {
 
 			ImGui::Text("[Statistics]");
 			ImGui::Text("FPS: %.1f (%.2f ms/frame)", ImGui::GetIO().Framerate, 1000.0f / ImGui::GetIO().Framerate);
+			ImGui::Text("ObjCount: %d", MOON_ObjectNumber);
 			ImGui::Text("Hover UI: %d", MOON_InputManager::isHoverUI);
 
 			ImGui::Separator();
@@ -393,8 +387,34 @@ namespace MOON {
 			if (ImGui::BeginTabBar("##tabs", ImGuiTabBarFlags_None)) {
 				if (ImGui::BeginTabItem("Graphics")) {
 					ImGui::Spacing(); ImGui::AlignTextToFramePadding();
-					ImGui::Text("BG Color:"); ImGui::SameLine();
-					ImGui::ColorEdit3("", (float*)&clearColor);
+					ImGui::Text("Shadow:");
+					ImGui::Indent(10.0f);
+					ImGui::Text("Distance:"); ImGui::SameLine(80);
+					ImGui::DragFloat("shadowDist", &Graphics::shadowDistance, 1.0f, 0, 0, "%.1f", 1.0f, true);
+					ImGui::Unindent(10.0f);
+					ImGui::Separator();
+
+					ImGui::Text("Anti-Aliasing:");
+					ImGui::Indent(10.0f);
+					ImGui::Text("Enable"); ImGui::SameLine(80);
+					ImGui::Checkbox("enableAA", &Graphics::antiAliasing, true);
+					const char* items[] = { "MASS", "TAA", "SRAA" };
+					ImGui::AlignTextToFramePadding();
+					ImGui::Text("Type"); ImGui::SameLine(80);
+					ImGui::PushID("Type");
+					if (ImGui::Combo("", (int*)&Graphics::AAType, items, IM_ARRAYSIZE(items))) {
+
+					}
+					ImGui::PopID();
+					ImGui::Unindent(10.0f);
+					ImGui::Separator();
+
+					ImGui::Text("Post-Processing:");
+					ImGui::Indent(10.0f);
+
+					ImGui::Unindent(10.0f);
+					ImGui::Separator();
+
 					ImGui::EndTabItem();
 				}
 				if (ImGui::BeginTabItem("Hotkey")) {
@@ -506,9 +526,21 @@ namespace MOON {
 				if (ImGui::MenuItem("Debug", 0, SceneManager::debug)) { SceneManager::debug = !SceneManager::debug; }
 				ImGui::Separator();
 				if (ImGui::BeginMenu("Background")) {
-					if (ImGui::MenuItem("Color", 0, true)) {}
-					if (ImGui::MenuItem("Image")) {}
-					if (ImGui::MenuItem("Settings...")) {}
+					if (ImGui::MenuItem("Color", 0, MOON_Enviroment == env_pure_color)) {
+						MOON_Enviroment = env_pure_color;
+					}
+					if (ImGui::MenuItem("CubeMap", 0, MOON_Enviroment == env_cubemap)) {
+						MOON_Enviroment = env_cubemap;
+					}
+					if (ImGui::MenuItem("ProSky", 0, MOON_Enviroment == env_procedural_sky)) {
+						MOON_Enviroment = env_procedural_sky;
+					}
+					if (ImGui::MenuItem("HDRI", 0, MOON_Enviroment == env_hdri)) {
+						MOON_Enviroment = env_hdri;
+					}
+					if (ImGui::MenuItem("Settings...")) {
+						MainUI::show_enviroment_editor = !MainUI::show_enviroment_editor;
+					}
 					ImGui::EndMenu();
 				}
 				ImGui::EndPopup();
@@ -823,7 +855,7 @@ namespace MOON {
 				if (MOON_EditTarget && MOON_EditTarget->ID == iter)
 					MOON_ObjectList[iter]->selected = true;
 
-				if (iter >= SceneManager::GetObjectNum()) break;
+				if (iter >= SceneManager::objectList.size()) break;
 				// remove ID in selection slot while click close button in the collapsing header
 				if (checker && !MOON_ObjectList[iter]->selected) {
 					auto end = MOON_InputManager::selection.end();
@@ -939,7 +971,26 @@ namespace MOON {
 
 		static void EnviromentWnd() {
 			ImGui::Begin(Icon_Name_To_ID(ICON_FA_CLOUD, " Enviroment"), &MainUI::show_enviroment_editor);
-			
+
+			const char* items[] = { "HDRI", "CubeMap", "PureColor", "ProSky" };
+			ImGui::AlignTextToFramePadding();
+			ImGui::Text("Enviroment"); ImGui::SameLine();
+			if (ImGui::Combo("", (int*)&MOON_Enviroment, items, IM_ARRAYSIZE(items))) {
+				
+			}
+
+			if (MOON_Enviroment == EnviromentType::env_pure_color) {
+				ImGui::Text("Pure Color:");
+				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvailWidth());
+				ImGui::ColorEdit3("", (float*)&clearColor);
+			} else if (MOON_Enviroment == EnviromentType::env_hdri) {
+
+			} else if (MOON_Enviroment == EnviromentType::env_cubemap) {
+
+			} else if (MOON_Enviroment == EnviromentType::env_procedural_sky) {
+
+			}
+
 			ImGui::End();
 		}
 
@@ -1226,36 +1277,6 @@ namespace MOON {
 					plt->DrawInWindow();
 			}
 		}
-
-	private:
-		static std::string OpenFile() {
-			TCHAR szBuffer[MAX_PATH] = { 0 };
-			BROWSEINFO bi;
-			ZeroMemory(&bi, sizeof(BROWSEINFO));
-			bi.hwndOwner = NULL;
-			bi.pszDisplayName = szBuffer;
-			bi.lpszTitle = "Select model file:";
-			bi.ulFlags = BIF_BROWSEINCLUDEFILES;
-			LPITEMIDLIST idl = SHBrowseForFolder(&bi);
-			if (NULL == idl) return NULL;
-			SHGetPathFromIDList(idl, szBuffer);
-			return szBuffer;
-		}
-		
-		static std::string OpenFolder() {
-			TCHAR szBuffer[MAX_PATH] = { 0 };
-			BROWSEINFO bi;
-			ZeroMemory(&bi, sizeof(BROWSEINFO));
-			bi.hwndOwner = NULL;
-			bi.pszDisplayName = szBuffer;
-			bi.lpszTitle = "Select export folder:";
-			bi.ulFlags = BIF_RETURNFSANCESTORS;
-			LPITEMIDLIST idl = SHBrowseForFolder(&bi);
-			if (NULL == idl) return NULL;
-			SHGetPathFromIDList(idl, szBuffer);
-			return szBuffer;
-		}
-
 	};
 
 }

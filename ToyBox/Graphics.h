@@ -10,14 +10,31 @@ namespace MOON {
 
 	class Graphics {
 	public:
+		struct PostProcessing {
+
+		};
+
+		// system enums
 		static PipelineMode pipeline;
 		static ShadingMode shading;
 		static SystemProcess process;
+		static int enviroment;
 
 		// global parameters
 		static std::vector<float> ground;
 		static int edit_mode_point_size;
 
+		// shadow parameters
+		static float shadowDistance;
+
+		// anti-aliasing parameters
+		static bool antiAliasing;
+		static int AAType;
+
+		// post-processing stack
+		static std::vector<PostProcessing> postStack;
+
+		static void DrawSky();
 		static void DrawIDLUT();
 		static void DrawIDLUT_EditMode();
 		static void DrawShadowMap();

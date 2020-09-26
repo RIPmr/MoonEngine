@@ -429,18 +429,19 @@ namespace MOON {
 		// *only remove target object from objectList, but not remove it from manager
 		static void RemoveObject(unsigned int ID) {
 			std::cout << "object removed: " << objectList[ID]->name << std::endl;
-			objectList[ID] = NULL;
-			if (ID < delID) delID = ID;
+			objectList[ID] = nullptr;
+			if (ID < delID || delID < 0) delID = ID;
 		}
 		static unsigned int GenUniqueID() {
 			if (delID < 0) {
 				return objectCounter++;
 			} else {
-				while (objectList[delID] != NULL) {
+				while (delID < objectList.size() && objectList[delID] != nullptr) {
 					if (++delID >= objectCounter)
 						return objectCounter++;
 				}
-				return delID++;
+				if (delID < objectList.size()) return delID++;
+				else return objectCounter++;
 			}
 		}
 		// delete target object from both objectList and manager
@@ -497,6 +498,7 @@ namespace MOON {
 					 typeid(*item) == typeid(LightMtl)		|| 
 					 typeid(*item) == typeid(Lambertian)	||
 					 typeid(*item) == typeid(Metal)			||
+					 typeid(*item) == typeid(SEM)			||
 					 typeid(*item) == typeid(Dielectric))	type = "Material";
 			else if (typeid(*item) == typeid(DirLight)		||
 					 typeid(*item) == typeid(PointLight)	||
@@ -555,9 +557,12 @@ namespace MOON {
 			else std::cout << "Unknown type, rename failed!" << std::endl;
 		}
 
+		// total object with unique ID in the scene, but some maybe null reference
 		static unsigned int GetObjectNum() {
 			return objectCounter;
 		}
+
+		// object number without null reference
 		static int CountObject() {
 			int count = ModelManager::CountItem();
 			count += TextureManager::CountItem();
@@ -595,6 +600,8 @@ namespace MOON {
 		static void Init() {
 			TextureManager::LoadImagesForUI();
 			std::cout << "- Images For UI Loaded." << std::endl;
+			TextureManager::LoadHDRI("./Assets/Textures/HDRI/HDR_029_Sky_Cloudy_Env.hdr");
+			std::cout << "- Default HDRI Loaded." << std::endl;
 			ShaderManager::LoadDefaultShaders();
 			std::cout << "- Default Shaders Loaded." << std::endl;
 			MaterialManager::CreateDefaultMats();
@@ -854,27 +861,38 @@ namespace MOON {
 			static Material* defaultMat;
 
 			static void CreateDefaultMats() {
-				defaultMat = MaterialManager::CreateMaterial("MoonMtl", "default");
+				defaultMat = MaterialManager::CreateMaterial(moonMtl, "default");
+				MaterialManager::CreateMaterial(sem, "SEM");
 			}
 
 			static Material* CreateMaterial(const MatType &type, const std::string &name) {
-				if (type == moonMtl) {
-					Material* newMat = new MoonMtl(name);
-					AddItem(newMat);
-					return newMat;
-				} else {
-
+				Material* newMat = nullptr;
+				switch (type) {
+					case moonMtl:
+						newMat = new MoonMtl(name);
+						break;
+					case light:
+						newMat = new LightMtl(name);
+						break;
+					case sem:
+						newMat = new SEM(name);
+						break;
 				}
+				if (newMat != nullptr) AddItem(newMat);
+				return newMat;
 			}
 
 			static Material* CreateMaterial(const std::string &type, const std::string &name) {
+				Material* newMat = nullptr;
 				if (type._Equal("MoonMtl")) {
-					Material* newMat = new MoonMtl(name);
-					AddItem(newMat);
-					return newMat;
-				} else {
-					
+					newMat = new MoonMtl(name);
+				} else if (type._Equal("LightMtl")) {
+					newMat = new LightMtl(name);
+				} else if (type._Equal("SEM")) {
+					newMat = new SEM(name);
 				}
+				if (newMat != nullptr) AddItem(newMat);
+				return newMat;
 			}
 		};
 
@@ -905,19 +923,20 @@ namespace MOON {
 				return res;
 			}
 
-			static bool Clear() {
+			/*static bool Clear() {
 				auto end = itemMap.end();
 				for (auto itr = itemMap.begin(); itr != end; ) {
 					delete itr->second;
 					itr = itemMap.erase(itr);
 				}
 				return true;
-			}
+			}*/
 		};
 
 		struct TextureManager : ObjectManager<Texture> {
-			static Texture* SHADOWMAP;
+			static FrameBuffer* SHADOWMAP;
 			static FrameBuffer* IDLUT;
+			static Texture* HDRI;
 			static std::vector<FrameBuffer*> SCENEBUFFERS;
 
 			// create buffers
@@ -955,23 +974,20 @@ namespace MOON {
 				AddItem(new Texture("./Resources/Icon_fullSize.png", "moon_logo_full"));
 			}
 
+			static void LoadHDRI(const std::string& path) {
+				if (HDRI != nullptr) DeleteItem(HDRI);
+				HDRI = new Texture(path, "SkyHDRI", TexType::defaultType, TexFormat::HDRI);
+				AddItem(HDRI);
+			}
+
 			// TODO
 			static Texture* CreateTexture();
 
-			static Texture* LoadTexture(const std::string &path, bool gamma = false) {
-				Texture* tex = new Texture(path);
+			static Texture* LoadTexture(const std::string &path, const std::string &name = UseFileName, bool gamma = false) {
+				Texture* tex = new Texture(path, name);
 
 				AddItem(tex);
 				return tex;
-			}
-
-			static bool Clear() {
-				auto end = itemMap.end();
-				for (auto itr = itemMap.begin(); itr != end; ) {
-					delete itr->second;
-					itr = itemMap.erase(itr);
-				}
-				return true;
 			}
 		};
 
@@ -986,18 +1002,24 @@ namespace MOON {
 				if (newShape != nullptr) AddItem(newShape);
 				return newShape;
 			}
+		};
 
-			/*static bool Clear() {
-				auto end = itemMap.end();
-				for (auto itr = itemMap.begin(); itr != end; ) {
+		struct ModelManager : ObjectManager<Model> {
+			static Model* skyDome;
+
+			static bool Clear() {
+				if (skyDome != nullptr) delete skyDome;
+				for (auto itr = itemMap.begin(); itr != itemMap.end(); ) {
 					delete itr->second;
 					itr = itemMap.erase(itr);
 				}
 				return true;
-			}*/
-		};
+			}
 
-		struct ModelManager : ObjectManager<Model> {
+			static void CreateSkyDome() {
+				skyDome = new Sphere("SkyDome", false, -999.0f, 24, MOON_UNSPECIFIEDID);
+			}
+
 			static bool Hit(const Ray &r, HitRecord &rec) {
 				HitRecord tempRec;
 				bool hitAnything = false;
@@ -1014,7 +1036,7 @@ namespace MOON {
 				return hitAnything;
 			}
 
-			/*static Model* CreateModel(const std::string &path, const std::string &name = "FILENAME") {
+			/*static Model* CreateModel(const std::string &path, const std::string &name = UseFileName) {
 				Model* newModel = new Model(path, name);
 				AddItem(newModel);
 
@@ -1038,7 +1060,7 @@ namespace MOON {
 				return model;
 			}
 
-			static Model* LoadModel(const std::string &path, const std::string &name = "FILENAME") {
+			static Model* LoadModel(const std::string &path, const std::string &name = UseFileName) {
 				Model* newModel = new Model(path, name);
 				//ThreadPool::CreateThread(&Model::LoadModel, newModel, path);
 				//AddItem(newModel);

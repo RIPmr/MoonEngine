@@ -229,8 +229,13 @@ Vector3 Renderer::SamplingColor(const Ray &r, int depth) {
 		else return Vector3::ZERO();
 	} else return SimpleSky(r);
 }
+
 Vector3 Renderer::SimpleSky(const Ray &r) {
 	Vector3 unit_direction = Vector3::Normalize(r.dir);
 	float t = 0.5 * (unit_direction.y + 1.0);
 	return (1.0 - t) * Vector3::ONE() + t * Vector3(0.5, 0.7, 1.0);
+}
+
+Vector3 Renderer::PureBackground(const Ray &r, const Vector4 &c) {
+	return Vector3(c.x, c.y, c.z);
 }

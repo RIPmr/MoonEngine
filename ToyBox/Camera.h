@@ -45,7 +45,7 @@ namespace MOON {
 			fov(45.0f), lens_radius(aperture / 2), MObject(name, id), isortho(isortho) {
 			transform.position = position;
 			transform.rotation = Quaternion::Rotate(Vector3::WORLD(FORWARD), lookDir);
-			zNear = 0.1f; zFar = 100.0f;
+			zNear = 0.1f; zFar = 1000.0f;
 			width = 1.0f; height = 1.0f;
 			tarPos = Vector3::ZERO();
 

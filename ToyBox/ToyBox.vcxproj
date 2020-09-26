@@ -138,6 +138,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Box.cpp" />
+    <ClCompile Include="ButtonEx.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Capsule.cpp" />
     <ClCompile Include="Coroutine.cpp" />
@@ -281,21 +282,31 @@
     <ClInclude Include="Vector4.h" />
     <ClInclude Include="Volume.h" />
     <ClInclude Include="WideNDeep.h" />
+    <ClInclude Include="WinDiagHandler.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="BlinnPhong.fs" />
+    <None Include="Bloom.fs" />
     <None Include="ConstColor.fs" />
     <None Include="ConstColor.vs" />
+    <None Include="Exposure.fs" />
     <None Include="Flat.fs" />
     <None Include="Flat.vs" />
     <None Include="Outline.fs" />
     <None Include="Outline.vs" />
     <None Include="packages.config" />
+    <None Include="PBR.fs" />
+    <None Include="PBR.vs" />
     <None Include="Resources\msyh.ttc" />
     <None Include="ScreenBuffer.fs" />
     <None Include="ScreenBuffer.vs" />
+    <None Include="SEM.fs" />
+    <None Include="SEM.vs" />
+    <None Include="SEM_Phong.fs" />
+    <None Include="SEM_Phong.vs" />
     <None Include="SimplePhong.fs" />
     <None Include="SimplePhong.vs" />
+    <None Include="ToneMapping.fs" />
     <None Include="VertexID.fs" />
     <None Include="VertexID.vs" />
   </ItemGroup>

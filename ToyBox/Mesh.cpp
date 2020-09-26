@@ -5,14 +5,28 @@
 //#define modelToWorld parent->transform.localToWorldMat.multVec
 
 namespace MOON {
-	void Mesh::Draw(Shader* shader, const Matrix4x4 & model, 
-		const bool &hovered = false, const bool &selected = false) {
+	void Mesh::Draw(Shader* shader, const Matrix4x4 & model, const bool &hovered = false, const bool &selected = false) {
 		// bind appropriate textures
 		unsigned int diffuseNr = 1;
 		unsigned int specularNr = 1;
 		unsigned int normalNr = 1;
 		unsigned int heightNr = 1;
 		unsigned int i;
+
+		// shader configuration
+		shader->use();
+
+		shader->setMat4("model", model);
+		shader->setMat4("view", MOON_ActiveCamera->view);
+		shader->setMat4("projection", MOON_ActiveCamera->projection);
+
+		shader->setVec3("lightColor", Vector3(1.0, 1.0, 1.0));
+		shader->setVec3("lightPos", MOON_ActiveCamera->transform.position);
+		shader->setVec3("viewPos", MOON_ActiveCamera->transform.position);
+		shader->setBool("isHovered", hovered);
+		shader->setBool("isSelected", selected);
+
+		material->SetShaderProps(shader);
 
 		// binding textures
 		// TODO
@@ -29,27 +43,11 @@ namespace MOON {
 		//		number = std::to_string(normalNr++);
 		//	else if (textures[i].type == TexType::height)
 		//		number = std::to_string(heightNr++);
-
 		//	// now set the sampler to the correct texture unit
 		//	glUniform1i(glGetUniformLocation(shader->localID, (name + number).c_str()), i);
 		//	// and finally bind the texture
 		//	glBindTexture(GL_TEXTURE_2D, textures[i].localID);
 		//}
-
-		// shader configuration
-		shader->use();
-
-		shader->setMat4("model", model);
-		shader->setMat4("view", MOON_ActiveCamera->view);
-		shader->setMat4("projection", MOON_ActiveCamera->projection);
-
-		shader->setVec3("lightColor", Vector3(1.0, 1.0, 1.0));
-		shader->setVec3("objectColor", dynamic_cast<MoonMtl*>(material)->Kd);
-		shader->setVec3("lightPos", MOON_ActiveCamera->transform.position);
-		shader->setVec3("viewPos", MOON_ActiveCamera->transform.position);
-
-		shader->setBool("isHovered", hovered);
-		shader->setBool("isSelected", selected);
 
 		// draw mesh
 		if (!VAO) SetupMesh();
@@ -138,3 +136,10 @@ namespace MOON {
 		return isect;
 	}
 }
+
+/*
+*NOTE:
+绑定多个纹理到对应的纹理单元后（最大32个纹理单元，0-31），需要定义哪个uniform采样器对应哪个纹理单元：
+    注意，我们使用glform1i设置uniform采样器的位置值，或者说纹理单元。
+    通过glUniform1i的设置，我们保证每个uniform采样器对应着正确的纹理单元。
+*/

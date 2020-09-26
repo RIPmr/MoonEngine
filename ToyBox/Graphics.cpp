@@ -77,6 +77,7 @@ namespace MOON {
 		Gizmo::DrawLinePrototype(ground, Color::WHITE(), 1.0f, false);
 
 		// draw objects
+		Graphics::DrawSky();
 		Graphics::DrawModels();
 		Graphics::DrawShapes();
 		Graphics::DrawHelpers();
@@ -176,6 +177,15 @@ namespace MOON {
 	void Graphics::DrawCameras() {
 		for (auto &obj : MOON_CameraManager::itemMap) {
 			Gizmo::DrawPointDirect(obj.second->transform.position, Color::RED(), 6.0f);
+		}
+	}
+
+	void Graphics::DrawSky() {
+		if (MOON_Enviroment == env_hdri && shading != WIRE) {
+			glDepthMask(GL_FALSE);
+			MOON_ModelManager::skyDome->transform.position = MOON_ActiveCamera->transform.position;
+			MOON_ModelManager::skyDome->Draw();
+			glDepthMask(GL_TRUE);
 		}
 	}
 

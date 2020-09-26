@@ -26,11 +26,6 @@ int main() {
 	GLFWwindow* window = InitWnd();
 	if (window == NULL) return -1;
 
-	std::cout << Color::IDEncoder(1) << std::endl;
-	std::cout << Color::IDEncoder(2) << std::endl;
-	std::cout << Color::IDEncoder(3) << std::endl;
-	std::cout << Color::IDEncoder(4) << std::endl;
-
 	// engine resources initialization
 	MOON_InitEngine();
 
@@ -427,6 +422,7 @@ void MOON_DrawMainUI() {
 
 	// update output image realtime while rendering
 	if (Renderer::progress && !Renderer::prevInQueue) {
+		glBindTexture(GL_TEXTURE_2D, Renderer::outputTexID);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, MOON_OutputSize.x, 
 			MOON_OutputSize.y, 0, GL_RGB, GL_UNSIGNED_BYTE, Renderer::outputImage);
 		if (Renderer::progress < 0) {
@@ -452,4 +448,6 @@ void MOON_InitEngine() {
 	std::cout << "- Native Operators Loaded." << std::endl;
 	Gizmo::CreateVirtualDummy();
 	std::cout << "- Virtual Dummy Created." << std::endl;
+	MOON_ModelManager::CreateSkyDome();
+	std::cout << "- Sky Dome Created." << std::endl;
 }

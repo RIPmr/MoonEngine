@@ -6,6 +6,20 @@
 namespace MOON {
 	Vector2 Material::PREVSIZE = Vector2(124, 124);
 
+	#pragma region material
+	void Material::ListShader() {
+		if (ImGui::TreeNode("Shader", ID)) {
+			auto width = ImGui::GetContentRegionAvailWidth();
+			ImGui::Text(Icon_Name_To_ID(ICON_FA_FILE_CODE_O, " " + shader->name));
+			ImGui::SameLine(width - 22.0f);
+			ImGui::PushID(shader->ID);
+			if (ImGui::SmallButton(ICON_FA_CROSSHAIRS))
+				MOON_InputManager::Select_Append(shader->ID);
+			ImGui::PopID();
+			ImGui::TreePop();
+		}
+	}
+
 	void Material::ListPreview() {
 		ImGui::Text("Preview: ");
 
@@ -25,7 +39,7 @@ namespace MOON {
 		if (MOON_InputManager::mouse_left_hold) return;
 
 		if (Renderer::progress) {
-			//glBindTexture(GL_TEXTURE_2D, preview->localID);
+			glBindTexture(GL_TEXTURE_2D, preview->localID);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Material::PREVSIZE.x, Material::PREVSIZE.y, 0,
 				GL_RGB, GL_UNSIGNED_BYTE, Renderer::matPrevImage);
 		}
@@ -48,7 +62,9 @@ namespace MOON {
 		if (Renderer::PrepareMatPrevRendering(preview))
 			ThreadPool::CreateThread(Renderer::renderingMatPreview, this);
 	}
+	#pragma endregion
 
+	#pragma region moonmtl
 	MoonMtl::MoonMtl() : Ns(0.0f), Ni(0.0f), d(0.0f), illum(0) {
 		Kd.setValue(0.8, 0.8, 0.8);
 		shader = MOON_ShaderManager::CreateShader("BlinnPhong", "SimplePhong.vs", "BlinnPhong.fs");
@@ -67,7 +83,9 @@ namespace MOON {
 
 		return true;
 	}
+	#pragma endregion
 
+	#pragma region simple_lambertian
 	bool Lambertian::scatter(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered) const {
 		Vector3 target = rec.p + rec.normal + MoonMath::RandomInUnitSphere();
 		scattered = Ray(rec.p, target - rec.p);
@@ -75,7 +93,9 @@ namespace MOON {
 
 		return true;
 	}
+	#pragma endregion
 
+	#pragma region metal
 	bool Metal::scatter(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered) const {
 		Vector3 normDir = Vector3::Normalize(r_in.dir);
 		Vector3 reflected = MoonMath::Reflect(normDir, rec.normal);
@@ -84,7 +104,9 @@ namespace MOON {
 
 		return (scattered.dir.dot(rec.normal) > 0);
 	}
+	#pragma endregion
 
+	#pragma region dielectric
 	bool Dielectric::scatter(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered) const {
 		Vector3 outward_normal;
 		Vector3 reflected = MoonMath::Reflect(r_in.dir, rec.normal);
@@ -117,4 +139,32 @@ namespace MOON {
 
 		return true;
 	}
+	#pragma endregion
+
+	#pragma region lightmtl
+	LightMtl::LightMtl() {}
+	LightMtl::LightMtl(const std::string &name) : Material(name) {}
+
+	bool LightMtl::scatter(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered) const {
+
+		return true;
+	}
+	#pragma endregion
+
+	#pragma region SEM
+	SEM::SEM() {
+		matcap = MOON_TextureManager::LoadTexture("./Assets/Textures/MatCap/matcap.jpg");
+		shader = MOON_ShaderManager::CreateShader("SEM", "SEM.vs", "SEM.fs");
+	}
+	SEM::SEM(const std::string &name) : Material(name) {
+		matcap = MOON_TextureManager::LoadTexture("./Assets/Textures/MatCap/matcap.jpg");
+		shader = MOON_ShaderManager::CreateShader("SEM", "SEM.vs", "SEM.fs");
+	}
+
+	bool SEM::scatter(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered) const {
+
+		return true;
+	}
+	#pragma endregion
+
 }

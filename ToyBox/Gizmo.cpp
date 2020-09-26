@@ -543,7 +543,7 @@ namespace MOON {
 #pragma region manipulate_massive
 	void Gizmo::CreateVirtualDummy() {
 		DeleteVirtualDummy();
-		globalVirtualDummy = new Dummy("vDum");
+		globalVirtualDummy = new Dummy("vDum", MOON_UNSPECIFIEDID);
 		//globalVirtualDummy = (Dummy*)MOON_HelperManager::CreateHelper(dummy, "vDum");
 	}
 

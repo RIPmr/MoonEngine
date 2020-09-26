@@ -26,7 +26,7 @@ namespace MOON {
 
 		#pragma region constructor
 		// for procedural mesh
-		Model(const std::string &name, const int id = MOON_AUTOID) : gammaCorrection(false), MObject(name, id), path("[PROCEDURAL]") {}
+		Model(const std::string &name, const int id = MOON_AUTOID) : gammaCorrection(false), MObject(name, id), path(PROCEDURAL) {}
 
 		Model(const Model& other) {
 			this->meshList.resize(other.meshList.size());
@@ -41,9 +41,9 @@ namespace MOON {
 		}
 
 		// for mesh in OBJ file
-		Model(const std::string &path, const std::string &name = "FILENAME", const int id = MOON_AUTOID, const bool gamma = false) :
+		Model(const std::string &path, const std::string &name = UseFileName, const int id = MOON_AUTOID, const bool gamma = false) :
 			path(path), gammaCorrection(gamma), MObject(id) {
-			if (!name._Equal("FILENAME")) this->name = name;
+			if (!name._Equal(UseFileName)) this->name = name;
 			else this->name = Utility::GetPathOrURLShortName(path);
 
 			OBJLoader::progress = 0;

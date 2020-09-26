@@ -46,6 +46,10 @@ namespace MOON {
 			glUniform1i(glGetUniformLocation(localID, name.c_str()), value);
 		}
 		// ------------------------------------------------------------------------
+		void setTexture(const std::string &name, int channel) const {
+			glUniform1i(glGetUniformLocation(localID, name.c_str()), channel);
+		}
+		// ------------------------------------------------------------------------
 		void setFloat(const std::string &name, float value) const {
 			glUniform1f(glGetUniformLocation(localID, name.c_str()), value);
 		}

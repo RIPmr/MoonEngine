@@ -10,7 +10,8 @@ namespace MOON {
 	#define MOON_ActiveView				SceneManager::activeView
 	#define MOON_OutputSize				Renderer::OUTPUT_SIZE
 	#define MOON_OutputTexID			Renderer::outputTexID
-	#define MOON_CountObject			SceneManager::GetObjectNum()
+	#define MOON_ObjectNumber			SceneManager::GetObjectNum()
+	#define MOON_CountObject			SceneManager::CountObject()
 	#define MOON_SceneCameras			SceneManager::CameraManager::sceneCameras
 	#define MOON_ActiveCamera			SceneManager::CameraManager::activeCamera
 	#define MOON_MousePos				SceneManager::InputManager::mousePos
@@ -46,6 +47,12 @@ namespace MOON {
 	// current target in edit mode
 	#define MOON_EditTarget				HotKeyManager::globalEditTarget
 	#define MOON_EditElem				HotKeyManager::globalEditElem
+
+	#define MOON_Enviroment				Graphics::enviroment
+
+	#define UseFileName					"[FILENAME]"
+	#define PROCEDURAL					"[PROCEDURAL]"
+	#define FRAMEBUFFER					"[FBO]"
 
 	enum MOON_MOUSE {
 		#define LEFT_MOUSE				0
@@ -231,6 +238,7 @@ namespace MOON {
 	enum SystemProcess {
 		sys_init,
 		sys_draw_scene,
+		sys_post_processing,
 		sys_coroutine,
 		sys_draw_ui,
 		sys_process_input,
@@ -282,5 +290,18 @@ namespace MOON {
 		FACE,
 		LOOP,
 		ELEM
+	};
+
+	enum EnviromentType {
+		env_hdri,
+		env_cubemap,
+		env_pure_color,
+		env_procedural_sky
+	};
+
+	enum AntiAliasingType {
+		MSAA,
+		TAA,
+		SRAA
 	};
 }

@@ -8,6 +8,7 @@
 #include "Texture.h"
 #include "ObjectBase.h"
 #include "MatSphere.h"
+#include "ButtonEx.h"
 
 namespace MOON {
 	enum MatType {
@@ -15,7 +16,8 @@ namespace MOON {
 		lambertian,
 		metal,
 		dielectric,
-		light
+		light,
+		sem
 	};
 
 	extern class renderer;
@@ -32,16 +34,11 @@ namespace MOON {
 		Material() : ObjectBase(MOON_AUTOID), preview(MOON_UNSPECIFIEDID), prevNeedUpdate(true) {}
 		Material(const std::string &name) : ObjectBase(name, MOON_AUTOID), preview(MOON_UNSPECIFIEDID), prevNeedUpdate(true) {}
 		//~Material() { delete shader; }
-		~Material() override {
+		virtual ~Material() override {
 			if (preview != NULL) delete preview;
 		}
 
-		void ListShader() {
-			if (ImGui::TreeNode("Shader", ID)) {
-				ImGui::Text(Icon_Name_To_ID(ICON_FA_FILE_CODE_O, " " + shader->name));
-				ImGui::TreePop();
-			}
-		}
+		void ListShader();
 
 		virtual void ListProperties() override {
 			// list name
@@ -50,19 +47,23 @@ namespace MOON {
 
 			// list shader
 			ListShader();
-			ImGui::Spacing();
+			ImGui::Separator();
 		}
 
 		virtual void GeneratePreview();
 		virtual void UpdatePreview();
 		virtual void ListPreview();
 
+		virtual void SetShaderProps(Shader* shader) {}
 		virtual bool scatter(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered) const = 0;
 	};
 
 	class LightMtl : public Material {
 	public:
-		virtual bool scatter(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered) const = 0;
+		LightMtl();
+		LightMtl(const std::string &name);
+
+		virtual bool scatter(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered) const;
 	};
 
 	class MoonMtl : public Material {
@@ -85,18 +86,15 @@ namespace MOON {
 		MoonMtl();
 		MoonMtl(const std::string &name);
 
-		virtual void ListProperties() override {
-			// list name
-			ListName();
-			ImGui::Separator();
+		virtual void SetShaderProps(Shader* shader) override {
+			shader->setVec3("objectColor", Kd);
+		}
 
-			// list shader
-			ListShader();
-			ImGui::Separator();
+		virtual void ListProperties() override {
+			Material::ListProperties();
 
 			// list parameters
 			ImGui::Text("Parameters:");
-
 			ImGui::Indent(10.0f);
 			// Ambient
 			ImGui::Text("Ambient "); ImGui::SameLine(100.0f);
@@ -194,6 +192,36 @@ namespace MOON {
 
 		Dielectric(float ri) : ref_idx(ri) {}
 		Dielectric(const std::string &name, float ri) : ref_idx(ri), Material(name) {}
+
+		virtual bool scatter(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered) const;
+	};
+
+	class SEM : public Material {
+	public:
+		Texture* matcap;
+
+		SEM();
+		SEM(const std::string &name);
+
+		virtual void SetShaderProps(Shader* shader) override {
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, matcap->localID);
+
+			shader->setTexture("tMatCap", 0);
+		}
+
+		virtual void ListProperties() override {
+			Material::ListProperties();
+
+			// show matcap
+			ImGui::Text("Matcap: ");
+			float maxPrevWidth = 124.0f;
+			float centering = (ImGui::GetContentRegionAvailWidth() - maxPrevWidth) / 2.0f;
+			ImGui::Indent(centering);
+			ButtonEx::FileButtonEx((void**)&matcap, matcap->path.c_str(), ImVec2(maxPrevWidth, 0), this->ID);
+			ImGui::Image((void*)(intptr_t)matcap->localID, ImVec2(maxPrevWidth, matcap->height * maxPrevWidth / matcap->width));
+			ImGui::Unindent(centering);
+		}
 
 		virtual bool scatter(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered) const;
 	};

@@ -28,12 +28,6 @@
     <Filter Include="Resources\Fonts">
       <UniqueIdentifier>{dbe1973d-5578-413b-8ddc-07ca12f058f3}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Shaders\FS">
-      <UniqueIdentifier>{0af2b061-f59c-468a-a3fa-e1ad205421d1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Shaders\VS">
-      <UniqueIdentifier>{8278a6de-5f1e-4a73-b28f-2a44d4b73977}</UniqueIdentifier>
-    </Filter>
     <Filter Include="SourceFiles\EnterPoint">
       <UniqueIdentifier>{f4480692-8837-4467-bef3-229c9b7c60a6}</UniqueIdentifier>
     </Filter>
@@ -102,6 +96,18 @@
     </Filter>
     <Filter Include="SourceFiles\Object\SmartMesh">
       <UniqueIdentifier>{9a86c03b-148c-4190-83cd-b57b3807c121}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\PostProcessing">
+      <UniqueIdentifier>{af4d1c3e-686c-4123-afdc-17f10fd34e73}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\Surface">
+      <UniqueIdentifier>{ea3760dc-4f41-43b6-ae95-46322727dfd7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\Surface\FS">
+      <UniqueIdentifier>{0af2b061-f59c-468a-a3fa-e1ad205421d1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\Surface\VS">
+      <UniqueIdentifier>{8278a6de-5f1e-4a73-b28f-2a44d4b73977}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -254,6 +260,9 @@
     </ClCompile>
     <ClCompile Include="Quaternion.cpp">
       <Filter>SourceFiles\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="ButtonEx.cpp">
+      <Filter>SourceFiles\UIEnhancement</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -533,6 +542,9 @@
     <ClInclude Include="Bone.h">
       <Filter>HeadFiles\Object\Helper</Filter>
     </ClInclude>
+    <ClInclude Include="WinDiagHandler.h">
+      <Filter>HeadFiles\UIEnhancement</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -540,43 +552,70 @@
       <Filter>Resources\Fonts</Filter>
     </None>
     <None Include="ConstColor.vs">
-      <Filter>Shaders\VS</Filter>
+      <Filter>Shaders\Surface\VS</Filter>
     </None>
     <None Include="SimplePhong.vs">
-      <Filter>Shaders\VS</Filter>
+      <Filter>Shaders\Surface\VS</Filter>
     </None>
     <None Include="ConstColor.fs">
-      <Filter>Shaders\FS</Filter>
+      <Filter>Shaders\Surface\FS</Filter>
     </None>
     <None Include="SimplePhong.fs">
-      <Filter>Shaders\FS</Filter>
+      <Filter>Shaders\Surface\FS</Filter>
     </None>
     <None Include="Outline.fs">
-      <Filter>Shaders\FS</Filter>
+      <Filter>Shaders\Surface\FS</Filter>
     </None>
     <None Include="Outline.vs">
-      <Filter>Shaders\VS</Filter>
+      <Filter>Shaders\Surface\VS</Filter>
     </None>
     <None Include="ScreenBuffer.fs">
-      <Filter>Shaders\FS</Filter>
+      <Filter>Shaders\Surface\FS</Filter>
     </None>
     <None Include="ScreenBuffer.vs">
-      <Filter>Shaders\VS</Filter>
+      <Filter>Shaders\Surface\VS</Filter>
     </None>
     <None Include="BlinnPhong.fs">
-      <Filter>Shaders\FS</Filter>
+      <Filter>Shaders\Surface\FS</Filter>
     </None>
     <None Include="Flat.fs">
-      <Filter>Shaders\FS</Filter>
+      <Filter>Shaders\Surface\FS</Filter>
     </None>
     <None Include="Flat.vs">
-      <Filter>Shaders\VS</Filter>
+      <Filter>Shaders\Surface\VS</Filter>
     </None>
     <None Include="VertexID.fs">
-      <Filter>Shaders\FS</Filter>
+      <Filter>Shaders\Surface\FS</Filter>
     </None>
     <None Include="VertexID.vs">
-      <Filter>Shaders\VS</Filter>
+      <Filter>Shaders\Surface\VS</Filter>
+    </None>
+    <None Include="PBR.fs">
+      <Filter>Shaders\Surface\FS</Filter>
+    </None>
+    <None Include="PBR.vs">
+      <Filter>Shaders\Surface\VS</Filter>
+    </None>
+    <None Include="SEM.fs">
+      <Filter>Shaders\Surface\FS</Filter>
+    </None>
+    <None Include="SEM.vs">
+      <Filter>Shaders\Surface\VS</Filter>
+    </None>
+    <None Include="SEM_Phong.fs">
+      <Filter>Shaders\Surface\FS</Filter>
+    </None>
+    <None Include="SEM_Phong.vs">
+      <Filter>Shaders\Surface\VS</Filter>
+    </None>
+    <None Include="Bloom.fs">
+      <Filter>Shaders\PostProcessing</Filter>
+    </None>
+    <None Include="ToneMapping.fs">
+      <Filter>Shaders\PostProcessing</Filter>
+    </None>
+    <None Include="Exposure.fs">
+      <Filter>Shaders\PostProcessing</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

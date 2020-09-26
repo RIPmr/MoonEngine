@@ -3,6 +3,7 @@
 
 #include "Utility.h"
 #include "ObjectBase.h"
+#include "ButtonEx.h"
 
 namespace MOON {
 	enum TexFormat {
@@ -36,14 +37,14 @@ namespace MOON {
 		bool gammaCorrection;
 		unsigned int localID;
 
-		Texture(const std::string & _path, const std::string &_name = "FILENAME", const TexType &_type = TexType::defaultType, const TexFormat &_format = TexFormat::twoD) :
+		Texture(const std::string & _path, const std::string &_name = UseFileName, const TexType &_type = TexType::defaultType, const TexFormat &_format = TexFormat::twoD) :
 				format(_format), type(_type), path(_path), ObjectBase(MOON_AUTOID), gammaCorrection(false) {
 			Utility::LoadTextureFromFile(_path, name, localID, width, height);
-			if (!_name._Equal("FILENAME")) name = _name;
+			if (!_name._Equal(UseFileName)) name = _name;
 		}
 		// for procedural texture
 		Texture(const int &_width, const int &_height, const std::string &_name, const unsigned int &_ID = MOON_AUTOID, const TexType &_type = TexType::defaultType, const TexFormat &_format = TexFormat::twoD) :
-			format(_format), type(_type), path("[PROCEDURAL]"), ObjectBase(_name, _ID), width(_width), height(_height), gammaCorrection(false) {
+			format(_format), type(_type), path(PROCEDURAL), ObjectBase(_name, _ID), width(_width), height(_height), gammaCorrection(false) {
 			// TODO: create a new texture and get an unique localID
 		}
 		
@@ -57,10 +58,12 @@ namespace MOON {
 			ImGui::Text(("Size:      (" + std::to_string(width) + u8"¡Á" + std::to_string(height) + ")").c_str());
 
 			// list preview
-			ImGui::Text("Location: ");
-			ImGui::Button(path.c_str(), ImVec2(ImGui::GetContentRegionAvailWidth(), 0));
-
-			ImGui::Separator();
+			ImGui::Text("Location: "); Texture* tmp = this;
+			ButtonEx::FileButtonEx(
+				(void**)&tmp, path.c_str(), 
+				ImVec2(ImGui::GetContentRegionAvailWidth(), 0), 
+				this->ID
+			); ImGui::Separator();
 
 			float maxPrevWidth = 124.0f;
 			ImGui::Text("Preview: "); ImGui::SameLine();
@@ -83,7 +86,7 @@ namespace MOON {
 
 		FrameBuffer(const int &_width, const int &_height, const std::string &_name, const unsigned int &_ID = MOON_AUTOID, const TexType &_type = TexType::defaultType, const TexFormat &_format = TexFormat::twoD) :
 			Texture(_width, _height, _name, _ID, TexType::defaultType, TexFormat::twoD) {
-			path = "[FBO]";
+			path = FRAMEBUFFER;
 			gammaCorrection = false;
 			CreateFrameBuffer();
 		}

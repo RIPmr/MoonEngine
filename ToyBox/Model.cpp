@@ -42,7 +42,7 @@ namespace MOON {
 		ImGui::Separator();
 
 		// list procedural property -------------------------------------------------------
-		if (path._Equal("[PROCEDURAL]")) {
+		if (path._Equal(PROCEDURAL)) {
 			ListProceduralProperties();
 			ImGui::Separator();
 		}

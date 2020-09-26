@@ -3,10 +3,16 @@
 #include <string>
 #include <iostream>
 
-#include "imgui_internal.h"
 #include "Icons.h"
+#include "imgui_internal.h"
 
 namespace MOON {
+	class ButtonEx {
+	public:
+		static std::string FileButton(const char* label, const ImVec2& size_arg, const int ID = -1);
+
+		static void* FileButtonEx(void** container, const char* label, const ImVec2& size_arg, const int ID = -1);
+	};
 	template<class T>
 	static void MakeDragAndDropWidget(T* &payload_in, const char* type, const char* label, void(*dropable)(T*&, T*&) = nullptr) {
 		if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoPreviewTooltip)) {

@@ -103,11 +103,18 @@ float Graphics::quadVertices[24] = {
 	 1.0f, -1.0f,  1.0f, 0.0f,
 	 1.0f,  1.0f,  1.0f, 1.0f
 };
-PipelineMode Graphics::pipeline		= PipelineMode::FORWARD_SHADING;
-ShadingMode Graphics::shading		= ShadingMode::DEFAULT;
-SystemProcess Graphics::process		= SystemProcess::sys_init;
-unsigned int Graphics::quadVAO		= MOON_UNSPECIFIEDID;
-unsigned int Graphics::quadVBO		= MOON_UNSPECIFIEDID;
+std::vector<Graphics::PostProcessing>		  Graphics::postStack;
+PipelineMode Graphics::pipeline				= PipelineMode::FORWARD_SHADING;
+ShadingMode Graphics::shading				= ShadingMode::DEFAULT;
+SystemProcess Graphics::process				= SystemProcess::sys_init;
+int Graphics::enviroment					= EnviromentType::env_pure_color;
+int Graphics::AAType						= AntiAliasingType::MSAA;
+unsigned int Graphics::quadVAO				= MOON_UNSPECIFIEDID;
+unsigned int Graphics::quadVBO				= MOON_UNSPECIFIEDID;
+float Graphics::shadowDistance				= 1000;
+bool Graphics::antiAliasing					= false;
+
+Model* MOON_ModelManager::skyDome			= MOON_UNSPECIFIEDID;
 
 // init Main UI
 bool MainUI::show_control_window			= false;
@@ -199,8 +206,9 @@ Shader* MOON_ShaderManager::outlineShader		= MOON_UNSPECIFIEDID;
 Shader* MOON_ShaderManager::overlayShader		= MOON_UNSPECIFIEDID;
 Shader* MOON_ShaderManager::screenBufferShader	= MOON_UNSPECIFIEDID;
 Material* MOON_MaterialManager::defaultMat		= MOON_UNSPECIFIEDID;
-Texture* MOON_TextureManager::SHADOWMAP			= MOON_UNSPECIFIEDID;
+FrameBuffer* MOON_TextureManager::SHADOWMAP		= MOON_UNSPECIFIEDID;
 FrameBuffer* MOON_TextureManager::IDLUT			= MOON_UNSPECIFIEDID;
+Texture* MOON_TextureManager::HDRI				= MOON_UNSPECIFIEDID;
 std::vector<FrameBuffer*>						  MOON_TextureManager::SCENEBUFFERS;
 
 Vector2 MOON_MousePos							= Vector2(-2.0f, -2.0f);
