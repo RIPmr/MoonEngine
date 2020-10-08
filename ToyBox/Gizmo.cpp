@@ -158,7 +158,7 @@ namespace MOON {
 		// offset if using center mode
 		/*auto offset = Vector3::ZERO();
 		if (Gizmo::gizmoPos == center && CheckType(trans->mobject, "Model"))
-			offset = dynamic_cast<Model*>(trans->mobject)->bbox_world.center - trans->position;
+			offset = dynamic_cast<Model*>(trans->mobject)->bbox.center - trans->position;
 		Transform* tmpTrans = new Transform(*trans); tmpTrans->position += offset;*/
 
 		auto translate = [&]() {
@@ -467,6 +467,7 @@ namespace MOON {
 		DrawPointPrototype(data, color, pointSize, model);
 
 		if (Graphics::process == sys_draw_ui) glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		else if (Graphics::process == sys_draw_scene) Graphics::SetDrawTarget(MOON_DrawTarget, depthTest);
 	}
 
 	void Gizmo::DrawPoints(const std::vector<Vector3> &points, const Vector4 &color, const float &pointSize, const bool& depthTest, const Matrix4x4 model, const bool& drawActiveViewOnly) {
@@ -484,6 +485,7 @@ namespace MOON {
 		DrawPointPrototype(points, color, pointSize, model);
 
 		if (Graphics::process == sys_draw_ui) glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		else if (Graphics::process == sys_draw_scene) Graphics::SetDrawTarget(MOON_DrawTarget, depthTest);
 	}
 
 	void Gizmo::DrawPoints(const unsigned int& VAO, const size_t& pointNum, const Vector4 &color, const float &pointSize, const bool& depthTest, const Matrix4x4 model, const bool& drawActiveViewOnly) {
@@ -501,6 +503,7 @@ namespace MOON {
 		DrawPointPrototype(VAO, pointNum, color, pointSize, model);
 
 		if (Graphics::process == sys_draw_ui) glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		else if (Graphics::process == sys_draw_scene) Graphics::SetDrawTarget(MOON_DrawTarget, depthTest);
 	}
 
 	void Gizmo::DrawLine(const Vector3 &start, const Vector3 &end, const Vector4 &color, const float &lineWidth, const bool& depthTest, const Matrix4x4 model, const bool& drawActiveViewOnly) {
@@ -520,6 +523,7 @@ namespace MOON {
 		DrawLinePrototype(data, color, lineWidth, false, model);
 
 		if (Graphics::process == sys_draw_ui) glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		else if (Graphics::process == sys_draw_scene) Graphics::SetDrawTarget(MOON_DrawTarget, depthTest);
 	}
 
 	void Gizmo::DrawLines(const std::vector<Vector3> &lines, const Vector4 &color, const float &lineWidth, const bool& depthTest, const bool &isStrip, const Matrix4x4 model, const Shader* overrideShader, const bool& drawActiveViewOnly) {
@@ -537,6 +541,7 @@ namespace MOON {
 		DrawLinePrototype(lines, color, lineWidth, isStrip, model, overrideShader);
 
 		if (Graphics::process == sys_draw_ui) glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		else if (Graphics::process == sys_draw_scene) Graphics::SetDrawTarget(MOON_DrawTarget, depthTest);
 	}
 #pragma endregion
 

@@ -17,6 +17,7 @@ namespace MOON {
 		Vector3 lower_left_corner;
 		Vector3 horizontal;
 		Vector3 vertical;
+		static std::vector<Vector3> cameraShape;
 
 	public:
 		// global param
@@ -29,12 +30,13 @@ namespace MOON {
 		float lens_radius;
 
 		// Camera options
-		float fov;
+		float fov, aspect; // fovx
 		float zNear, zFar;
 		float width, height;
 
 		// Camera matrix
 		bool isortho;
+		bool lockSize;
 		Matrix4x4 view;
 		Matrix4x4 projection;
 
@@ -42,26 +44,30 @@ namespace MOON {
 		Camera(const std::string &name, const Vector3 &position = Vector3::ZERO(), 
 			const Vector3 &lookDir = Vector3::WORLD(FORWARD), const bool& isortho = false,
 			const float aperture = 0.0f, const int id = MOON_AUTOID) :
-			fov(45.0f), lens_radius(aperture / 2), MObject(name, id), isortho(isortho) {
+			fov(45.0f), lens_radius(aperture / 2), MObject(name, id), isortho(isortho), aspect(1.7f) {
 			transform.position = position;
 			transform.rotation = Quaternion::Rotate(Vector3::WORLD(FORWARD), lookDir);
 			zNear = 0.1f; zFar = 1000.0f;
 			width = 1.0f; height = 1.0f;
 			tarPos = Vector3::ZERO();
+			lockSize = true;
 
 			UpdateMatrix();
 		}
 
 		Camera(const Vector3 &position = Vector3::ZERO(), const Vector3 &Front = Vector3(0.0f, 0.0f, -1.0f),
 			const bool& isortho = false, const float aperture = 0.0f, const int id = MOON_AUTOID) :
-			fov(45.0f), lens_radius(aperture / 2), MObject(id), isortho(isortho) {
+			fov(45.0f), lens_radius(aperture / 2), MObject(id), isortho(isortho), aspect(1.7f) {
 			transform.position = position;
 			zNear = 0.1f; zFar = 1000.0f;
 			width = 1.0f; height = 1.0f;
 			tarPos = Vector3::ZERO();
+			lockSize = true;
 
 			UpdateMatrix();
 		}
+
+		void SetAperture(const float& aperture) { this->lens_radius = aperture / 2.0f; }
 
 		void InitRenderCamera();
 		void UpdateMatrix();
@@ -83,5 +89,9 @@ namespace MOON {
 		void ZoomCamera(Vector2 &mouseOffset);
 		void RotateCamera(Vector2 mouseOffset, bool constrainPitch = true);
 		void PushCamera(Vector2 &mouseScrollOffset);
+
+		void Draw(Shader* overrideShader = NULL) override;
+
+		void ListProperties() override;
 	};
 }

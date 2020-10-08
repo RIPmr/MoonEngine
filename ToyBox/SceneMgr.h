@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <iomanip>
+#include <time.h>
 
 #include "Gizmo.h"
 #include "SmartMeshes.h"
@@ -338,7 +339,8 @@ namespace MOON {
 
 		static bool RenameItem(ObjectBase* item, const std::string newName) {
 			std::cout << "renamed \'" << item->name << "\' to: \'" << newName << "\'" << std::endl;
-			RemoveItem(item->name, item->ID, false);
+			//RemoveItem(item->name, item->ID, false);
+			RemoveItem(item->ID, false);
 			item->name = newName;
 			AddItem(dynamic_cast<T*>(item), false);
 			return true;
@@ -363,6 +365,8 @@ namespace MOON {
 		static unsigned int objectCounter;
 	public:
 		// global parameters
+		static BVH* sceneBVH;
+
 		static Vector2 WND_SIZE;
 		static Vector2 SCR_SIZE;
 		static float aspect;
@@ -377,11 +381,44 @@ namespace MOON {
 		static std::vector<ObjectBase*> objectList;
 		static std::vector<ObjectBase*> matchedList;
 
+		static void ReleaseBVH() {
+			if (sceneBVH != nullptr) delete sceneBVH;
+		}
+
+		// building BVH tree for all models in the scene
+		static void BuildBVH() {
+			std::cout << "Building Scene BVH... ..." << std::endl;
+			std::vector<Hitable*> renderList;
+			for (auto& it : MOON_ModelManager::itemMap) {
+				if (!it.second->visible) continue;
+				else if (CheckType(it.second->opstack.GetDeliver(), "Model"))
+					renderList.push_back((Model*)it.second->opstack.GetDeliver());
+			}
+			for (auto& it : MOON_ShapeManager::itemMap) {
+				if (!it.second->visible || !it.second->opstack.HasDeliver()) continue;
+				else if (CheckType(it.second->opstack.deliver, "Model"))
+					renderList.push_back((Model*)it.second->opstack.deliver);
+			}
+			ReleaseBVH();
+			sceneBVH = new BVH(renderList, Vector2(0, renderList.size() - 1));
+			std::cout << "Root Node: min:";
+			std::cout << sceneBVH->bbox.min << " max: ";
+			std::cout << sceneBVH->bbox.max << std::endl;
+
+			std::cout << "Building Local BVH... ..." << std::endl;
+			std::cout << "total model number:" << renderList.size() << std::endl;
+			for (auto& it : renderList) {
+				dynamic_cast<Model*>(it)->BuildBVH();
+			}
+			std::cout << "Done." << std::endl;
+		}
+
 		static void SetWndSize(unsigned int width, unsigned int height, SceneView view) {
 			if (view == MOON_ActiveView) {
 				SCR_SIZE.setValue(width, height);
 				aspect = (float)width / height;
 			}
+			MOON_SceneCameras[view]->aspect = aspect;
 			MOON_SceneCameras[view]->width = width / 25.0f;
 			MOON_SceneCameras[view]->height = height / 25.0f;
 			MOON_SceneCameras[view]->UpdateMatrix();
@@ -482,6 +519,7 @@ namespace MOON {
 					 _type._Equal("Shape")		||
 					 _type._Equal("Helper")		||
 					 _type._Equal("Light"))		type = "MObject";
+			else if (_type._Equal("BVH"))		type = "BVH";
 			else type = "Unknown";
 			return type;
 		}
@@ -522,6 +560,7 @@ namespace MOON {
 					 typeid(*item) == typeid(Tape)			||
 					 typeid(*item) == typeid(Volume)		||
 					 typeid(*item) == typeid(Proxy))		type = "Helper";
+			else if (typeid(*item) == typeid(BVH))			type = "BVH";
 			else type = "Unknown";
 			return type;
 		}
@@ -577,10 +616,6 @@ namespace MOON {
 		}
 
 		static void Clear() {
-			for (auto it = MOON_SceneCameras.begin(); it != MOON_SceneCameras.end(); it++) {
-				delete *it;
-			}
-			MOON_SceneCameras.clear();
 			objectList.clear();
 		}
 
@@ -600,7 +635,7 @@ namespace MOON {
 		static void Init() {
 			TextureManager::LoadImagesForUI();
 			std::cout << "- Images For UI Loaded." << std::endl;
-			TextureManager::LoadHDRI("./Assets/Textures/HDRI/HDR_029_Sky_Cloudy_Env.hdr");
+			TextureManager::LoadHDRI("./Assets/Textures/HDRI/DS360_041_Extra_Ref.hdr");
 			std::cout << "- Default HDRI Loaded." << std::endl;
 			ShaderManager::LoadDefaultShaders();
 			std::cout << "- Default Shaders Loaded." << std::endl;
@@ -619,6 +654,19 @@ namespace MOON {
 		struct Clock {
 			static float deltaTime;
 			static float lastFrame;
+
+			static std::string GetTimeStamp() {
+				struct tm *ptr;
+				time_t timestamp;
+				char str[80];
+
+				timestamp = time(NULL);
+				ptr = localtime(&timestamp);
+				strftime(str, 100, "%Y.%m.%d %H:%M:%S", ptr);
+				std::cout << "new time stamp: " << str << std::endl;
+
+				return str;
+			}
 		};
 
 		struct InputManager {
@@ -909,6 +957,7 @@ namespace MOON {
 				screenBufferShader = new Shader("ScreenBuffer", "ScreenBuffer.vs", "ScreenBuffer.fs");
 				AddItem(new Shader("FlatShader", "Flat.vs", "Flat.fs")); 
 				AddItem(new Shader("VertexID", "VertexID.vs", "VertexID.fs")); 
+				AddItem(new Shader("EnvSphere", "EnvSphere.vs", "EnvSphere.fs")); 
 				AddItem(lineShader);
 				AddItem(outlineShader);
 				AddItem(screenBufferShader);
@@ -958,10 +1007,10 @@ namespace MOON {
 			}
 
 			static void CreateSceneBuffer() {
-				SCENEBUFFERS.push_back(new FrameBuffer(-1, -1, "PerspView", MOON_AUTOID));
-				SCENEBUFFERS.push_back(new FrameBuffer(-1, -1, "FrontView", MOON_AUTOID));
-				SCENEBUFFERS.push_back(new FrameBuffer(-1, -1, "LeftView", MOON_AUTOID));
-				SCENEBUFFERS.push_back(new FrameBuffer(-1, -1, "TopView", MOON_AUTOID));
+				SCENEBUFFERS.push_back(new FrameBuffer(-1, -1, "PerspView", MOON_AUTOID, GL_RGB16F));
+				SCENEBUFFERS.push_back(new FrameBuffer(-1, -1, "FrontView", MOON_AUTOID, GL_RGB16F));
+				SCENEBUFFERS.push_back(new FrameBuffer(-1, -1, "LeftView", MOON_AUTOID, GL_RGB16F));
+				SCENEBUFFERS.push_back(new FrameBuffer(-1, -1, "TopView", MOON_AUTOID, GL_RGB16F));
 				for (auto it = SCENEBUFFERS.begin(); it != SCENEBUFFERS.end(); it++) {
 					AddItem(*it);
 				}
@@ -976,7 +1025,7 @@ namespace MOON {
 
 			static void LoadHDRI(const std::string& path) {
 				if (HDRI != nullptr) DeleteItem(HDRI);
-				HDRI = new Texture(path, "SkyHDRI", TexType::defaultType, TexFormat::HDRI);
+				HDRI = new Texture(path, "SkyHDRI", TexType::defaultType);
 				AddItem(HDRI);
 			}
 
@@ -1017,18 +1066,24 @@ namespace MOON {
 			}
 
 			static void CreateSkyDome() {
-				skyDome = new Sphere("SkyDome", false, -999.0f, 24, MOON_UNSPECIFIEDID);
+				skyDome = new Sphere("SkyDome", false, 999.0f, 24, MOON_UNSPECIFIEDID);
+				skyDome->transform.rotation = Quaternion(Vector3(0, 0, 180.0f));
+				skyDome->transform.Rotate(Quaternion::Rotate(Vector3(1, 0, 0), 90 * Deg2Rad));
 			}
 
-			static bool Hit(const Ray &r, HitRecord &rec) {
+			static bool Hit(const Ray &r, HitRecord &rec, const int& acc) {
 				HitRecord tempRec;
 				bool hitAnything = false;
 
-				for (auto &iter : itemMap) {
-					if (iter.second->visible) {
-						if (iter.second->Hit(r, tempRec)) {
-							hitAnything = true;
-							rec = tempRec;
+				if (acc == 2) { // BVH
+					if (sceneBVH->Hit(r, rec)) hitAnything = true;
+				} else {
+					for (auto &iter : itemMap) {
+						if (iter.second->visible) {
+							if (iter.second->Hit(r, tempRec)) {
+								hitAnything = true;
+								rec = tempRec;
+							}
 						}
 					}
 				}
@@ -1087,13 +1142,26 @@ namespace MOON {
 			}
 
 			static bool LoadSceneCamera() {
-				sceneCameras.push_back(new Camera("PerspCamera", Vector3(0.0f, 2.0f, 20.0f), Vector3::WORLD(BACKWARD), false, 0.0f, MOON_UNSPECIFIEDID));
-				sceneCameras.push_back(new Camera("FrontCamera", Vector3(0.0f, 0.0f, 20.0f), Vector3::WORLD(BACKWARD), true, 0.0f, MOON_UNSPECIFIEDID));
-				sceneCameras.push_back(new Camera("LeftCamera", Vector3(20.0f, 0.0f, 0.0f), Vector3::WORLD(RIGHT), true, 0.0f, MOON_UNSPECIFIEDID));
-				sceneCameras.push_back(new Camera("TopCamera", Vector3(0.0f, 20.0f, 0.0f), Vector3::WORLD(DOWN), true, 0.0f, MOON_UNSPECIFIEDID));
-				//AddItem(sceneCameras[0]); AddItem(sceneCameras[1]); AddItem(sceneCameras[2]); AddItem(sceneCameras[3]);
-				activeCamera = sceneCameras[3];
-				Renderer::targetCamera = sceneCameras[0];
+				sceneCameras.push_back(new Camera("PerspCamera", Vector3(0.0f, 2.0f, 20.0f), Vector3::WORLD(BACKWARD), false, 0.0f, MOON_AUTOID));
+				sceneCameras.push_back(new Camera("FrontCamera", Vector3(0.0f, 0.0f, 20.0f), Vector3::WORLD(BACKWARD), true, 0.0f, MOON_AUTOID));
+				sceneCameras.push_back(new Camera("LeftCamera", Vector3(20.0f, 0.0f, 0.0f), Vector3::WORLD(RIGHT), true, 0.0f, MOON_AUTOID));
+				sceneCameras.push_back(new Camera("TopCamera", Vector3(0.0f, 20.0f, 0.0f), Vector3::WORLD(DOWN), true, 0.0f, MOON_AUTOID));
+				AddItem(sceneCameras[0]); AddItem(sceneCameras[1]); AddItem(sceneCameras[2]); AddItem(sceneCameras[3]);
+				sceneCameras[0]->visible = sceneCameras[1]->visible = sceneCameras[2]->visible = sceneCameras[3]->visible = false;
+				sceneCameras[1]->zFar = sceneCameras[2]->zFar = sceneCameras[3]->zFar = 100.0f;
+				Renderer::targetCamera = sceneCameras[0]; activeCamera = sceneCameras[3];
+				return true;
+			}
+
+			static bool Clear() {
+				/*for (auto it = MOON_SceneCameras.begin(); it != MOON_SceneCameras.end(); it++)
+					delete *it;
+				MOON_SceneCameras.clear();*/
+
+				for (auto itr = itemMap.begin(); itr != itemMap.end(); ) {
+					delete itr->second;
+					itr = itemMap.erase(itr);
+				}
 				return true;
 			}
 		};

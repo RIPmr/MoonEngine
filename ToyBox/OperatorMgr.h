@@ -26,7 +26,7 @@ namespace MOON {
 
 		static void ListCategory(const std::string &typeName, MObject::OPStack& opstack, unsigned int& loop);
 
-		static void ListOperators(const ImVec2& position, MObject::OPStack& opstack);
+		static void ListOperators(MObject::OPStack& opstack);
 	#pragma endregion
 
 	#pragma region load_operators

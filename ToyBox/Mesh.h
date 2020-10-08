@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 
+#include "BVH.h"
 #include "MShader.h"
 #include "Texture.h"
 #include "Vector2.h"
@@ -40,25 +41,41 @@ namespace MOON {
 		}
 	};
 
+	extern class Mesh;
+	class Triangle : public Hitable {
+	public:
+		Mesh* parent;
+		unsigned int pa, pb, pc;
+
+		Triangle(Mesh* parent, unsigned int& a, unsigned int& b, unsigned int& c);
+
+		void UpdateBBox();
+
+		bool Hit(const Ray &r, HitRecord &rec) const override;
+	};
+
 	extern class Model;
 	class Mesh : public ObjectBase, public Hitable {
 	public:
+		//Model* parent;
 		std::vector<Vertex> vertices;
 		std::vector<unsigned int> triangles;
-		//Model* parent;
-		Material* material;
-		BoundingBox bbox;
 		unsigned int VAO;
-
 		bool selected;
+
+		Material* material;
+		BVH* localBVH;
+		std::vector<Hitable*> triList;
 
 		Mesh() {}
 		Mesh(const Mesh &mesh) : vertices(mesh.vertices), triangles(mesh.triangles), 
-			material(mesh.material), VAO(mesh.VAO), bbox(mesh.bbox), selected(false) {}
+			material(mesh.material), VAO(mesh.VAO), selected(false), Hitable(mesh.bbox) {}
 		Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> triangles) : ObjectBase("Mesh", MOON_UNSPECIFIEDID), VAO(0) {
 			this->vertices = vertices;
 			this->triangles = triangles;
 			this->selected = false;
+			this->material = nullptr;
+			this->localBVH = nullptr;
 
 			// set the vertex buffers and its attribute pointers
 			//setupMesh();
@@ -67,6 +84,9 @@ namespace MOON {
 		Mesh(const std::string &name, std::vector<Vertex> vertices, std::vector<unsigned int> triangles) : ObjectBase(name, MOON_UNSPECIFIEDID), VAO(0) {
 			this->vertices = vertices;
 			this->triangles = triangles;
+			this->selected = false;
+			this->material = nullptr;
+			this->localBVH = nullptr;
 
 			// set the vertex buffers and its attribute pointers
 			//setupMesh();
@@ -92,6 +112,27 @@ namespace MOON {
 				glDeleteBuffers(1, &VBO);
 				glDeleteVertexArrays(1, &VAO);
 			}
+			if (localBVH != nullptr) delete localBVH;
+			Utility::ReleaseVector(triList);
+		}
+
+		virtual void BuildBVH() {
+			if (localBVH != nullptr) delete localBVH;
+			Utility::ReleaseVector(triList);
+
+			// prepare triangles list
+			for (int i = 0; i < triangles.size(); i += 3) {
+				triList.push_back(
+					new Triangle(this, 
+						triangles[i], 
+						triangles[i + 1], 
+						triangles[i + 2]
+					)
+				);
+			}
+
+			// build BVH
+			localBVH = new BVH(triList, Vector2(0, triList.size() - 1));
 		}
 
 		virtual void UpdateBBox() {
@@ -102,22 +143,13 @@ namespace MOON {
 
 		virtual void Draw(Shader* shader, const Matrix4x4 &model, const bool &hovered, const bool &selected);
 
-		bool Hit(const Ray &r, HitRecord &rec) const {
-			return Hit(Matrix4x4::identity(), r, rec);
-		}
+		// * ray-mesh intersect calculated in local space
+		bool Hit(const Ray &r, HitRecord &rec) const override {
+			uint32_t triIndex; Vector2 uv; Vector3 hitNormal;
 
-		bool Hit(const Matrix4x4 modelMat, const Ray &r, HitRecord &rec) const {
-			uint32_t triIndex;
-			Vector2 uv;
-			Vector3 hitNormal;
-			Vector2 hitTextureCoordinates;
-
-			if (Intersect(modelMat, r, rec.t, triIndex, uv)) {
-				GetSurfaceProperties(modelMat, triIndex, uv, hitNormal, hitTextureCoordinates);
+			if (Intersect(r, rec.t, triIndex, uv)) {
+				GetSurfaceProperties(triIndex, uv, rec.normal, rec.uv);
 				rec.p = r.PointAtParameter(rec.t);
-				//rec.normal = Vector3::Normalize(rec.p);
-				rec.normal = hitNormal;
-				//rec.uv = hitTextureCoordinates;
 				rec.mat = material;
 				return true;
 			}
@@ -125,14 +157,16 @@ namespace MOON {
 			return false;
 		}
 
+		void GetSurfaceProperties(const uint32_t &triIndex, const Vector2 &uv, Vector3 &hitNormal, Vector2 &hitUV) const;
+		void GetSurfaceProperties(const int& ta, const int& tb, const int& tc, const Vector2 &uv, Vector3 &hitNormal, Vector2 &hitUV) const;
+
 	protected:
 		unsigned int VBO, EBO;
 
 	private:
 		// initializes all the buffer objects/arrays
 		virtual void SetupMesh();
-		void GetSurfaceProperties(const Matrix4x4 modelMat, const uint32_t &triIndex, const Vector2 &uv, Vector3 &hitNormal, Vector2 &hitTextureCoordinates) const;
 		// Test if the ray interesests this triangle mesh
-		bool Intersect(const Matrix4x4 modelMat, const Ray &ray, float &tNear, uint32_t &triIndex, Vector2 &uv) const;
+		bool Intersect(const Ray &ray, float &tNear, uint32_t &triIndex, Vector2 &uv) const;
 	};
 }

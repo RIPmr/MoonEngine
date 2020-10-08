@@ -34,9 +34,9 @@ namespace MOON {
 		opstack.Add(op);
 	}
 
-	void OperatorManager::ListOperators(const ImVec2& position, MObject::OPStack& opstack) {
+	void OperatorManager::ListOperators(MObject::OPStack& opstack) {
 		if (showList) {
-			//ImGui::SetCursorPos(position);
+			ImVec2 position = ImGui::GetCursorPos();
 			ImVec2 availableSize = ImGui::GetContentRegionAvail();
 			availableSize.y = 20 * std::min(10, (int)(matchList.empty() ? available_operators->size() : matchList.size())) + 50;
 			ImGui::BeginChild(

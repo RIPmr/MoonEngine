@@ -1,4 +1,5 @@
 #pragma once
+#pragma region headers
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
@@ -11,6 +12,8 @@
 #include <shlobj.h>
 #include <commDlg.h>
 
+#include "Renderer.h"
+#include "SceneMgr.h"
 #include "SmartMeshes.h"
 #include "HotkeyMgr.h"
 #include "ThreadPool.h"
@@ -30,13 +33,15 @@
 #include "WinDiagHandler.h"
 #include "AssetLoader.h"
 #include "MaterialEditor.h"
+#pragma endregion
 #pragma warning(disable:4996)
 
 namespace MOON {
 	class MainUI {
 	public:
-		// parameters
+	#pragma region parameters
 		static Vector4 clearColor;
+		static bool sceneWndFocused;
 
 		// image resources
 		static Texture *icon, *logo, *logoFull;
@@ -62,7 +67,7 @@ namespace MOON {
 		static bool show_material_editor;
 		static bool show_enviroment_editor;
 
-		static bool show_codeEditor;
+		static bool show_code_editor;
 		static bool show_ribbon;
 		static bool show_timeline;
 
@@ -77,6 +82,8 @@ namespace MOON {
 
 		// class-like wnds
 		static MaterialEditor matEditor;
+		static CodeEditor CEditor;
+	#pragma endregion
 
 		static void CleanUp() {
 			//matEditor.CleanUp();
@@ -169,16 +176,27 @@ namespace MOON {
 					if (ImGui::MenuItem("Rotation")) {}
 					ImGui::EndMenu();
 				}
-				if (ImGui::MenuItem("Bone Tool")) {}
-				if (ImGui::MenuItem("Facial")) {}
-				if (ImGui::MenuItem("Retarget")) {}
+				ImGui::Separator();
+				if (ImGui::MenuItem("Bone Tools")) {}
+				if (ImGui::MenuItem("Emotionless")) {}
+				if (ImGui::MenuItem("Retargeting")) {}
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("Simulation")) {
 				if (ImGui::MenuItem("Fire")) {}
-				if (ImGui::MenuItem("Water")) {}
-				if (ImGui::MenuItem("Cloth")) {}
+				if (ImGui::MenuItem("Fluid")) {}
 				if (ImGui::MenuItem("Fracture")) {}
+				ImGui::Separator();
+				if (ImGui::BeginMenu("MoonGrav")) {
+					if (ImGui::MenuItem("Rigibody")) {}
+					if (ImGui::MenuItem("Cloth")) {}
+					ImGui::EndMenu();
+				}
+				if (ImGui::BeginMenu("Crowd")) {
+					if (ImGui::MenuItem("Create Crowd")) {}
+					if (ImGui::MenuItem("Character Editor")) {}
+					ImGui::EndMenu();
+				}
 				ImGui::Separator();
 				if (ImGui::MenuItem("ParticleSys", "6")) {}
 				ImGui::EndMenu();
@@ -211,12 +229,16 @@ namespace MOON {
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("Script")) {
-				if (ImGui::MenuItem("Code Editor", NULL, MainUI::show_codeEditor)) {
-					MainUI::show_codeEditor = !MainUI::show_codeEditor;
-					if (MainUI::show_codeEditor) MainUI::show_console_window = true;
+				if (ImGui::MenuItem("Code Editor", NULL, MainUI::show_code_editor)) {
+					MainUI::show_code_editor = !MainUI::show_code_editor;
+					if (MainUI::show_code_editor) MainUI::show_console_window = true;
 				}
 				if (ImGui::MenuItem("Console Window", NULL, MainUI::show_console_window)) {
 					MainUI::show_console_window = !MainUI::show_console_window;
+				}
+				ImGui::Separator();
+				if (ImGui::MenuItem("Plugin Manager", NULL)) {
+					
 				}
 				ImGui::EndMenu();
 			}
@@ -320,7 +342,17 @@ namespace MOON {
 			ImGui::Begin(Icon_Name_To_ID(ICON_FA_COGS, " ControlPanel"));
 
 			if (ImGui::Button("Test Btn")) {
-				
+				SceneManager::BuildBVH();
+			}
+
+			if (SceneManager::sceneBVH != nullptr) {
+				SceneManager::sceneBVH->Draw();
+
+				for (auto& it : MOON_ModelManager::itemMap) {
+					if (!it.second->visible) continue;
+					else if (CheckType(it.second->opstack.GetDeliver(), "Model"))
+						((Model*)it.second)->DebugBVH();
+				}
 			}
 
 			ImGui::End();
@@ -333,7 +365,6 @@ namespace MOON {
 			static int width = MOON_OutputSize.x, height = MOON_OutputSize.y;
 			static int sr = Renderer::samplingRate;
 			static int rd = Renderer::maxReflectionDepth;
-			static bool depth = true, motion = false;
 
 			ImGui::Text("Output Size:");
 			ImGui::SetNextItemWidth(availWidth);
@@ -357,8 +388,22 @@ namespace MOON {
 			if (ImGui::InputInt("ref_depth", &rd, 1, 5, 0, true))
 				Renderer::maxReflectionDepth = rd;
 
-			ImGui::Checkbox("Depth of field ", &depth);
-			ImGui::Checkbox("Motion blur ", &motion);
+			const char* accitems[] = { "NONE", "AABB", "BVH", "BSP", "KDTree" };
+			ImGui::AlignTextToFramePadding();
+			ImGui::Text("Ray Acceleration:");
+			ImGui::PushID("accType");
+			ImGui::Combo("", (int*)&Renderer::acc, accitems, IM_ARRAYSIZE(accitems));
+			ImGui::PopID();
+
+			const char* filteritems[] = { "Nearest", "Bilinear", "Trilinear", "Anisotropic" };
+			ImGui::AlignTextToFramePadding();
+			ImGui::Text("Texture Filter:");
+			ImGui::PushID("filterType");
+			ImGui::Combo("", (int*)&Renderer::filter, filteritems, IM_ARRAYSIZE(filteritems));
+			ImGui::PopID();
+
+			ImGui::Checkbox("Depth of field ", &Renderer::depth);
+			ImGui::Checkbox("Motion blur ", &Renderer::motion);
 
 			ImGui::Spacing();
 			if (ImGui::Button("Rendering")) {
@@ -398,7 +443,7 @@ namespace MOON {
 					ImGui::Indent(10.0f);
 					ImGui::Text("Enable"); ImGui::SameLine(80);
 					ImGui::Checkbox("enableAA", &Graphics::antiAliasing, true);
-					const char* items[] = { "MASS", "TAA", "SRAA" };
+					const char* items[] = { "MSAA", "TAA", "SRAA" };
 					ImGui::AlignTextToFramePadding();
 					ImGui::Text("Type"); ImGui::SameLine(80);
 					ImGui::PushID("Type");
@@ -411,9 +456,9 @@ namespace MOON {
 
 					ImGui::Text("Post-Processing:");
 					ImGui::Indent(10.0f);
-
+					Graphics::DrawPostProcessingStack();
 					ImGui::Unindent(10.0f);
-					ImGui::Separator();
+					//ImGui::Separator();
 
 					ImGui::EndTabItem();
 				}
@@ -472,6 +517,8 @@ namespace MOON {
 
 		static void SplitSceneWnd(const char* name, const SceneView view, bool (&docked)[4], bool focus = false) {
 			ImGui::Begin(name, 0, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+			sceneWndFocused |= ImGui::IsWindowFocused(ImGuiFocusedFlags_ChildWindows | ImGuiFocusedFlags_RootWindow);
+			
 			ForceNoTabBar(name, docked[view]);
 			Vector2 wndSize(
 				ImGui::GetWindowSize().x - ImGui::GetStyle().WindowPadding.x,
@@ -553,7 +600,8 @@ namespace MOON {
 		static void SceneWnd() {
 			static bool old = true, currentLayout_m = false;
 			static bool docked[4] = { false, false, false, false };
-			if (MOON_InputManager::IsKeyDown(KEY_SPACE)) currentLayout_m = !currentLayout_m;
+			auto switchControl = sceneWndFocused && MOON_InputManager::IsKeyDown(KEY_SPACE);
+			if (switchControl) currentLayout_m = !currentLayout_m;
 
 			const char* dockspaceName;
 			if (currentLayout_m) dockspaceName = "layout_default";
@@ -586,12 +634,13 @@ namespace MOON {
 			ImGui::DockSpace(dockSpaceId_m, ImVec2(0.0f, 0.0f), 0);
 			ImGui::End();
 
+			sceneWndFocused = false;
 			if (!currentLayout_m) {
 				SplitSceneWnd("top", top, docked);
 				SplitSceneWnd("left", left, docked);
 				SplitSceneWnd("front", front, docked);
 			}
-			SplitSceneWnd("persp", persp, docked, MOON_InputManager::IsKeyDown(KEY_SPACE));
+			SplitSceneWnd("persp", persp, docked, switchControl);
 		}
 
 		static void ShowVFB() {
@@ -600,34 +649,41 @@ namespace MOON {
 
 			ImGui::Begin(Icon_Name_To_ID(ICON_FA_FILM, " VFB"), &MainUI::show_VFB_window, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize);
 
+			auto rightCorner = ImGui::GetContentRegionAvailWidth() - 22;
 			ImGui::Button(ICON_FA_CLOCK_O, ImVec2(22, 22)); ImGui::SameLine();
 			ImGui::Text(u8"|"); ImGui::SameLine();
 			ImGui::Button(ICON_FA_OBJECT_GROUP, ImVec2(22, 22)); ImGui::SameLine();
-			ImGui::Button(ICON_FA_ADJUST, ImVec2(22, 22));
+			ImGui::Button(ICON_FA_ADJUST, ImVec2(22, 22)); ImGui::SameLine();
+			ImGui::Button(ICON_FA_COG, ImVec2(22, 22));
+			ImGui::SameLine(rightCorner);
+			if (ImGui::Button(ICON_FA_CAMERA, ImVec2(22, 22))) {
+				Renderer::StartRendering();
+			}
 			ImGui::Separator();
 			
-			ImGui::Text("size = %.0f x %.0f", MOON_OutputSize.x, MOON_OutputSize.y);
+			std::string sep = Renderer::timeStamp._Equal("") ? "" : " | ";
+			ImGui::Text((
+				u8"%.0f ¡Á %.0f" + sep +
+				Renderer::timeStamp).c_str(), 
+				MOON_OutputSize.x, MOON_OutputSize.y
+			);
 
 			ImVec2 pos = ImGui::GetCursorScreenPos();
+			ImVec2 mousePos = ImGui::GetMousePos();
 			if (MOON_OutputTexID != -1)
 				ImGui::Image((void*)(intptr_t)MOON_OutputTexID, ImVec2(MOON_OutputSize.x, MOON_OutputSize.y));
 
-			if (ImGui::IsItemHovered() && ImGui::IsMouseDown(2)) {
+			if (ImGui::IsItemHovered() && ImGui::IsMouseDown(1)) {
 				ImGui::BeginTooltip();
-				float region_sz = 32.0f;
-				float region_x = MOON_MousePos.x - pos.x - region_sz * 0.5f;
-				float region_y = MOON_MousePos.y - pos.y - region_sz * 0.5f;
+				float region_sz = 32.0f, zoom = 4.0f;
+				Vector2 region(mousePos.x - pos.x - region_sz * 0.5f, mousePos.y - pos.y - region_sz * 0.5f);
+				region.x = MoonMath::clamp(region.x, 0, MOON_OutputSize.x - region_sz);
+				region.y = MoonMath::clamp(region.y, 0, MOON_OutputSize.y - region_sz);
 
-				if (region_x < 0.0f) region_x = 0.0f;
-				else if (region_x > MOON_OutputSize.x - region_sz) region_x = MOON_OutputSize.x - region_sz;
-				if (region_y < 0.0f) region_y = 0.0f;
-				else if (region_y > MOON_OutputSize.y - region_sz) region_y = MOON_OutputSize.y - region_sz;
-
-				float zoom = 4.0f;
-				ImGui::Text("Min: (%.2f, %.2f)", region_x, region_y);
-				ImGui::Text("Max: (%.2f, %.2f)", region_x + region_sz, region_y + region_sz);
-				ImVec2 uv0 = ImVec2((region_x) / MOON_OutputSize.x, (region_y) / MOON_OutputSize.y);
-				ImVec2 uv1 = ImVec2((region_x + region_sz) / MOON_OutputSize.x, (region_y + region_sz) / MOON_OutputSize.y);
+				ImGui::Text("Min: (%.2f, %.2f)", region.x, region.y);
+				ImGui::Text("Max: (%.2f, %.2f)", region.x + region_sz, region.y + region_sz);
+				ImVec2 uv0 = ImVec2(region.x / MOON_OutputSize.x, region.y / MOON_OutputSize.y);
+				ImVec2 uv1 = ImVec2((region.x + region_sz) / MOON_OutputSize.x, (region.y + region_sz) / MOON_OutputSize.y);
 				ImGui::Image((void*)(intptr_t)MOON_OutputTexID, ImVec2(region_sz * zoom, region_sz * zoom), uv0, uv1, ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.5f));
 				ImGui::EndTooltip();
 			}
@@ -787,13 +843,13 @@ namespace MOON {
 				SceneManager::ListMatchedItems();
 			} else {
 				if (showModel) MOON_ModelManager::ListItems_Hierarchial();
-				if (showMat) MOON_MaterialManager::ListItems_Hierarchial();
-				if (showTex) MOON_TextureManager::ListItems_Hierarchial();
-				if (showLight) MOON_LightManager::ListItems_Hierarchial();
-				if (showCam) MOON_CameraManager::ListItems_Hierarchial();
-				if (showShader) MOON_ShaderManager::ListItems_Hierarchial();
 				if (showShape) MOON_ShapeManager::ListItems_Hierarchial();
 				if (showHelper) MOON_HelperManager::ListItems_Hierarchial();
+				if (showLight) MOON_LightManager::ListItems_Hierarchial();
+				if (showCam) MOON_CameraManager::ListItems_Hierarchial();
+				if (showMat) MOON_MaterialManager::ListItems_Hierarchial();
+				if (showTex) MOON_TextureManager::ListItems_Hierarchial();
+				if (showShader) MOON_ShaderManager::ListItems_Hierarchial();
 			}
 
 			if (!ImGui::IsAnyItemHovered() && ImGui::IsWindowHovered()) {
@@ -984,7 +1040,18 @@ namespace MOON {
 				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvailWidth());
 				ImGui::ColorEdit3("", (float*)&clearColor);
 			} else if (MOON_Enviroment == EnviromentType::env_hdri) {
-
+				MOON_TextureManager::HDRI->ListProperties();
+				ImGui::Text("Rotate"); ImGui::SameLine(80.0f);
+				auto euler = MOON_ModelManager::skyDome->transform.rotation.eulerAngles;
+				float rotEuler[3] = { euler.x, euler.y, euler.z };
+				if (ImGui::DragFloat3("rot", rotEuler, 0.1f, -INFINITY, INFINITY, "%.3f", 1.0f, true)) {
+					Quaternion deltaQ = Quaternion(
+						rotEuler[0] - euler.x,
+						rotEuler[1] - euler.y,
+						rotEuler[2] - euler.z
+					);
+					MOON_ModelManager::skyDome->transform.Rotate(deltaQ);
+				}
 			} else if (MOON_Enviroment == EnviromentType::env_cubemap) {
 
 			} else if (MOON_Enviroment == EnviromentType::env_procedural_sky) {
@@ -1083,8 +1150,7 @@ namespace MOON {
 		}
 
 		static void CodeEditor() {
-			static MOON::CodeEditor CEditor;
-			CEditor.Draw(&MainUI::show_codeEditor);
+			CEditor.Draw(&MainUI::show_code_editor);
 		}
 
 		static void RibbonBar() {
@@ -1153,12 +1219,14 @@ namespace MOON {
 
 			ImGui::Text(u8"|"); ImGui::SameLine();
 
+			if (ImGui::Button(ICON_FA_LIST_ALT, ImVec2(22, 22))) {
+				MainUI::show_render_setting = !MainUI::show_render_setting;
+			} ImGui::SameLine();
+			SwitchButton(ICON_FA_WINDOW_MAXIMIZE, ICON_FA_WINDOW_MAXIMIZE, MainUI::show_VFB_window);
+			ImGui::SameLine();
 			if (ImGui::Button(ICON_FA_CAMERA, ImVec2(22, 22))) {
 				MainUI::show_VFB_window = true;
 				Renderer::StartRendering();
-			} ImGui::SameLine();
-			if (ImGui::Button(ICON_FA_LIST_ALT, ImVec2(22, 22))) {
-				MainUI::show_render_setting = !MainUI::show_render_setting;
 			} ImGui::SameLine();
 
 			ImGui::Text(u8"|"); ImGui::SameLine();

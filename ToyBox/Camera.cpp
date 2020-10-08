@@ -1,14 +1,49 @@
 #include <iostream>
+#include <imgui.h>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 #include "Camera.h"
+#include "Gizmo.h"
+#include "Strutil.h"
+#include "ButtonEx.h"
 #include "SceneMgr.h"
+#include "Renderer.h"
 
 namespace MOON {
+	std::vector<Vector3> Camera::cameraShape = std::vector<Vector3>{
+		Vector3(-0.1f,  0.1f, -0.3f), Vector3(-0.1f, -0.1f, -0.3f),
+		Vector3(-0.1f, -0.1f, -0.3f), Vector3(0.1f, -0.1f, -0.3f),
+		Vector3(0.1f, -0.1f, -0.3f), Vector3(0.1f,  0.1f, -0.3f),
+		Vector3(0.1f,  0.1f, -0.3f), Vector3(-0.1f,  0.1f, -0.3f),
+
+		Vector3(-0.1f,  0.1f, -0.1f), Vector3(-0.1f, -0.1f, -0.1f),
+		Vector3(-0.1f, -0.1f, -0.1f), Vector3(0.1f, -0.1f, -0.1f),
+		Vector3(0.1f, -0.1f, -0.1f), Vector3(0.1f,  0.1f, -0.1f),
+		Vector3(0.1f,  0.1f, -0.1f), Vector3(-0.1f,  0.1f, -0.1f),
+
+		Vector3(-0.15f,  0.15f, 0), Vector3(-0.15f, -0.15f, 0),
+		Vector3(-0.15f, -0.15f, 0), Vector3(0.15f, -0.15f, 0),
+		Vector3(0.15f, -0.15f, 0), Vector3(0.15f,  0.15f, 0),
+		Vector3(0.15f,  0.15f, 0), Vector3(-0.15f,  0.15f, 0),
+
+		// connect
+		Vector3(-0.1f, 0.1f, -0.3f), Vector3(-0.1f, 0.1f, -0.1f),
+		Vector3(-0.1f, 0.1f, -0.1f), Vector3(-0.15f, 0.15f, 0),
+
+		Vector3(-0.1f, -0.1f, -0.3f), Vector3(-0.1f, -0.1f, -0.1f),
+		Vector3(-0.1f, -0.1f, -0.1f), Vector3(-0.15f, -0.15f, 0),
+
+		Vector3(0.1f, -0.1f, -0.3f), Vector3(0.1f, -0.1f, -0.1f),
+		Vector3(0.1f, -0.1f, -0.1f), Vector3(0.15f, -0.15f, 0),
+
+		Vector3(0.1f, 0.1f, -0.3f), Vector3(0.1f, 0.1f, -0.1f),
+		Vector3(0.1f, 0.1f, -0.1f), Vector3(0.15f, 0.15f, 0)
+	};
+
 	Matrix4x4 Camera::GetProjectionMatrix() {
 		if (isortho) return Matrix4x4::Orthographic(width, height, zNear, zFar);
-		else return Matrix4x4::Perspective(fov, SceneManager::aspect, zNear, zFar);
+		else return Matrix4x4::Perspective(fov, aspect, zNear, zFar);
 	}
 
 	Matrix4x4 Camera::GetViewMatrix() {
@@ -71,10 +106,9 @@ namespace MOON {
 
 	// screen pos to world ray fast version (used in renderer)
 	Ray Camera::GetRay(float s, float t, float aspect) {
-		s = (s - 0.5f) / 2.0f * aspect + 0.5f;
-		Vector3 rd = lens_radius * MoonMath::RandomInUnitDisk();
+		s = (s - 0.5f) / 2.0f * aspect + 0.5f;  auto pos = transform.position;
+		Vector3 rd = Renderer::depth ? MoonMath::RandomInUnitDisk() * lens_radius : Vector3::ZERO();
 		Vector3 offset = transform.GetLocalAxis(RIGHT) * rd.x + transform.GetLocalAxis(UP) * rd.y;
-		auto pos = transform.position;
 		return Ray(pos + offset, lower_left_corner + s * horizontal + t * vertical - pos - offset);
 	}
 
@@ -99,7 +133,7 @@ namespace MOON {
 		tarPos = target ? const_cast<Transform&>(target->transform).position : Vector3::ZERO();
 
 		transform.position = tarPos - transform.GetLocalAxis(FORWARD) * 
-			(target ? (target->bbox_world.max - target->bbox_world.min).magnitude() * 2.0f : 20.0f);
+			(target ? (target->bbox.max - target->bbox.min).magnitude() * 2.0f : 20.0f);
 		UpdateMatrix();
 	}
 
@@ -131,7 +165,7 @@ namespace MOON {
 	}
 
 	// screen pos to world pos
-	// *NOTE: need to enable depth test
+	// *NOTE: depth test should be enabled
 	Vector3 Camera::unProjectMouse() const {
 		GLfloat winZ;
 		Vector3 screenPos(MOON_MousePos.x, MOON_ScrSize.y - MOON_MousePos.y - 1, 0.0f);
@@ -145,5 +179,132 @@ namespace MOON {
 		Vector3 worldPos = Matrix4x4::UnProject(screenPos, MOON_ActiveCamera->view, MOON_ActiveCamera->projection, viewport);
 
 		return worldPos;
+	}
+
+	void Camera::Draw(Shader* overrideShader) {
+		//Gizmo::DrawPointDirect(transform.position, Color::RED(), 6.0f);
+		std::vector<Vector3> camShape(cameraShape);
+
+		// draw field of view
+		auto farCenter = Vector3::WORLD(FORWARD) * zFar;
+		auto nearCenter = Vector3::WORLD(FORWARD) * zNear;
+		if (isortho) {
+			float y = height / 2.0f, x = width / 2.0f;
+
+			camShape.push_back(farCenter  + Vector3( x,  y, 0));
+			camShape.push_back(nearCenter + Vector3( x,  y, 0));
+			camShape.push_back(farCenter  + Vector3(-x,  y, 0));
+			camShape.push_back(nearCenter + Vector3(-x,  y, 0));
+			camShape.push_back(farCenter  + Vector3(-x, -y, 0));
+			camShape.push_back(nearCenter + Vector3(-x, -y, 0));
+			camShape.push_back(farCenter  + Vector3( x, -y, 0));
+			camShape.push_back(nearCenter + Vector3( x, -y, 0));
+
+			camShape.push_back(farCenter + Vector3( x,  y, 0));
+			camShape.push_back(farCenter + Vector3(-x,  y, 0));
+			camShape.push_back(farCenter + Vector3(-x,  y, 0));
+			camShape.push_back(farCenter + Vector3(-x, -y, 0));
+			camShape.push_back(farCenter + Vector3(-x, -y, 0));
+			camShape.push_back(farCenter + Vector3( x, -y, 0));
+			camShape.push_back(farCenter + Vector3( x, -y, 0));
+			camShape.push_back(farCenter + Vector3( x,  y, 0));
+
+			camShape.push_back(nearCenter + Vector3( x,  y, 0));
+			camShape.push_back(nearCenter + Vector3(-x,  y, 0));
+			camShape.push_back(nearCenter + Vector3(-x,  y, 0));
+			camShape.push_back(nearCenter + Vector3(-x, -y, 0));
+			camShape.push_back(nearCenter + Vector3(-x, -y, 0));
+			camShape.push_back(nearCenter + Vector3( x, -y, 0));
+			camShape.push_back(nearCenter + Vector3( x, -y, 0));
+			camShape.push_back(nearCenter + Vector3( x,  y, 0));
+		} else {
+			float y = zFar * std::tanf(fov * Deg2Rad / 2.0f);
+			float ny = zNear * std::tanf(fov * Deg2Rad / 2.0f);
+			float x = y * aspect, nx = ny * aspect;
+
+			camShape.push_back(Vector3::ZERO());
+			camShape.push_back(farCenter + Vector3( x,  y, 0));
+			camShape.push_back(Vector3::ZERO());
+			camShape.push_back(farCenter + Vector3(-x,  y, 0));
+			camShape.push_back(Vector3::ZERO());
+			camShape.push_back(farCenter + Vector3( x, -y, 0));
+			camShape.push_back(Vector3::ZERO());
+			camShape.push_back(farCenter + Vector3(-x, -y, 0));
+			
+			camShape.push_back(nearCenter + Vector3( nx,  ny, 0));
+			camShape.push_back(nearCenter + Vector3(-nx,  ny, 0));
+			camShape.push_back(nearCenter + Vector3(-nx,  ny, 0));
+			camShape.push_back(nearCenter + Vector3(-nx, -ny, 0));
+			camShape.push_back(nearCenter + Vector3(-nx, -ny, 0));
+			camShape.push_back(nearCenter + Vector3( nx, -ny, 0));
+			camShape.push_back(nearCenter + Vector3( nx, -ny, 0));
+			camShape.push_back(nearCenter + Vector3( nx,  ny, 0));
+
+			camShape.push_back(farCenter + Vector3( x,  y, 0));
+			camShape.push_back(farCenter + Vector3(-x,  y, 0));
+			camShape.push_back(farCenter + Vector3(-x,  y, 0));
+			camShape.push_back(farCenter + Vector3(-x, -y, 0));
+			camShape.push_back(farCenter + Vector3(-x, -y, 0));
+			camShape.push_back(farCenter + Vector3( x, -y, 0));
+			camShape.push_back(farCenter + Vector3( x, -y, 0));
+			camShape.push_back(farCenter + Vector3( x,  y, 0));
+		}
+
+		Gizmo::DrawLinesDirect(camShape, wireColor, overrideShader == NULL ? 1.0f : 5.0f, false, transform.localToWorldMat, overrideShader);
+	}
+
+	void Camera::ListProperties() {
+		// list name
+		ListName();
+		ImGui::Separator();
+
+		// list transform
+		ListTransform();
+		if (transform.changeFlag) UpdateMatrix();
+		ImGui::Separator();
+
+		// list camera properties
+		ImGui::Text("Aperture"); ImGui::SameLine(80.0f);
+		float aperture = lens_radius * 2.0f;
+		if (ImGui::DragFloat("aperture", &aperture, 0.1f, 0, 0, "%.3f", 1.0f, true)) {
+			lens_radius = aperture / 2.0f;
+		}
+		ImGui::Text("Near/Far"); ImGui::SameLine(80.0f);
+		float halfWidth = ImGui::GetContentRegionAvailWidth() / 2.0f - 5.0f;
+		ImGui::SetNextItemWidth(halfWidth);
+		if (ImGui::DragFloat("near", &zNear, 0.1f, 0.0f, zFar, "%.3f", 1.0f, true)) {
+			UpdateMatrix();
+		} ImGui::SameLine(90.0f + halfWidth);
+		ImGui::SetNextItemWidth(halfWidth);
+		if (ImGui::DragFloat("far", &zFar, 0.1f, zNear, INFINITY, "%.3f", 1.0f, true)) {
+			UpdateMatrix();
+		}
+		ImGui::Text("Ortho"); ImGui::SameLine(80.0f);
+		if (ImGui::Checkbox("iso", &isortho, true)) {
+			UpdateMatrix();
+		}
+		if (isortho) {
+			ImGui::SameLine(); SwitchButton(ICON_FA_LOCK, ICON_FA_LOCK, lockSize);
+
+			ImGui::Text("ScrSize"); ImGui::SameLine(80.0f);
+			if (lockSize) {
+				ImGui::Text((Strutil::to_string_precision(width, 2) + u8" ¡Á " +
+					Strutil::to_string_precision(height, 2)).c_str());
+			} else {
+				ImGui::SetNextItemWidth(halfWidth);
+				if (ImGui::DragFloat("width", &width, 0.1f, 0, 0, "%.3f", 1.0f, true)) {
+					UpdateMatrix();
+				} ImGui::SameLine(90.0f + halfWidth);
+				ImGui::SetNextItemWidth(halfWidth);
+				if (ImGui::DragFloat("height", &height, 0.1f, 0, 0, "%.3f", 1.0f, true)) {
+					UpdateMatrix();
+				}
+			}
+		} else {
+			ImGui::Text("FOV"); ImGui::SameLine(80.0f);
+			if (ImGui::DragFloat("fov", &fov, 0.1f, 0.0f, 90.0f, "%.3f", 1.0f, true)) {
+				UpdateMatrix();
+			}
+		}
 	}
 }

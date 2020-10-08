@@ -11,8 +11,8 @@
 *	  \/__/         \/__/         \/__/         \/__/
 *
 * @author	HZT
-* @date		2020-09-12
-* @version	0.1.0
+* @date		2020-10-07
+* @version	0.1.2
 */
 
 #pragma once
@@ -30,6 +30,7 @@
 #include <random>
 #include <map>
 
+#include "CodeEditor.h"
 #include "Coroutine.h"
 #include "ThreadPool.h"
 #include "AssetLoader.h"
@@ -61,6 +62,8 @@
 #include "OBJMgr.h"
 #include "HotkeyMgr.h"
 #include "OperatorMgr.h"
+#include "BVH.h"
+#include "PostEffects.h"
 
 // NN heads
 #include "Plotter.h"
@@ -94,19 +97,17 @@ std::vector<float> Graphics::ground;
 int Graphics::edit_mode_point_size = 4;
 
 // init Pipe Mgr
-float Graphics::quadVertices[24] = {
-	// positions   // texCoords
-	-1.0f,  1.0f,  0.0f, 1.0f,
-	-1.0f, -1.0f,  0.0f, 0.0f,
-	 1.0f, -1.0f,  1.0f, 0.0f,
-	-1.0f,  1.0f,  0.0f, 1.0f,
-	 1.0f, -1.0f,  1.0f, 0.0f,
-	 1.0f,  1.0f,  1.0f, 1.0f
+GLfloat Graphics::quadVertices[20] = {
+	// Positions        // Texture Coords
+	-1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+	-1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+	 1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+	 1.0f, -1.0f, 0.0f, 1.0f, 0.0f
 };
-std::vector<Graphics::PostProcessing>		  Graphics::postStack;
 PipelineMode Graphics::pipeline				= PipelineMode::FORWARD_SHADING;
 ShadingMode Graphics::shading				= ShadingMode::DEFAULT;
 SystemProcess Graphics::process				= SystemProcess::sys_init;
+SceneView Graphics::currDrawTarget			= SceneView::top;
 int Graphics::enviroment					= EnviromentType::env_pure_color;
 int Graphics::AAType						= AntiAliasingType::MSAA;
 unsigned int Graphics::quadVAO				= MOON_UNSPECIFIEDID;
@@ -117,6 +118,7 @@ bool Graphics::antiAliasing					= false;
 Model* MOON_ModelManager::skyDome			= MOON_UNSPECIFIEDID;
 
 // init Main UI
+bool MainUI::sceneWndFocused				= false;
 bool MainUI::show_control_window			= false;
 bool MainUI::show_explorer_window			= true;
 bool MainUI::show_scene_window				= true;
@@ -135,7 +137,7 @@ bool MainUI::show_enviroment_editor			= false;
 bool MainUI::show_ribbon					= true;
 bool MainUI::show_timeline					= true;
 bool MainUI::show_profiler					= true;
-bool MainUI::show_codeEditor				= false;
+bool MainUI::show_code_editor				= false;
 bool MainUI::show_render_setting	 		= false;
 bool MainUI::show_material_editor			= false;
 bool MainUI::show_nn_manager				= false;
@@ -149,6 +151,7 @@ ImGuiIO*	MainUI::io						= MOON_UNSPECIFIEDID;
 
 // init class-like windows
 MaterialEditor								  MainUI::matEditor;
+CodeEditor									  MainUI::CEditor;
 std::vector<Plotter*>						  PlotManager::plotList;
 unsigned int PlotManager::cnt				= 0;
 
@@ -173,6 +176,7 @@ float SceneManager::Clock::deltaTime		= MOON_UNSPECIFIEDID;
 float SceneManager::Clock::lastFrame		= MOON_UNSPECIFIEDID;
 bool SceneManager::debug					= false;
 bool SceneManager::exitFlag					= false;
+BVH* SceneManager::sceneBVH					= MOON_UNSPECIFIEDID;
 
 ShadingMode SceneManager::splitShading[4]	= { DEFAULT , WIRE , WIRE , WIRE };
 
@@ -257,3 +261,14 @@ SnapMode HotKeyManager::snapType				= vertex;
 Element  HotKeyManager::globalEditElem			= VERT;
 bool	 HotKeyManager::enableSnap				= false;
 MObject* HotKeyManager::globalEditTarget		= nullptr;
+
+unsigned int BVH::divisionAxis					= 0;
+
+// regist post-processing effects
+std::map<std::string, EffectCreator> PostFactory::effectList;
+REGIST_POST_EFFECT(ScreenSpaceReflection);
+REGIST_POST_EFFECT(ToneMapping);
+REGIST_POST_EFFECT(Exposure);
+REGIST_POST_EFFECT(Bloom);
+REGIST_POST_EFFECT(Curve);
+REGIST_POST_EFFECT(SSAO);

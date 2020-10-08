@@ -5,14 +5,40 @@
 //#define modelToWorld parent->transform.localToWorldMat.multVec
 
 namespace MOON {
-	void Mesh::Draw(Shader* shader, const Matrix4x4 & model, const bool &hovered = false, const bool &selected = false) {
-		// bind appropriate textures
-		unsigned int diffuseNr = 1;
-		unsigned int specularNr = 1;
-		unsigned int normalNr = 1;
-		unsigned int heightNr = 1;
-		unsigned int i;
+#pragma region Triangle_implementation
+	Triangle::Triangle(Mesh* parent, unsigned int& a, unsigned int& b, unsigned int& c) {
+		this->parent = parent;
+		pa = a; pb = b; pc = c;
+		UpdateBBox();
+	}
+	
+	void Triangle::UpdateBBox() {
+		bbox.Reset();
+		bbox.join(parent->vertices[pa].Position);
+		bbox.join(parent->vertices[pb].Position);
+		bbox.join(parent->vertices[pc].Position);
+	}
 
+	// * ray-tri intersect calculated test in local space
+	bool Triangle::Hit(const Ray &r, HitRecord &rec) const {
+		Vector2 uv; float t;
+		if (MoonMath::RayTriangleIntersect(r, parent->vertices[pa].Position,
+			parent->vertices[pb].Position, parent->vertices[pc].Position, t, uv.x, uv.y)) {
+			if (t > EPSILON && t < rec.t) {
+				parent->GetSurfaceProperties(pa, pb, pc, uv, rec.normal, rec.uv);
+				rec.t = t;
+				rec.p = r.PointAtParameter(rec.t);
+				rec.mat = parent->material;
+				return true;
+			}
+		}
+
+		return false;
+	}
+#pragma endregion
+
+#pragma region Mesh_implementation
+	void Mesh::Draw(Shader* shader, const Matrix4x4 & model, const bool &hovered = false, const bool &selected = false) {
 		// shader configuration
 		shader->use();
 
@@ -26,37 +52,16 @@ namespace MOON {
 		shader->setBool("isHovered", hovered);
 		shader->setBool("isSelected", selected);
 
+		// material prop configuration
 		material->SetShaderProps(shader);
-
-		// binding textures
-		// TODO
-		//for (i = 0; i < textures.size(); i++) {
-		//	// active proper texture unit before binding
-		//	glActiveTexture(GL_TEXTURE0 + i);
-		//	// retrieve texture number (the N in diffuse_textureN)
-		//	std::string number;
-		//	if (textures[i].type == TexType::diffuse)
-		//		number = std::to_string(diffuseNr++);
-		//	else if (textures[i].type == TexType::specular)
-		//		number = std::to_string(specularNr++);
-		//	else if (textures[i].type == TexType::normal)
-		//		number = std::to_string(normalNr++);
-		//	else if (textures[i].type == TexType::height)
-		//		number = std::to_string(heightNr++);
-		//	// now set the sampler to the correct texture unit
-		//	glUniform1i(glGetUniformLocation(shader->localID, (name + number).c_str()), i);
-		//	// and finally bind the texture
-		//	glBindTexture(GL_TEXTURE_2D, textures[i].localID);
-		//}
 
 		// draw mesh
 		if (!VAO) SetupMesh();
-		//std::cout << VAO << std::endl;
 		glBindVertexArray(VAO);
 		glDrawElements(GL_TRIANGLES, triangles.size(), GL_UNSIGNED_INT, 0);
-		glBindVertexArray(0);
 
-		// always good practice to set everything back to defaults once configured.
+		// set everything back to defaults once configured
+		glBindVertexArray(0);
 		glActiveTexture(GL_TEXTURE0);
 	}
 
@@ -87,42 +92,46 @@ namespace MOON {
 		glBindVertexArray(0);
 	}
 
-	void Mesh::GetSurfaceProperties(const Matrix4x4 modelMat, const uint32_t &triIndex, 
-		const Vector2 &uv, Vector3 &hitNormal, Vector2 &hitTextureCoordinates) const {
-		// face normal
-		/*Vector3 &v0 = P[trisIndex[triIndex * 3]];
-		Vector3 &v1 = P[trisIndex[triIndex * 3 + 1]];
-		Vector3 &v2 = P[trisIndex[triIndex * 3 + 2]];
-		hitNormal = (v1 - v0).cross(v2 - v0);
-		hitNormal.normalize();*/
-
+	// triIndex: start id of the triangle
+	void Mesh::GetSurfaceProperties(const uint32_t &triIndex, const Vector2 &uv, 
+		Vector3 &hitNormal, Vector2 &hitUV) const {
+		GetSurfaceProperties(triangles[triIndex * 3], triangles[triIndex * 3 + 1],
+			triangles[triIndex * 3 + 2], uv, hitNormal, hitUV);
+	}
+	void Mesh::GetSurfaceProperties(const int& ta, const int& tb, const int& tc, 
+		const Vector2 &uv, Vector3 &hitNormal, Vector2 &hitUV) const {
 		// texture coordinates
 		/*const Vector2 &st0 = texCoordinates[triIndex * 3];
 		const Vector2 &st1 = texCoordinates[triIndex * 3 + 1];
 		const Vector2 &st2 = texCoordinates[triIndex * 3 + 2];
 		hitTextureCoordinates = (1 - uv.x - uv.y) * st0 + uv.x * st1 + uv.y * st2;*/
 
-		// vertex normal
-		Vector3 const &n0 = vertices[triangles[triIndex * 3]].Normal;
-		Vector3 const &n1 = vertices[triangles[triIndex * 3 + 1]].Normal;
-		Vector3 const &n2 = vertices[triangles[triIndex * 3 + 2]].Normal;
+		// flat normal
+		/*Vector3 &v0 = P[trisIndex[triIndex * 3]];
+		Vector3 &v1 = P[trisIndex[triIndex * 3 + 1]];
+		Vector3 &v2 = P[trisIndex[triIndex * 3 + 2]];
+		hitNormal = (v1 - v0).cross(v2 - v0);
+		hitNormal.normalize();*/
+
+		// smooth normal
+		Vector3 const &n0 = vertices[ta].Normal;
+		Vector3 const &n1 = vertices[tb].Normal;
+		Vector3 const &n2 = vertices[tc].Normal;
 
 		hitNormal = (1 - uv.x - uv.y) * n0 + uv.x * n1 + uv.y * n2;
-		hitNormal = modelMat.multDir(hitNormal);
-		hitNormal.normalize();
-		//std::cout << hitNormal << std::endl;
 	}
 
 	// Test if the ray interesests this triangle mesh
-	bool Mesh::Intersect(const Matrix4x4 modelMat, const Ray &ray, float &tNear, uint32_t &triIndex, Vector2 &uv) const {
+	bool Mesh::Intersect(const Ray &ray, float &tNear, uint32_t &triIndex, Vector2 &uv) const {
 		bool isect = false;
 		for (uint32_t i = 0, j = 0; i < triangles.size() / 3; ++i) {
-			Vector3 const &v0 = modelMat.multVec(vertices[triangles[j]].Position);
+			/*Vector3 const &v0 = modelMat.multVec(vertices[triangles[j]].Position);
 			Vector3 const &v1 = modelMat.multVec(vertices[triangles[j + 1]].Position);
-			Vector3 const &v2 = modelMat.multVec(vertices[triangles[j + 2]].Position);
+			Vector3 const &v2 = modelMat.multVec(vertices[triangles[j + 2]].Position);*/
 
-			float t = tNear, u, v;
-			if (MoonMath::RayTriangleIntersect(ray, v0, v1, v2, t, u, v)) {
+			float t, u, v;
+			if (MoonMath::RayTriangleIntersect(ray, vertices[triangles[j]].Position, 
+				vertices[triangles[j + 1]].Position, vertices[triangles[j + 2]].Position, t, u, v)) {
 				if (t > EPSILON && t < tNear) {
 					tNear = t;
 					uv.setValue(u, v);
@@ -132,9 +141,10 @@ namespace MOON {
 			}
 			j += 3;
 		}
-
 		return isect;
 	}
+#pragma endregion
+
 }
 
 /*

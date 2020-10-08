@@ -1,11 +1,11 @@
 #pragma once
 #include <cmath>
-#include <algorithm>
 #include <vector>
+#include <algorithm>
 
+#include "properties.h"
 #include "MathUtils.h"
 #include "Vector3.h"
-#include "properties.h"
 #include "Ray.h"
 
 namespace MOON {

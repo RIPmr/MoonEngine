@@ -76,7 +76,6 @@ namespace MOON {
 
 	void MObject::OPStack::ListStacks() {
 		static auto stackName = std::string(ICON_FA_WRENCH) + " OP-Stack";
-		ImVec2 listPos = ImGui::GetCursorPos(); listPos.y += 22;
 		ImGui::Checkbox(UniquePropNameFromParent("enableOPStack"), &enable, true); ImGui::SameLine();
 
 		// add operator to stack
@@ -89,7 +88,7 @@ namespace MOON {
 		// show operator list
 		if (OperatorManager::showList) ImGui::SetNextItemOpen(true);
 		if (ImGui::CollapsingHeader(stackName.c_str(), ImGuiTreeNodeFlags_DefaultOpen, parent->ID)) {
-			if (OperatorManager::parentID == parent->ID) OperatorManager::ListOperators(listPos, *this);
+			if (OperatorManager::parentID == parent->ID) OperatorManager::ListOperators(*this);
 			ImGui::PushID(parent->ID);
 			for (int i = 0; i < opList.size(); i++) {
 				ImGui::PushID(i);
@@ -194,6 +193,7 @@ namespace MOON {
 		if (ImGui::DragFloat3(UniquePropName("Pos"), pos, 0.1f, -INFINITY, INFINITY, "%.3f", 1.0f, true)) {
 			if (transform.parent != nullptr && isLocal) transform.localPosition = Vector3(pos);
 			else transform.position = Vector3(pos);
+			transform.changeFlag = true;
 		}
 		ImGui::Text("Rotation"); ImGui::SameLine(80.0f);
 		if (ImGui::DragFloat3(UniquePropName("Rot"), rotEuler, 0.1f, -INFINITY, INFINITY, "%.3f", 1.0f, true)) {
@@ -203,6 +203,7 @@ namespace MOON {
 				rotEuler[2] - euler.z
 			);
 			transform.Rotate(deltaQ);
+			transform.changeFlag = true;
 			/*if (transform.parent != nullptr) transform.localRotation = Quaternion(rotEuler[0], rotEuler[1], rotEuler[2]);
 			else transform.rotation = Quaternion(rotEuler[0], rotEuler[1], rotEuler[2]);*/
 		}
@@ -210,6 +211,7 @@ namespace MOON {
 		if (ImGui::DragFloat3(UniquePropName("Sca"), scale, 0.1f, -INFINITY, INFINITY, "%.3f", 1.0f, true)) {
 			if (transform.parent != nullptr && isLocal) transform.localScale = Vector3(scale);
 			else transform.scale = Vector3(scale);
+			transform.changeFlag = true;
 		}
 		ImGui::Unindent(10.0f);
 		if (transform.parent != nullptr && isLocal) ImGui::PopStyleColor();

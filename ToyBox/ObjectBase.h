@@ -99,6 +99,16 @@ namespace MOON {
 			void Add(Operator* op);
 			void RemoveStack(Operator* op);
 			void ClearStack();
+
+			bool IsEmpty() { 
+				if (opList.size()) return true; else return false; 
+			}
+			bool HasDeliver() {
+				if (deliver == nullptr) return false; else return true;
+			}
+			MObject* GetDeliver() {
+				if (deliver == nullptr) return parent; else return deliver;
+			}
 		};
 
 		bool freezed;

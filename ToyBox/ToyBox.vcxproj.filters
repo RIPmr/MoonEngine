@@ -37,29 +37,11 @@
     <Filter Include="HeadFiles\Miscellaneous">
       <UniqueIdentifier>{e588a6e5-ba90-4f36-bca6-2c4afabfd23a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="HeadFiles\Object">
-      <UniqueIdentifier>{e7f90c53-55a1-4674-ab8d-58fd1a841534}</UniqueIdentifier>
-    </Filter>
     <Filter Include="SourceFiles\Math">
       <UniqueIdentifier>{67be73da-bc16-4582-a724-69aa15813a01}</UniqueIdentifier>
     </Filter>
     <Filter Include="SourceFiles\Component">
       <UniqueIdentifier>{c906942f-f04a-4bfb-ad8f-d47c5bb954ce}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="HeadFiles\MOONNN">
-      <UniqueIdentifier>{7f61a3c1-ee5d-4b1a-b065-3c27de453fc1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="HeadFiles\MOONCAKE">
-      <UniqueIdentifier>{29f1cb1a-1767-4ad9-8605-a3b16942c639}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="HeadFiles\RABBIT">
-      <UniqueIdentifier>{aa432a36-0228-45d2-adfb-b30feda1dc1d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="SourceFiles\MOONNN">
-      <UniqueIdentifier>{e385724b-57cc-4fdf-9052-94ed5b21b211}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="SourceFiles\RABBIT">
-      <UniqueIdentifier>{9506ac61-b38c-4adb-aea6-d109e33f6c2d}</UniqueIdentifier>
     </Filter>
     <Filter Include="HeadFiles\UIEnhancement">
       <UniqueIdentifier>{561127af-05c9-42fd-abc5-804c72219f41}</UniqueIdentifier>
@@ -67,35 +49,11 @@
     <Filter Include="HeadFiles\UIEnhancement\Icon">
       <UniqueIdentifier>{6027bfa1-5b89-4551-829e-1b3d797556bc}</UniqueIdentifier>
     </Filter>
-    <Filter Include="HeadFiles\Object\SmartMesh">
-      <UniqueIdentifier>{b8eaf32a-391b-4923-a1e1-6c807d7fa280}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="HeadFiles\MOONCAKE\ExternalOps">
-      <UniqueIdentifier>{8cf4dd95-6433-448e-a813-077b9cada2e4}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="SourceFiles\MOONCAKE">
-      <UniqueIdentifier>{df5bf4d7-1ebc-414a-aa7a-e16cef463348}</UniqueIdentifier>
-    </Filter>
     <Filter Include="SourceFiles\UIEnhancement">
       <UniqueIdentifier>{38d5d812-7578-40c1-9708-15b8d2882259}</UniqueIdentifier>
     </Filter>
     <Filter Include="SourceFiles\Miscellaneous">
       <UniqueIdentifier>{3067aa9c-3f12-4155-8646-a59081230551}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="HeadFiles\Object\Helper">
-      <UniqueIdentifier>{af7fa5c7-9b69-4852-badc-787b3d6766cf}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="HeadFiles\Object\Mesh">
-      <UniqueIdentifier>{b00c4178-6c27-424d-bcd7-7db1c0afc374}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="HeadFiles\Object\Shape">
-      <UniqueIdentifier>{01c0514f-9793-4355-84cc-3e09bef0cedd}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="SourceFiles\Object">
-      <UniqueIdentifier>{3dfb4f42-59dc-4978-a417-27e6809673ad}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="SourceFiles\Object\SmartMesh">
-      <UniqueIdentifier>{9a86c03b-148c-4190-83cd-b57b3807c121}</UniqueIdentifier>
     </Filter>
     <Filter Include="Shaders\PostProcessing">
       <UniqueIdentifier>{af4d1c3e-686c-4123-afdc-17f10fd34e73}</UniqueIdentifier>
@@ -108,6 +66,51 @@
     </Filter>
     <Filter Include="Shaders\Surface\VS">
       <UniqueIdentifier>{8278a6de-5f1e-4a73-b28f-2a44d4b73977}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeadFiles\Component\MOONCAKE">
+      <UniqueIdentifier>{29f1cb1a-1767-4ad9-8605-a3b16942c639}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeadFiles\Component\MOONCAKE\ExternalOps">
+      <UniqueIdentifier>{8cf4dd95-6433-448e-a813-077b9cada2e4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeadFiles\Component\MOONNN">
+      <UniqueIdentifier>{7f61a3c1-ee5d-4b1a-b065-3c27de453fc1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SourceFiles\Component\MOONCAKE">
+      <UniqueIdentifier>{df5bf4d7-1ebc-414a-aa7a-e16cef463348}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SourceFiles\Component\MOONNN">
+      <UniqueIdentifier>{e385724b-57cc-4fdf-9052-94ed5b21b211}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SourceFiles\Component\RABBIT">
+      <UniqueIdentifier>{9506ac61-b38c-4adb-aea6-d109e33f6c2d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SourceFiles\Component\Object">
+      <UniqueIdentifier>{3dfb4f42-59dc-4978-a417-27e6809673ad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SourceFiles\Component\Object\SmartMesh">
+      <UniqueIdentifier>{9a86c03b-148c-4190-83cd-b57b3807c121}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeadFiles\Component\Object">
+      <UniqueIdentifier>{e7f90c53-55a1-4674-ab8d-58fd1a841534}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeadFiles\Component\Object\SmartMesh">
+      <UniqueIdentifier>{b8eaf32a-391b-4923-a1e1-6c807d7fa280}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeadFiles\Component\Object\Helper">
+      <UniqueIdentifier>{af7fa5c7-9b69-4852-badc-787b3d6766cf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeadFiles\Component\Object\Mesh">
+      <UniqueIdentifier>{b00c4178-6c27-424d-bcd7-7db1c0afc374}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeadFiles\Component\Object\Shape">
+      <UniqueIdentifier>{01c0514f-9793-4355-84cc-3e09bef0cedd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeadFiles\Component\RABBIT">
+      <UniqueIdentifier>{aa432a36-0228-45d2-adfb-b30feda1dc1d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\PostProcessing\ScreenBuffer">
+      <UniqueIdentifier>{be894882-86ec-436b-9374-60f1d1115ed6}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -133,7 +136,7 @@
       <Filter>SourceFiles\Component</Filter>
     </ClCompile>
     <ClCompile Include="Neuron.cpp">
-      <Filter>SourceFiles\MOONNN</Filter>
+      <Filter>SourceFiles\Component\MOONNN</Filter>
     </ClCompile>
     <ClCompile Include="Vector4.cpp">
       <Filter>SourceFiles\Math</Filter>
@@ -148,13 +151,13 @@
       <Filter>SourceFiles\Math</Filter>
     </ClCompile>
     <ClCompile Include="NGraph.cpp">
-      <Filter>SourceFiles\MOONNN</Filter>
+      <Filter>SourceFiles\Component\MOONNN</Filter>
     </ClCompile>
     <ClCompile Include="imgui\ImPlot.cpp">
       <Filter>SourceFiles\UIEnhancement</Filter>
     </ClCompile>
     <ClCompile Include="NNManager.cpp">
-      <Filter>SourceFiles\MOONNN</Filter>
+      <Filter>SourceFiles\Component\MOONNN</Filter>
     </ClCompile>
     <ClCompile Include="MaterialEditor.cpp">
       <Filter>SourceFiles\Component</Filter>
@@ -163,10 +166,10 @@
       <Filter>SourceFiles\UIEnhancement</Filter>
     </ClCompile>
     <ClCompile Include="Optimizer.cpp">
-      <Filter>SourceFiles\MOONNN</Filter>
+      <Filter>SourceFiles\Component\MOONNN</Filter>
     </ClCompile>
     <ClCompile Include="NFunction.cpp">
-      <Filter>SourceFiles\MOONNN</Filter>
+      <Filter>SourceFiles\Component\MOONNN</Filter>
     </ClCompile>
     <ClCompile Include="NodeEditorBase.cpp">
       <Filter>SourceFiles\Component</Filter>
@@ -175,10 +178,10 @@
       <Filter>SourceFiles\Component</Filter>
     </ClCompile>
     <ClCompile Include="Renderer.cpp">
-      <Filter>SourceFiles\RABBIT</Filter>
+      <Filter>SourceFiles\Component\RABBIT</Filter>
     </ClCompile>
     <ClCompile Include="Material.cpp">
-      <Filter>SourceFiles\RABBIT</Filter>
+      <Filter>SourceFiles\Component\RABBIT</Filter>
     </ClCompile>
     <ClCompile Include="FlowMenu.cpp">
       <Filter>SourceFiles\UIEnhancement</Filter>
@@ -190,22 +193,22 @@
       <Filter>SourceFiles\UIEnhancement</Filter>
     </ClCompile>
     <ClCompile Include="Sphere.cpp">
-      <Filter>SourceFiles\Object\SmartMesh</Filter>
+      <Filter>SourceFiles\Component\Object\SmartMesh</Filter>
     </ClCompile>
     <ClCompile Include="Plane.cpp">
-      <Filter>SourceFiles\Object\SmartMesh</Filter>
+      <Filter>SourceFiles\Component\Object\SmartMesh</Filter>
     </ClCompile>
     <ClCompile Include="Box.cpp">
-      <Filter>SourceFiles\Object\SmartMesh</Filter>
+      <Filter>SourceFiles\Component\Object\SmartMesh</Filter>
     </ClCompile>
     <ClCompile Include="Capsule.cpp">
-      <Filter>SourceFiles\Object\SmartMesh</Filter>
+      <Filter>SourceFiles\Component\Object\SmartMesh</Filter>
     </ClCompile>
     <ClCompile Include="Cylinder.cpp">
-      <Filter>SourceFiles\Object\SmartMesh</Filter>
+      <Filter>SourceFiles\Component\Object\SmartMesh</Filter>
     </ClCompile>
     <ClCompile Include="Ring.cpp">
-      <Filter>SourceFiles\Object\SmartMesh</Filter>
+      <Filter>SourceFiles\Component\Object\SmartMesh</Filter>
     </ClCompile>
     <ClCompile Include="opengl\src\glad.c">
       <Filter>ThirdParty</Filter>
@@ -229,10 +232,10 @@
       <Filter>ThirdParty</Filter>
     </ClCompile>
     <ClCompile Include="OperatorMgr.cpp">
-      <Filter>SourceFiles\MOONCAKE</Filter>
+      <Filter>SourceFiles\Component\MOONCAKE</Filter>
     </ClCompile>
     <ClCompile Include="NativeOperators.cpp">
-      <Filter>SourceFiles\MOONCAKE</Filter>
+      <Filter>SourceFiles\Component\MOONCAKE</Filter>
     </ClCompile>
     <ClCompile Include="Utility.cpp">
       <Filter>SourceFiles\Miscellaneous</Filter>
@@ -241,28 +244,34 @@
       <Filter>SourceFiles\Miscellaneous</Filter>
     </ClCompile>
     <ClCompile Include="Camera.cpp">
-      <Filter>SourceFiles\Object</Filter>
+      <Filter>SourceFiles\Component\Object</Filter>
     </ClCompile>
     <ClCompile Include="HalfMesh.cpp">
-      <Filter>SourceFiles\Object</Filter>
+      <Filter>SourceFiles\Component\Object</Filter>
     </ClCompile>
     <ClCompile Include="Mesh.cpp">
-      <Filter>SourceFiles\Object</Filter>
+      <Filter>SourceFiles\Component\Object</Filter>
     </ClCompile>
     <ClCompile Include="Model.cpp">
-      <Filter>SourceFiles\Object</Filter>
-    </ClCompile>
-    <ClCompile Include="MShader.cpp">
-      <Filter>SourceFiles\Object</Filter>
+      <Filter>SourceFiles\Component\Object</Filter>
     </ClCompile>
     <ClCompile Include="ObjectBase.cpp">
-      <Filter>SourceFiles\Object</Filter>
+      <Filter>SourceFiles\Component\Object</Filter>
     </ClCompile>
     <ClCompile Include="Quaternion.cpp">
       <Filter>SourceFiles\Math</Filter>
     </ClCompile>
     <ClCompile Include="ButtonEx.cpp">
       <Filter>SourceFiles\UIEnhancement</Filter>
+    </ClCompile>
+    <ClCompile Include="ImTextEditor.cpp">
+      <Filter>SourceFiles\UIEnhancement</Filter>
+    </ClCompile>
+    <ClCompile Include="MShader.cpp">
+      <Filter>SourceFiles\Component\RABBIT</Filter>
+    </ClCompile>
+    <ClCompile Include="PostFactory.cpp">
+      <Filter>SourceFiles\Component</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -285,7 +294,7 @@
       <Filter>HeadFiles\Component</Filter>
     </ClInclude>
     <ClInclude Include="Camera.h">
-      <Filter>HeadFiles\Object</Filter>
+      <Filter>HeadFiles\Component\Object</Filter>
     </ClInclude>
     <ClInclude Include="Quaternion.h">
       <Filter>HeadFiles\Math</Filter>
@@ -294,22 +303,22 @@
       <Filter>HeadFiles\Math</Filter>
     </ClInclude>
     <ClInclude Include="Light.h">
-      <Filter>HeadFiles\Object</Filter>
+      <Filter>HeadFiles\Component\Object</Filter>
     </ClInclude>
     <ClInclude Include="Texture.h">
-      <Filter>HeadFiles\Object</Filter>
+      <Filter>HeadFiles\Component\Object</Filter>
     </ClInclude>
     <ClInclude Include="Hitable.h">
-      <Filter>HeadFiles\Object</Filter>
+      <Filter>HeadFiles\Component\Object</Filter>
     </ClInclude>
     <ClInclude Include="Ray.h">
       <Filter>HeadFiles\Math</Filter>
     </ClInclude>
     <ClInclude Include="ObjectBase.h">
-      <Filter>HeadFiles\Object</Filter>
+      <Filter>HeadFiles\Component\Object</Filter>
     </ClInclude>
     <ClInclude Include="Model.h">
-      <Filter>HeadFiles\Object</Filter>
+      <Filter>HeadFiles\Component\Object</Filter>
     </ClInclude>
     <ClInclude Include="Utility.h">
       <Filter>HeadFiles\Miscellaneous</Filter>
@@ -324,15 +333,12 @@
       <Filter>HeadFiles\Miscellaneous</Filter>
     </ClInclude>
     <ClInclude Include="BoundingBox.h">
-      <Filter>HeadFiles\Object</Filter>
+      <Filter>HeadFiles\Component\Object</Filter>
     </ClInclude>
     <ClInclude Include="OBJMgr.h">
       <Filter>HeadFiles\Component</Filter>
     </ClInclude>
     <ClInclude Include="AssetLoader.h">
-      <Filter>HeadFiles\Component</Filter>
-    </ClInclude>
-    <ClInclude Include="CodeEditor.h">
       <Filter>HeadFiles\Component</Filter>
     </ClInclude>
     <ClInclude Include="Gizmo.h">
@@ -354,31 +360,31 @@
       <Filter>HeadFiles\Math</Filter>
     </ClInclude>
     <ClInclude Include="Neuron.h">
-      <Filter>HeadFiles\MOONNN</Filter>
+      <Filter>HeadFiles\Component\MOONNN</Filter>
     </ClInclude>
     <ClInclude Include="Matrix.h">
       <Filter>HeadFiles\Math</Filter>
     </ClInclude>
     <ClInclude Include="NGraph.h">
-      <Filter>HeadFiles\MOONNN</Filter>
+      <Filter>HeadFiles\Component\MOONNN</Filter>
     </ClInclude>
     <ClInclude Include="NFunction.h">
-      <Filter>HeadFiles\MOONNN</Filter>
+      <Filter>HeadFiles\Component\MOONNN</Filter>
     </ClInclude>
     <ClInclude Include="NVariable.h">
-      <Filter>HeadFiles\MOONNN</Filter>
+      <Filter>HeadFiles\Component\MOONNN</Filter>
     </ClInclude>
     <ClInclude Include="Optimizer.h">
-      <Filter>HeadFiles\MOONNN</Filter>
+      <Filter>HeadFiles\Component\MOONNN</Filter>
     </ClInclude>
     <ClInclude Include="NNManager.h">
-      <Filter>HeadFiles\MOONNN</Filter>
+      <Filter>HeadFiles\Component\MOONNN</Filter>
     </ClInclude>
     <ClInclude Include="FNN.h">
-      <Filter>HeadFiles\MOONNN</Filter>
+      <Filter>HeadFiles\Component\MOONNN</Filter>
     </ClInclude>
     <ClInclude Include="NNBase.h">
-      <Filter>HeadFiles\MOONNN</Filter>
+      <Filter>HeadFiles\Component\MOONNN</Filter>
     </ClInclude>
     <ClInclude Include="ButtonEx.h">
       <Filter>HeadFiles\UIEnhancement</Filter>
@@ -402,22 +408,22 @@
       <Filter>HeadFiles\UIEnhancement</Filter>
     </ClInclude>
     <ClInclude Include="CNN.h">
-      <Filter>HeadFiles\MOONNN</Filter>
+      <Filter>HeadFiles\Component\MOONNN</Filter>
     </ClInclude>
     <ClInclude Include="RNN.h">
-      <Filter>HeadFiles\MOONNN</Filter>
+      <Filter>HeadFiles\Component\MOONNN</Filter>
     </ClInclude>
     <ClInclude Include="GNN.h">
-      <Filter>HeadFiles\MOONNN</Filter>
+      <Filter>HeadFiles\Component\MOONNN</Filter>
     </ClInclude>
     <ClInclude Include="NodeEditorBase.h">
       <Filter>HeadFiles\UIEnhancement</Filter>
     </ClInclude>
     <ClInclude Include="LR.h">
-      <Filter>HeadFiles\MOONNN</Filter>
+      <Filter>HeadFiles\Component\MOONNN</Filter>
     </ClInclude>
     <ClInclude Include="WideNDeep.h">
-      <Filter>HeadFiles\MOONNN</Filter>
+      <Filter>HeadFiles\Component\MOONNN</Filter>
     </ClInclude>
     <ClInclude Include="Graphics.h">
       <Filter>HeadFiles\Component</Filter>
@@ -426,25 +432,25 @@
       <Filter>HeadFiles\Math</Filter>
     </ClInclude>
     <ClInclude Include="Renderer.h">
-      <Filter>HeadFiles\RABBIT</Filter>
+      <Filter>HeadFiles\Component\RABBIT</Filter>
     </ClInclude>
     <ClInclude Include="Material.h">
-      <Filter>HeadFiles\RABBIT</Filter>
+      <Filter>HeadFiles\Component\RABBIT</Filter>
     </ClInclude>
     <ClInclude Include="MaterialEditor.h">
       <Filter>HeadFiles\Component</Filter>
     </ClInclude>
     <ClInclude Include="OperatorBase.h">
-      <Filter>HeadFiles\MOONCAKE</Filter>
+      <Filter>HeadFiles\Component\MOONCAKE</Filter>
     </ClInclude>
     <ClInclude Include="OperatorMgr.h">
-      <Filter>HeadFiles\MOONCAKE</Filter>
+      <Filter>HeadFiles\Component\MOONCAKE</Filter>
     </ClInclude>
     <ClInclude Include="MatSphere.h">
-      <Filter>HeadFiles\RABBIT</Filter>
+      <Filter>HeadFiles\Component\RABBIT</Filter>
     </ClInclude>
     <ClInclude Include="PMapGen.h">
-      <Filter>HeadFiles\RABBIT</Filter>
+      <Filter>HeadFiles\Component\RABBIT</Filter>
     </ClInclude>
     <ClInclude Include="ImTimeline.h">
       <Filter>HeadFiles\UIEnhancement</Filter>
@@ -468,82 +474,97 @@
       <Filter>HeadFiles\UIEnhancement\Icon</Filter>
     </ClInclude>
     <ClInclude Include="Sphere.h">
-      <Filter>HeadFiles\Object\SmartMesh</Filter>
+      <Filter>HeadFiles\Component\Object\SmartMesh</Filter>
     </ClInclude>
     <ClInclude Include="Coroutine.h">
       <Filter>HeadFiles\Miscellaneous</Filter>
     </ClInclude>
     <ClInclude Include="Plane.h">
-      <Filter>HeadFiles\Object\SmartMesh</Filter>
+      <Filter>HeadFiles\Component\Object\SmartMesh</Filter>
     </ClInclude>
     <ClInclude Include="Box.h">
-      <Filter>HeadFiles\Object\SmartMesh</Filter>
+      <Filter>HeadFiles\Component\Object\SmartMesh</Filter>
     </ClInclude>
     <ClInclude Include="Capsule.h">
-      <Filter>HeadFiles\Object\SmartMesh</Filter>
+      <Filter>HeadFiles\Component\Object\SmartMesh</Filter>
     </ClInclude>
     <ClInclude Include="Cylinder.h">
-      <Filter>HeadFiles\Object\SmartMesh</Filter>
+      <Filter>HeadFiles\Component\Object\SmartMesh</Filter>
     </ClInclude>
     <ClInclude Include="SmartMeshes.h">
-      <Filter>HeadFiles\Object\SmartMesh</Filter>
+      <Filter>HeadFiles\Component\Object\SmartMesh</Filter>
     </ClInclude>
     <ClInclude Include="Ring.h">
-      <Filter>HeadFiles\Object\SmartMesh</Filter>
+      <Filter>HeadFiles\Component\Object\SmartMesh</Filter>
     </ClInclude>
     <ClInclude Include="FileManager.h">
       <Filter>HeadFiles\Component</Filter>
     </ClInclude>
     <ClInclude Include="CakeParser.h">
-      <Filter>HeadFiles\MOONCAKE\ExternalOps</Filter>
+      <Filter>HeadFiles\Component\MOONCAKE\ExternalOps</Filter>
     </ClInclude>
     <ClInclude Include="PluginManager.h">
-      <Filter>HeadFiles\MOONCAKE\ExternalOps</Filter>
+      <Filter>HeadFiles\Component\MOONCAKE\ExternalOps</Filter>
     </ClInclude>
     <ClInclude Include="Strutil.h">
       <Filter>HeadFiles\Miscellaneous</Filter>
     </ClInclude>
     <ClInclude Include="Dummy.h">
-      <Filter>HeadFiles\Object\Helper</Filter>
+      <Filter>HeadFiles\Component\Object\Helper</Filter>
     </ClInclude>
     <ClInclude Include="Mesh.h">
-      <Filter>HeadFiles\Object\Mesh</Filter>
+      <Filter>HeadFiles\Component\Object\Mesh</Filter>
     </ClInclude>
     <ClInclude Include="HalfMesh.h">
-      <Filter>HeadFiles\Object\Mesh</Filter>
+      <Filter>HeadFiles\Component\Object\Mesh</Filter>
     </ClInclude>
     <ClInclude Include="Spline.h">
-      <Filter>HeadFiles\Object\Shape</Filter>
+      <Filter>HeadFiles\Component\Object\Shape</Filter>
     </ClInclude>
     <ClInclude Include="Shapes.h">
-      <Filter>HeadFiles\Object\Shape</Filter>
+      <Filter>HeadFiles\Component\Object\Shape</Filter>
     </ClInclude>
     <ClInclude Include="MShader.h">
-      <Filter>HeadFiles\RABBIT</Filter>
+      <Filter>HeadFiles\Component\RABBIT</Filter>
     </ClInclude>
     <ClInclude Include="Transform.h">
-      <Filter>HeadFiles\Object</Filter>
+      <Filter>HeadFiles\Component\Object</Filter>
     </ClInclude>
     <ClInclude Include="Tape.h">
-      <Filter>HeadFiles\Object\Helper</Filter>
+      <Filter>HeadFiles\Component\Object\Helper</Filter>
     </ClInclude>
     <ClInclude Include="Proxy.h">
-      <Filter>HeadFiles\Object\Helper</Filter>
+      <Filter>HeadFiles\Component\Object\Helper</Filter>
     </ClInclude>
     <ClInclude Include="Volume.h">
-      <Filter>HeadFiles\Object\Helper</Filter>
+      <Filter>HeadFiles\Component\Object\Helper</Filter>
     </ClInclude>
     <ClInclude Include="HelperBase.h">
-      <Filter>HeadFiles\Object\Helper</Filter>
+      <Filter>HeadFiles\Component\Object\Helper</Filter>
     </ClInclude>
     <ClInclude Include="Helpers.h">
-      <Filter>HeadFiles\Object\Helper</Filter>
+      <Filter>HeadFiles\Component\Object\Helper</Filter>
     </ClInclude>
     <ClInclude Include="Bone.h">
-      <Filter>HeadFiles\Object\Helper</Filter>
+      <Filter>HeadFiles\Component\Object\Helper</Filter>
     </ClInclude>
     <ClInclude Include="WinDiagHandler.h">
       <Filter>HeadFiles\UIEnhancement</Filter>
+    </ClInclude>
+    <ClInclude Include="BVH.h">
+      <Filter>HeadFiles\Component\Object</Filter>
+    </ClInclude>
+    <ClInclude Include="ImTextEditor.h">
+      <Filter>HeadFiles\UIEnhancement</Filter>
+    </ClInclude>
+    <ClInclude Include="CodeEditor.h">
+      <Filter>HeadFiles\UIEnhancement</Filter>
+    </ClInclude>
+    <ClInclude Include="PostFactory.h">
+      <Filter>HeadFiles\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="PostEffects.h">
+      <Filter>HeadFiles\Component</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -567,12 +588,6 @@
       <Filter>Shaders\Surface\FS</Filter>
     </None>
     <None Include="Outline.vs">
-      <Filter>Shaders\Surface\VS</Filter>
-    </None>
-    <None Include="ScreenBuffer.fs">
-      <Filter>Shaders\Surface\FS</Filter>
-    </None>
-    <None Include="ScreenBuffer.vs">
       <Filter>Shaders\Surface\VS</Filter>
     </None>
     <None Include="BlinnPhong.fs">
@@ -616,6 +631,27 @@
     </None>
     <None Include="Exposure.fs">
       <Filter>Shaders\PostProcessing</Filter>
+    </None>
+    <None Include="EnvSphere.vs">
+      <Filter>Shaders\Surface\FS</Filter>
+    </None>
+    <None Include="EnvSphere.fs">
+      <Filter>Shaders\Surface\VS</Filter>
+    </None>
+    <None Include="SSR.fs">
+      <Filter>Shaders\PostProcessing</Filter>
+    </None>
+    <None Include="SSAO.fs">
+      <Filter>Shaders\PostProcessing</Filter>
+    </None>
+    <None Include="ScreenBuffer.vs">
+      <Filter>Shaders\PostProcessing\ScreenBuffer</Filter>
+    </None>
+    <None Include="Curve.fs">
+      <Filter>Shaders\PostProcessing</Filter>
+    </None>
+    <None Include="ScreenBuffer.fs">
+      <Filter>Shaders\PostProcessing\ScreenBuffer</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

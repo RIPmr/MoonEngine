@@ -8,8 +8,9 @@ namespace MOON {
 	#define MOON_WndSize				SceneManager::WND_SIZE
 	#define MOON_ScrSize				SceneManager::SCR_SIZE
 	#define MOON_ActiveView				SceneManager::activeView
+	#define MOON_DrawTarget				Graphics::currDrawTarget
 	#define MOON_OutputSize				Renderer::OUTPUT_SIZE
-	#define MOON_OutputTexID			Renderer::outputTexID
+	#define MOON_OutputTexID			Renderer::output->localID
 	#define MOON_ObjectNumber			SceneManager::GetObjectNum()
 	#define MOON_CountObject			SceneManager::CountObject()
 	#define MOON_SceneCameras			SceneManager::CameraManager::sceneCameras
@@ -41,6 +42,8 @@ namespace MOON {
 	#define MOON_MouseRelease(key)		SceneManager::InputManager::IsMouseRelease(key)
 	#define MOON_MouseRepeat(key)		SceneManager::InputManager::IsMouseRepeat(key)
 
+	#define CheckClass(item, type)		typeid(*item) == typeid(type)
+	#define CheckSuperClass(item, type)	SceneManager::GetSuperClass(item)._Equal(type)
 	#define CheckType(item, type)		SceneManager::GetType(item)._Equal(type)
 	#define MOON_ViewportState			HotKeyManager::state
 

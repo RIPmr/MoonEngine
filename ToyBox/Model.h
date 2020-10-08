@@ -20,9 +20,8 @@ namespace MOON {
 		std::vector<Mesh*> meshList;
 		std::vector<unsigned int> selected_meshes;
 		std::string path;
-		BoundingBox bbox;
-		BoundingBox bbox_world;
 		bool gammaCorrection;
+		BoundingBox bbox_local;
 
 		#pragma region constructor
 		// for procedural mesh
@@ -36,7 +35,7 @@ namespace MOON {
 			this->transform = other.transform;
 			this->path = other.path;
 			this->bbox = other.bbox;
-			this->bbox_world = other.bbox_world;
+			this->bbox_local = other.bbox_local;
 			this->gammaCorrection = other.gammaCorrection;
 		}
 
@@ -59,40 +58,31 @@ namespace MOON {
 		#pragma endregion
 
 		#pragma region operations
+		virtual void BuildBVH() {
+			for (auto &iter : meshList) {
+				iter->BuildBVH();
+			}
+		}
+
 		void Draw(Shader* overrideShader = NULL) override;
 
 		void UpdateBBox() {
 			for (auto &iter : meshList) {
-				bbox.join(iter->bbox);
+				bbox_local.join(iter->bbox);
 			}
 		}
 
 		// Rough but fast
 		void UpdateWorldBBox() {
 			std::vector<Vector3> corner;
-			bbox.GetCorners(&corner);
-			bbox_world.Reset();
+			bbox_local.GetCorners(&corner);
+			bbox.Reset();
 			for (auto &iter : corner) {
-				bbox_world.join(transform.localToWorldMat.multVec(iter));
+				bbox.join(transform.localToWorldMat.multVec(iter));
 			}
 		}
 
-		bool Hit(const Ray &r, HitRecord &rec) const {
-			HitRecord tempRec;
-			bool hitAnything = false;
-			tempRec.t = rec.t;
-
-			if (bbox_world.intersect(r)) {
-				for (auto &iter : meshList) {
-					if (iter->Hit(transform.localToWorldMat, r, tempRec)) {
-						hitAnything = true;
-						rec = tempRec;
-					}
-				}
-			}
-
-			return hitAnything;
-		}
+		bool Hit(const Ray &r, HitRecord &rec) const;
 
 		unsigned int CountVerts() {
 			unsigned int vertNum = 0;
@@ -108,6 +98,12 @@ namespace MOON {
 				faceNum += iter->triangles.size() / 3;
 			}
 			return faceNum;
+		}
+
+		void DebugBVH(const Vector4& color = Color::GREEN()) {
+			for (auto &iter : meshList) {
+				if (iter->localBVH != nullptr) iter->localBVH->Draw(color);
+			}
 		}
 		#pragma endregion
 

@@ -39,15 +39,16 @@ int main() {
 
 	Model* sphere = MOON_ModelManager::CreateSmartMesh(SmartMesh::sphere, "sphere");
 	sphere->transform.Translate(Vector3::WORLD(UP) + Vector3::WORLD(LEFT) * 2.0f);
+	sphere->transform.Rotate(Quaternion::Rotate(Vector3(1, 0, 0), 90 * Deg2Rad));
 
 	// test half mesh
 	/*HalfMesh* edMesh = new HalfMesh(sphere->meshList[0]);
 	ReleaseVector(sphere->meshList);
 	sphere->meshList.push_back(edMesh);*/
 
-	Model* boxes = MOON_ModelManager::LoadModel("Assets\\Models\\box_stack.obj");
+	/*Model* boxes = MOON_ModelManager::LoadModel("Assets\\Models\\box_stack.obj");
 	boxes->transform.Translate(Vector3::WORLD(UP));
-	boxes->transform.Translate(Vector3::WORLD(RIGHT) * 1.0f);
+	boxes->transform.Translate(Vector3::WORLD(RIGHT) * 1.0f);*/
 	//boxes->transform.Rotate(Quaternion(Vector3(0, 0, 45)));
 
 	Shape* sp = MOON_ShapeManager::CreateShape(line, "spline");
@@ -59,6 +60,17 @@ int main() {
 	sp->transform.Translate(Vector3::WORLD(RIGHT) * 4.0f);
 	sp->transform.Translate(Vector3::WORLD(UP));
 	sp->transform.Rotate(Quaternion(Vector3(0, 90, 0)));
+
+	// duplicate random spheres
+	/*for (int i = 0; i < 10; i++) {
+		Model* dup = MOON_ModelManager::CreateSmartMesh(SmartMesh::sphere, "sphere_" + std::to_string(i));
+		dup->transform.Translate(Vector3(
+			MoonMath::RandomRange(-10, 10),
+			MoonMath::RandomRange(-10, 10),
+			MoonMath::RandomRange(-10, 10)
+		));
+		dup->transform.Scale(Vector3::ONE() * MoonMath::RandomRange(0.5, 2.0));
+	}*/
 
 	//sp->transform.SetParent(&boxes->transform);
 	//rabbit->transform.SetParent(&sp->transform);
@@ -87,6 +99,10 @@ int main() {
 		// draw Scene View ----------------------------------------------------------
 		Graphics::process = sys_draw_scene;
 		Graphics::DrawSceneView(persp);
+		/*Graphics::ApplyPostProcessing(
+			MOON_TextureManager::SCENEBUFFERS[persp],
+			MOON_ShaderManager::screenBufferShader
+		);*/
 		Graphics::DrawSceneView(front);
 		Graphics::DrawSceneView(top);
 		Graphics::DrawSceneView(left);
@@ -324,8 +340,13 @@ void MOON_CleanUp() {
 	ThreadPool::WaitAllThreadExit();
 	ThreadPool::Clean();
 	std::cout << "All thread exit." << std::endl;
+	Renderer::Clear();
+	std::cout << "Output render buffer released." << std::endl;
+	Graphics::Clear();
+	std::cout << "Post-Processing stack released." << std::endl;
 	Gizmo::ReleaseDummyMap();
 	Gizmo::DeleteVirtualDummy();
+	SceneManager::ReleaseBVH();
 	std::cout << "Virtual dummy deleted." << std::endl;
 	MOON_PlotManager::Release();
 	std::cout << "PlotManager cleared." << std::endl;
@@ -410,7 +431,7 @@ void MOON_DrawMainUI() {
 	if (MainUI::show_create_window)		MainUI::CreateWnd();
 	if (MainUI::show_ribbon)			MainUI::RibbonBar();
 	if (MainUI::show_enviroment_editor) MainUI::EnviromentWnd();
-	if (MainUI::show_codeEditor)		MainUI::CodeEditor();
+	if (MainUI::show_code_editor)		MainUI::CodeEditor();
 	if (MainUI::show_timeline)			MainUI::ShowTimeline();
 	if (MainUI::show_material_editor)	MainUI::MaterialEditorWnd();
 	if (MainUI::show_render_setting)	MainUI::RenderSettingWnd();
@@ -422,9 +443,17 @@ void MOON_DrawMainUI() {
 
 	// update output image realtime while rendering
 	if (Renderer::progress && !Renderer::prevInQueue) {
-		glBindTexture(GL_TEXTURE_2D, Renderer::outputTexID);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, MOON_OutputSize.x, 
-			MOON_OutputSize.y, 0, GL_RGB, GL_UNSIGNED_BYTE, Renderer::outputImage);
+		//glBindTexture(GL_TEXTURE_2D, Renderer::outputTexID);
+		glBindTexture(GL_TEXTURE_2D, MOON_OutputTexID);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, MOON_OutputSize.x, 
+			MOON_OutputSize.y, 0, GL_RGB, GL_FLOAT, Renderer::outputImage);
+		if (Graphics::enablePP) {
+			auto shading = Graphics::shading;
+			Graphics::SetShadingMode(DEFAULT);
+			Graphics::ApplyPostStack(Renderer::output);
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			Graphics::SetShadingMode(shading);
+		}
 		if (Renderer::progress < 0) {
 			Renderer::progress = 0;
 			glBindTexture(GL_TEXTURE_2D, 0);

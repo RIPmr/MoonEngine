@@ -3,21 +3,40 @@
 #include <GLFW/glfw3.h>
 #include <vector>
 
+#include "MShader.h"
+#include "Texture.h"
 #include "MoonEnums.h"
-#include "SceneMgr.h"
 
 namespace MOON {
 
+	#define PostEffect Graphics::PostProcessing
+
 	class Graphics {
 	public:
-		struct PostProcessing {
 
+		class PostProcessing {
+		public:
+			std::string name;
+
+			bool enabled = true;
+			bool opened = true;
+
+			Shader* shader;
+
+			PostProcessing(const std::string& name, Shader*& shader);
+			PostProcessing(const std::string& name, const std::string& shaderPath);
+			virtual ~PostProcessing() = default;
+
+			virtual void ListProperties() {}
+			virtual void ConfigureProps() {}
 		};
 
+		#pragma region parameters
 		// system enums
 		static PipelineMode pipeline;
 		static ShadingMode shading;
 		static SystemProcess process;
+		static SceneView currDrawTarget;
 		static int enviroment;
 
 		// global parameters
@@ -32,8 +51,16 @@ namespace MOON {
 		static int AAType;
 
 		// post-processing stack
-		static std::vector<PostProcessing> postStack;
+		static bool enablePP;
+		static bool showList;
+		static bool focusKey;
+		static char	buf[64];
+		static int	selection;
+		static std::vector<PostProcessing*> postStack;
+		static std::vector<std::string>	matchList;
+		#pragma endregion
 
+		// pipeline functions
 		static void DrawSky();
 		static void DrawIDLUT();
 		static void DrawIDLUT_EditMode();
@@ -48,17 +75,28 @@ namespace MOON {
 		static void DrawCameras();
 		static void HighlightSelection();
 
-		// TODO
-		static void DrawDeferredShading();
+		// deferred functions
+		static void Blit(FrameBuffer*& src, FrameBuffer*& dst, const Shader* shader);
+		static void ApplyPostProcessing(FrameBuffer*& buffer, const Shader* shader);
+		static void ApplyPostProcessing(FrameBuffer*& buffer, PostProcessing* renderer);
+		static void ApplyPostStack(FrameBuffer*& buffer);
+
+		// debug functions
 		static void DrawPrototype();
 		static void DrawMesh();
+
+		static void SearchOps_Fuzzy(const char* typeName);
+		static void DrawPostProcessingStack();
+		static void ListEffects();
+
+		static void Clear();
 
 	private:
 		static unsigned int quadVAO, quadVBO;
 
 		// vertex attributes for a quad that fills the 
 		// entire screen in Normalized Device Coordinates.
-		static float quadVertices[24];
+		static GLfloat quadVertices[20];
 
 		// config screen quad VAO
 		static void ConfigureScreenQuad();

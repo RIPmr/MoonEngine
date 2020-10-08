@@ -77,7 +77,6 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>.\opengl\include;.\glm;.\assimp;.\assimp\include;.\imgui;..\packages\Pre-built.2\include;..\packages\Pre-built.2\dll\x64;$(IncludePath)</IncludePath>
     <LibraryPath>.\opengl\lib;.\assimp\lib;E:\Workspaces\VS\ToyBox\ToyBox\opengl\lib\x64\Debug;E:\Workspaces\VS\ToyBox\ToyBox\opengl\lib\x64\Release;..\packages\Pre-built.2\lib\x64;E:\Workspaces\VS\ToyBox\ToyBox\opengl\lib;.\opengl\lib\x64\Debug;$(LibraryPath)</LibraryPath>
-    <IntDir>D:\vsTmp</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -158,6 +157,7 @@
     <ClCompile Include="imgui\ImNodesEz.cpp" />
     <ClCompile Include="imgui\ImPlot.cpp" />
     <ClCompile Include="ImPie.cpp" />
+    <ClCompile Include="ImTextEditor.cpp" />
     <ClCompile Include="ImTimeline.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Material.cpp" />
@@ -180,6 +180,7 @@
     <ClCompile Include="Optimizer.cpp" />
     <ClCompile Include="Graphics.cpp" />
     <ClCompile Include="Plane.cpp" />
+    <ClCompile Include="PostFactory.cpp" />
     <ClCompile Include="Ring.cpp" />
     <ClCompile Include="Sphere.cpp" />
     <ClCompile Include="Quaternion.cpp" />
@@ -194,6 +195,7 @@
     <ClInclude Include="BoundingBox.h" />
     <ClInclude Include="Box.h" />
     <ClInclude Include="ButtonEx.h" />
+    <ClInclude Include="BVH.h" />
     <ClInclude Include="CakeParser.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Capsule.h" />
@@ -217,6 +219,7 @@
     <ClInclude Include="Icons.h" />
     <ClInclude Include="imgui\ImPlot.h" />
     <ClInclude Include="ImPie.h" />
+    <ClInclude Include="ImTextEditor.h" />
     <ClInclude Include="ImTimeline.h" />
     <ClInclude Include="LR.h" />
     <ClInclude Include="NFunction.h" />
@@ -253,6 +256,8 @@
     <ClInclude Include="Plotter.h" />
     <ClInclude Include="PluginManager.h" />
     <ClInclude Include="PMapGen.h" />
+    <ClInclude Include="PostEffects.h" />
+    <ClInclude Include="PostFactory.h" />
     <ClInclude Include="Proxy.h" />
     <ClInclude Include="Ring.h" />
     <ClInclude Include="SmartMeshes.h" />
@@ -289,6 +294,9 @@
     <None Include="Bloom.fs" />
     <None Include="ConstColor.fs" />
     <None Include="ConstColor.vs" />
+    <None Include="Curve.fs" />
+    <None Include="EnvSphere.fs" />
+    <None Include="EnvSphere.vs" />
     <None Include="Exposure.fs" />
     <None Include="Flat.fs" />
     <None Include="Flat.vs" />
@@ -306,6 +314,8 @@
     <None Include="SEM_Phong.vs" />
     <None Include="SimplePhong.fs" />
     <None Include="SimplePhong.vs" />
+    <None Include="SSAO.fs" />
+    <None Include="SSR.fs" />
     <None Include="ToneMapping.fs" />
     <None Include="VertexID.fs" />
     <None Include="VertexID.vs" />

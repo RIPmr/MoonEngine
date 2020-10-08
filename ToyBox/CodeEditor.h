@@ -1,15 +1,19 @@
 #pragma once
 #include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_opengl3.h>
-#include <shellapi.h>
 #include <cstdlib>
-#include <string.h>
-#include <algorithm>
+#include <cstring>
 #include <string>
+#include <algorithm>
+#include <fstream>
+
+#include "Icons.h"
+#include "StackWindow.h"
+#include "ImTextEditor.h"
+#pragma warning(disable:4996)
 
 namespace MOON {
-	// class-like window
+
+#pragma region console_window
 	struct ConsoleWnd {
 		char                  InputBuf[256];
 		ImVector<char*>       Items;
@@ -32,6 +36,7 @@ namespace MOON {
 			ScrollToBottom = false;
 			AddLog("Welcome to the MOON!");
 		}
+
 		~ConsoleWnd() {
 			ClearLog();
 			for (int i = 0; i < History.Size; i++)
@@ -286,24 +291,161 @@ namespace MOON {
 			return 0;
 		}
 	};
+#pragma endregion
 
+#pragma region code_editor_impl
 	struct CodeEditor {
-		void Draw(bool* isOpen) {
-			ImGui::Begin(Icon_Name_To_ID(ICON_FA_CODE, " Code Editor"), isOpen);
-			static char text[1024 * 16] =
-				"/*\n"
-				" The Pentium F00F bug, shorthand for F0 0F C7 C8,\n"
-				" the hexadecimal encoding of one offending instruction,\n"
-				" more formally, the invalid operand with locked CMPXCHG8B\n"
-				" instruction bug, is a design flaw in the majority of\n"
-				" Intel Pentium, Pentium MMX, and Pentium OverDrive\n"
-				" processors (all in the P5 microarchitecture).\n"
-				"*/\n\n"
-				"label:\n"
-				"\tlock cmpxchg8b eax\n";
+	public:
+		TextEditor editor;
+		std::string fileToEdit;
 
-			ImGui::InputTextMultiline("##source", text, IM_ARRAYSIZE(text), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16));
+		CodeEditor() {
+			ConfigureEditor_GLSL();
+		}
+
+		void ConfigureEditor_GLSL() {
+			auto lang = TextEditor::LanguageDefinition::GLSL();
+
+			// set your own known preprocessor symbols and their corresponding values
+			static const char* ppnames[] = { 
+				"NULL", "assert", "attribute", "uniform", "varying", "in", "out",
+			};
+			static const char* ppvalues[] = {
+				"#define NULL ((void*)0)",
+				" #define assert(expression) (void)(                                                  \n"
+				"    (!!(expression)) ||                                                              \n"
+				"    (_wassert(_CRT_WIDE(#expression), _CRT_WIDE(__FILE__), (unsigned)(__LINE__)), 0) \n"
+				" )"
+			};
+			for (int i = 0; i < sizeof(ppnames) / sizeof(ppnames[0]); ++i) {
+				TextEditor::TextIdentifier id;
+				id.mDeclaration = i < 2 ? ppvalues[i] : "";
+				lang.mPreprocIdentifiers.insert(std::make_pair(std::string(ppnames[i]), id));
+			}
+
+			// set your own identifiers
+			static const char* identifiers[] = {
+				"HWND", "TextEditor" 
+			};
+			static const char* idecls[] = {
+				"typedef HWND_* HWND", "class TextEditor" 
+			};
+			for (int i = 0; i < sizeof(identifiers) / sizeof(identifiers[0]); ++i) {
+				TextEditor::TextIdentifier id;
+				id.mDeclaration = std::string(idecls[i]);
+				lang.mIdentifiers.insert(std::make_pair(std::string(identifiers[i]), id));
+			}
+
+			//editor.SetPalette(TextEditor::GetLightPalette());
+			editor.SetLanguageDefinition(lang);
+
+			// error markers
+			/*TextEditor::ErrorMarkers markers;
+			markers.insert(std::make_pair<int, std::string>(6, "Example error here:\nInclude file not found: \"TextEditor.h\""));
+			markers.insert(std::make_pair<int, std::string>(41, "Another example error"));
+			editor.SetErrorMarkers(markers);*/
+
+			// "breakpoint" markers
+			/*TextEditor::Breakpoints bpts;
+			bpts.insert(24);
+			bpts.insert(47);
+			editor.SetBreakpoints(bpts);*/
+		}
+
+		void LoadFile(const std::string& path) {
+			fileToEdit = path;
+			std::ifstream tmp(fileToEdit);
+			if (tmp.good()) {
+				std::string str((std::istreambuf_iterator<char>(tmp)), std::istreambuf_iterator<char>());
+				editor.SetText(str);
+			}
+		}
+
+		void Draw(bool* isOpen) {
+			auto cpos = editor.GetCursorPosition();
+			ImGui::Begin(Icon_Name_To_ID(ICON_FA_CODE, " Code Editor"), isOpen, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_MenuBar);
+			ImGui::SetWindowSize(ImVec2(800, 600), ImGuiCond_FirstUseEver);
+			if (ImGui::BeginMenuBar()) {
+				if (ImGui::BeginMenu("File")) {
+					if (ImGui::MenuItem("New", "Ctrl+N")) {
+						fileToEdit.clear();
+						editor.SetText("");
+					}
+					ImGui::Separator();
+					if (ImGui::MenuItem("Open", "Ctrl+O")) {
+						// TODO: open file ...
+
+					}
+					if (ImGui::MenuItem("Save", "Ctrl+S")) {
+						auto textToSave = editor.GetText();
+						// TODO: save text ...
+
+					}
+					if (ImGui::MenuItem("Save As...", "Ctrl+Shift+N")) {
+						auto textToSave = editor.GetText();
+						// TODO: save text ...
+
+					}
+					ImGui::Separator();
+					if (ImGui::MenuItem("Quit", "Alt+F4")) isOpen = false;
+					ImGui::EndMenu();
+				}
+				if (ImGui::BeginMenu("Edit")) {
+					bool ro = editor.IsReadOnly();
+					if (ImGui::MenuItem("Read-only mode", nullptr, &ro))
+						editor.SetReadOnly(ro);
+					ImGui::Separator();
+
+					if (ImGui::MenuItem("Undo", "Alt+Backspace", nullptr, !ro && editor.CanUndo()))
+						editor.Undo();
+					if (ImGui::MenuItem("Redo", "Ctrl+Y", nullptr, !ro && editor.CanRedo()))
+						editor.Redo();
+
+					ImGui::Separator();
+
+					if (ImGui::MenuItem("Copy", "Ctrl+C", nullptr, editor.HasSelection()))
+						editor.Copy();
+					if (ImGui::MenuItem("Cut", "Ctrl+X", nullptr, !ro && editor.HasSelection()))
+						editor.Cut();
+					if (ImGui::MenuItem("Delete", "Del", nullptr, !ro && editor.HasSelection()))
+						editor.Delete();
+					if (ImGui::MenuItem("Paste", "Ctrl+V", nullptr, !ro && ImGui::GetClipboardText() != nullptr))
+						editor.Paste();
+
+					ImGui::Separator();
+
+					if (ImGui::MenuItem("Select all", nullptr, nullptr))
+						editor.SetSelection(TextEditor::Coordinates(), TextEditor::Coordinates(editor.GetTotalLines(), 0));
+
+					ImGui::EndMenu();
+				}
+
+				if (ImGui::BeginMenu("View")) {
+					if (ImGui::MenuItem("Dark palette"))
+						editor.SetPalette(TextEditor::GetDarkPalette());
+					if (ImGui::MenuItem("Light palette"))
+						editor.SetPalette(TextEditor::GetLightPalette());
+					if (ImGui::MenuItem("Retro blue palette"))
+						editor.SetPalette(TextEditor::GetRetroBluePalette());
+					ImGui::EndMenu();
+				}
+				ImGui::EndMenuBar();
+			}
+
+			ImGui::Text(
+				"%6d/%-6d %6d lines  | %s | %s | %s%s", 
+				cpos.mLine + 1, cpos.mColumn + 1, 
+				editor.GetTotalLines(),
+				editor.IsOverwrite() ? "Ovr" : "Ins",
+				editor.GetLanguageDefinition().mName.c_str(),
+				editor.CanUndo() ? "*" : " ",
+				fileToEdit.empty() ? "NewDocument" : fileToEdit.c_str()
+			);
+
+			editor.Render("CodeEditor");
 			ImGui::End();
 		}
 	};
+#pragma endregion
+
 }

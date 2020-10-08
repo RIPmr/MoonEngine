@@ -7,12 +7,18 @@
 #include "imgui_internal.h"
 
 namespace MOON {
+	extern class Texture;
 	class ButtonEx {
 	public:
 		static std::string FileButton(const char* label, const ImVec2& size_arg, const int ID = -1);
 
 		static void* FileButtonEx(void** container, const char* label, const ImVec2& size_arg, const int ID = -1);
+	
+		static bool TexFileBtnWithPrev(Texture*& ref, const int& type, const ImVec2& size_arg, const int ID = -1);
+
+		static void ClampedImage(Texture* tex, const float& clampSize, const bool& clampWidth = true, const ImVec2& uv0 = ImVec2(0, 0), const ImVec2& uv1 = ImVec2(1, 1), const ImVec4& tint_col = ImVec4(1, 1, 1, 1), const ImVec4& border_col = ImVec4(0, 0, 0, 0));
 	};
+
 	template<class T>
 	static void MakeDragAndDropWidget(T* &payload_in, const char* type, const char* label, void(*dropable)(T*&, T*&) = nullptr) {
 		if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoPreviewTooltip)) {

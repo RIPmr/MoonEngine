@@ -60,6 +60,6 @@ namespace MOON {
 		// Load Materials from .mtl file
 		static bool LoadMaterials(const std::string &path);
 
-		static Texture* LoadTexture(const TexType &type, const std::string &path);
+		static Texture* LoadTexture(const TexType &type, const std::string &path, const std::string &name = UseFileName);
 	};
 }

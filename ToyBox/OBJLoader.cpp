@@ -22,8 +22,8 @@ namespace MOON {
 		// count the newlines with an algorithm specialized for counting:
 		unsigned line_count = std::count(
 			std::istream_iterator<char>(myfile),
-			std::istream_iterator<char>(),
-			'\n');
+			std::istream_iterator<char>(), '\n'
+		);
 
 		return line_count;
 	}
@@ -384,7 +384,7 @@ namespace MOON {
 			}
 		}
 
-		// take care of missing normals
+		// take care of missing normals,
 		// these may not be truly accurate but it is the 
 		// best they get for not compiling a mesh with normals	
 		if (noNormal) {
@@ -398,11 +398,9 @@ namespace MOON {
 		}
 	}
 
-	// Triangulate a list of vertices into a face by printing
-	// inducies corresponding with triangles within it
+	// Triangulate a list of vertices into a face by printing inducies corresponding with triangles within it
 	void OBJLoader::VertexTriangluation(std::vector<unsigned int>& oIndices, const std::vector<Vertex>& iVerts) {
-		// If there are 2 or less verts,
-		// no triangle can be created, so exit
+		// If there are 2 or less verts, no triangle can be created, so exit
 		if (iVerts.size() < 3) return;
 
 		// If it is a triangle no need to calculate it
@@ -433,8 +431,7 @@ namespace MOON {
 				else pNext = tVerts[i + 1];
 
 
-				// Check to see if there are only 3 verts left
-				// if so this is the last triangle
+				// Check to see if there are only 3 verts left, if so this is the last triangle
 				if (tVerts.size() == 3) {
 					// Create a triangle from pCur, pPrev, pNext
 					for (int j = 0; j < int(tVerts.size()); j++) {
@@ -551,98 +548,72 @@ namespace MOON {
 				if (curline.size() > 7) matName = tail(curline);
 				tempMaterial = MOON_MaterialManager::CreateMaterial("MoonMtl", matName);
 			}
-			// Ambient Color
-			if (firstToken(curline) == "Ka") {
+			
+			if (firstToken(curline) == "Ka") { // Ambient Color
 				std::vector<std::string> temp;
 				split(tail(curline), temp, " ");
 
 				if (temp.size() != 3) continue;
 
-				dynamic_cast<MoonMtl*>(tempMaterial)->Ka.x = std::stof(temp[0]);
-				dynamic_cast<MoonMtl*>(tempMaterial)->Ka.y = std::stof(temp[1]);
-				dynamic_cast<MoonMtl*>(tempMaterial)->Ka.z = std::stof(temp[2]);
-			}
-			// Diffuse Color
-			if (firstToken(curline) == "Kd") {
+				dynamic_cast<MoonMtl*>(tempMaterial)->ambientC.setValue(
+					std::stof(temp[0]), std::stof(temp[1]), std::stof(temp[2])
+				);
+			} else if (firstToken(curline) == "Kd") { // Diffuse Color
 				std::vector<std::string> temp;
 				split(tail(curline), temp, " ");
-
 				if (temp.size() != 3) continue;
 
-				dynamic_cast<MoonMtl*>(tempMaterial)->Kd.x = std::stof(temp[0]);
-				dynamic_cast<MoonMtl*>(tempMaterial)->Kd.y = std::stof(temp[1]);
-				dynamic_cast<MoonMtl*>(tempMaterial)->Kd.z = std::stof(temp[2]);
-			}
-			// Specular Color
-			if (firstToken(curline) == "Ks") {
+				dynamic_cast<MoonMtl*>(tempMaterial)->diffuseC.setValue(
+					std::stof(temp[0]), std::stof(temp[1]), std::stof(temp[2])
+				);
+			} else if (firstToken(curline) == "Ks") { // Specular Color
 				std::vector<std::string> temp;
 				split(tail(curline), temp, " ");
-
 				if (temp.size() != 3) continue;
 
-				dynamic_cast<MoonMtl*>(tempMaterial)->Ks.x = std::stof(temp[0]);
-				dynamic_cast<MoonMtl*>(tempMaterial)->Ks.y = std::stof(temp[1]);
-				dynamic_cast<MoonMtl*>(tempMaterial)->Ks.z = std::stof(temp[2]);
-			}
-			// Specular Exponent
-			if (firstToken(curline) == "Ns") {
-				dynamic_cast<MoonMtl*>(tempMaterial)->Ns = std::stof(tail(curline));
-			}
-			// Optical Density
-			if (firstToken(curline) == "Ni") {
-				dynamic_cast<MoonMtl*>(tempMaterial)->Ni = std::stof(tail(curline));
-			}
-			// Dissolve
-			if (firstToken(curline) == "d") {
-				dynamic_cast<MoonMtl*>(tempMaterial)->d = std::stof(tail(curline));
-			}
-			// Illumination
-			if (firstToken(curline) == "illum") {
-				dynamic_cast<MoonMtl*>(tempMaterial)->illum = std::stoi(tail(curline));
+				dynamic_cast<MoonMtl*>(tempMaterial)->reflectW.setValue(
+					std::stof(temp[0]), std::stof(temp[1]), std::stof(temp[2])
+				);
+			} else if (firstToken(curline) == "Ns") { // Specular Exponent
+				//dynamic_cast<MoonMtl*>(tempMaterial)->glossiness = std::stof(tail(curline));
+			} else if (firstToken(curline) == "Ni") { // Optical Density
+				dynamic_cast<MoonMtl*>(tempMaterial)->refractW = Vector3::ONE() * std::stof(tail(curline));
+			} else if (firstToken(curline) == "d") {  // Dissolve
+				dynamic_cast<MoonMtl*>(tempMaterial)->translucency = Vector3::ONE() * std::stof(tail(curline));
+			} else if (firstToken(curline) == "illum") { // Illumination
+				dynamic_cast<MoonMtl*>(tempMaterial)->illumination = Vector3::ONE() * std::stoi(tail(curline));
 			}
 
 			// Load textures
-			// Ambient Texture
 			if (firstToken(curline) == "map_Ka") {
-				dynamic_cast<MoonMtl*>(tempMaterial)->map_Ka = LoadTexture(TexType::ambient, tail(curline));
-			}
-			// Diffuse Texture
-			if (firstToken(curline) == "map_Kd") {
-				dynamic_cast<MoonMtl*>(tempMaterial)->map_Kd = LoadTexture(TexType::diffuse, tail(curline));
-			}
-			// Specular Texture
-			if (firstToken(curline) == "map_Ks") {
-				dynamic_cast<MoonMtl*>(tempMaterial)->map_Ks = LoadTexture(TexType::specular, tail(curline));
-			}
-			// Specular Hightlight Map
-			if (firstToken(curline) == "map_Ns") {
-				dynamic_cast<MoonMtl*>(tempMaterial)->map_Ns = LoadTexture(TexType::highlight, tail(curline));
-			}
-			// Alpha Texture
-			if (firstToken(curline) == "map_d") {
-				dynamic_cast<MoonMtl*>(tempMaterial)->map_d = LoadTexture(TexType::alpha, tail(curline));
-			}
-			// Bump Map
-			if (firstToken(curline) == "map_Bump" || firstToken(curline) == "map_bump" || firstToken(curline) == "bump") {
-				dynamic_cast<MoonMtl*>(tempMaterial)->map_bump = LoadTexture(TexType::normal, tail(curline));
+				dynamic_cast<MoonMtl*>(tempMaterial)->textures.push_back(LoadTexture(TexType::ambient, tail(curline), "ambientMap"));
+			} else if (firstToken(curline) == "map_Kd") {
+				dynamic_cast<MoonMtl*>(tempMaterial)->textures.push_back(LoadTexture(TexType::diffuse, tail(curline), "diffuseMap"));
+			} else if (firstToken(curline) == "map_Ks") {
+				dynamic_cast<MoonMtl*>(tempMaterial)->textures.push_back(LoadTexture(TexType::reflect, tail(curline), "reflectMap"));
+			} else if (firstToken(curline) == "map_Ns") {
+				dynamic_cast<MoonMtl*>(tempMaterial)->textures.push_back(LoadTexture(TexType::glossiness, tail(curline), "glossinessMap"));
+			} else if (firstToken(curline) == "map_d") {
+				dynamic_cast<MoonMtl*>(tempMaterial)->textures.push_back(LoadTexture(TexType::alpha, tail(curline), "alphaMap"));
+			} else if (firstToken(curline) == "map_Bump" || firstToken(curline) == "map_bump" || firstToken(curline) == "bump") {
+				dynamic_cast<MoonMtl*>(tempMaterial)->textures.push_back(LoadTexture(TexType::normal, tail(curline), "normalMap"));
 			}
 		}
 
 		// Test to see if anything was loaded
-		// If not return false
 		//if (LoadedMaterials.empty()) return false;
-		// If so return true
 		//else return true;
 	}
 
-	Texture* OBJLoader::LoadTexture(const TexType &type, const std::string &path) {
+	Texture* OBJLoader::LoadTexture(const TexType &type, const std::string &path, const std::string &name) {
 		// if find corresponding texture in loaded textures
 		Texture* searchTex = MOON_TextureManager::GetItem(Utility::GetPathOrURLShortName(path));
 		if (searchTex != NULL) return searchTex;
 
 		// else load that new texture
 		GLuint texID = (GLuint)MOON_UNSPECIFIEDID;
-		Texture* newTex = MOON_TextureManager::LoadTexture(path);
+		Texture* newTex = MOON_TextureManager::LoadTexture(path, name);
+		newTex->type = type;
 
 		return newTex;
 	}

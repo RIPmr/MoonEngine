@@ -7,10 +7,11 @@
 #include <sstream>
 #include <iostream>
 
-#include "ObjectBase.h"
 #include "Vector2.h"
 #include "Vector3.h"
+#include "Texture.h"
 #include "Matrix4x4.h"
+#include "ObjectBase.h"
 
 namespace MOON {
 	class Shader : public ObjectBase {
@@ -46,7 +47,9 @@ namespace MOON {
 			glUniform1i(glGetUniformLocation(localID, name.c_str()), value);
 		}
 		// ------------------------------------------------------------------------
-		void setTexture(const std::string &name, int channel) const {
+		void setTexture(const std::string &name, Texture* tex, int channel) const {
+			glActiveTexture(GL_TEXTURE0 + channel);
+			glBindTexture(GL_TEXTURE_2D, tex->localID);
 			glUniform1i(glGetUniformLocation(localID, name.c_str()), channel);
 		}
 		// ------------------------------------------------------------------------

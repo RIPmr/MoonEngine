@@ -138,6 +138,9 @@ namespace MOON {
 
 		~Transform() {
 			if (parent != nullptr) parent->RemoveChild(this);
+
+			// TODO: delete child objects
+
 		}
 
 		inline void SetParent(Transform* parent) {

@@ -68,84 +68,169 @@ namespace MOON {
 
 	class MoonMtl : public Material {
 	public:
-		Vector3 Ka;		// Ambient Color
-		Vector3 Kd;		// Diffuse Color
-		Vector3 Ks;		// Specular Color
-		float Ns;		// Specular Exponent
-		float Ni;		// Optical Density
-		float d;		// Dissolve
-		int illum;		// Illumination
+		// C: color, W: weight
+		Vector3 ambientC;
 
-		Texture* map_Ka;		// Ambient Texture Map
-		Texture* map_Kd;		// Diffuse Texture Map
-		Texture* map_Ks;		// Specular Texture Map
-		Texture* map_Ns;		// Specular Hightlight Map
-		Texture* map_d;			// Alpha Texture Map
-		Texture* map_bump;		// Bump Map
+		Vector3 diffuseC;
+		float roughness;
+
+		Vector3 reflectW;
+		Vector3 refractW;
+		float glossiness;
+		float IOR;
+
+		Vector3 translucency;
+		Vector3 opacity;
+		Vector3 fogC;
+		float fogW;
+
+		float dispW;
+
+		Vector3 illumination;
+
+		Vector3 metalness;
+		float anisotropy;
+		float an_rotation;
+
+		std::vector<Texture*> textures;
 
 		MoonMtl();
 		MoonMtl(const std::string &name);
+		~MoonMtl() override;
+
+		int GetTextureIndex(const TexType& type) {
+			for (int i = 0; i < textures.size(); i++) {
+				if (type == textures[i]->type) return i;
+			}
+			return -1;
+		}
+
+		void TextureButton(const TexType& type, const std::string& title, float* colorRef,
+			const ImVec2& btnSize, const float& interval, unsigned int& loopID) {
+			auto tid = GetTextureIndex(type);
+			ImGui::Text((title + " ").c_str()); ImGui::SameLine(interval);
+			if (colorRef != nullptr) {
+				if (ImGui::ColorEdit3(UniquePropName(title), colorRef,
+					ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel)) {
+					this->prevNeedUpdate = true;
+				} ImGui::SameLine();
+			}
+			if (tid < 0) {
+				Texture* tex = nullptr;
+				if (ButtonEx::TexFileBtnWithPrev(tex, type, btnSize, loopID++)) {
+					textures.push_back(tex);
+					this->prevNeedUpdate = true;
+				}
+			} else {
+				if (ButtonEx::TexFileBtnWithPrev(textures[tid], type, btnSize, loopID++)) {
+					if (textures[tid] == nullptr) Utility::RemoveElemAt(textures, tid);
+					this->prevNeedUpdate = true;
+				}
+			}
+		}
 
 		virtual void SetShaderProps(Shader* shader) override {
-			shader->setVec3("objectColor", Kd);
+			// colors
+			shader->setVec3("ambientC",		ambientC);
+			shader->setVec3("objectColor",	diffuseC);
+			shader->setVec3("reflectW",		reflectW);
+			shader->setVec3("refractW",		refractW);
+			shader->setVec3("translucency", translucency);
+			shader->setVec3("opacity",		opacity);
+			shader->setVec3("fogC",			fogC);
+			shader->setVec3("illumination", illumination);
+			shader->setVec3("metalness",	metalness);
+
+			// floats
+			shader->setFloat("roughness",	roughness);
+			shader->setFloat("glossiness",	glossiness);
+			shader->setFloat("IOR",			IOR);
+			shader->setFloat("fogW",		fogW);
+			shader->setFloat("dispW",		dispW);
+			shader->setFloat("anisotropy",	anisotropy);
+			shader->setFloat("an_rotation", an_rotation);
+
+			// textures
+			for (int i = 0; i < textures.size(); i++) {
+				shader->setTexture(enum_to_string(textures[i]->type), textures[i], i);
+			}
 		}
 
 		virtual void ListProperties() override {
 			Material::ListProperties();
 
+			if (name._Equal("default")) {
+				ListPreview();
+				ImGui::Spacing();
+				return ;
+			}
+
 			// list parameters
 			ImGui::Text("Parameters:");
 			ImGui::Indent(10.0f);
+
 			// Ambient
-			ImGui::Text("Ambient "); ImGui::SameLine(100.0f);
-			if (ImGui::ColorEdit3(UniquePropName("Ka"), (float*)&Ka, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel)) {
+			float interval = 90.0f; unsigned int bid = 0;
+			ImVec2 btnSize{ ImGui::GetContentRegionAvailWidth() - interval - 20, 22 };
+
+			TextureButton(ambient,		"Ambient",		(float*)&ambientC,		btnSize, interval, bid);
+			TextureButton(diffuse,		"Diffuse",		(float*)&diffuseC,		btnSize, interval, bid);
+			TextureButton(normal,	"Normal",	nullptr, ImVec2(btnSize.x + 30, btnSize.y), interval, bid);
+			TextureButton(reflect,		"Reflect",		(float*)&reflectW,		btnSize, interval, bid);
+			TextureButton(refract,		"Refract",		(float*)&refractW,		btnSize, interval, bid);
+			TextureButton(metallic,		"Metalness",	(float*)&metalness,		btnSize, interval, bid);
+			TextureButton(translucent,	"Translucent",	(float*)&translucency,	btnSize, interval, bid);
+			TextureButton(displacement, "Displace", nullptr, ImVec2(btnSize.x + 30, btnSize.y), interval, bid);
+			TextureButton(illuminant,	"Illuminant",	(float*)&illumination,	btnSize, interval, bid);
+			TextureButton(alpha,		"Opacity",		(float*)&opacity,		btnSize, interval, bid);
+
+			ImGui::PushID("fog");
+			ImGui::Text("Fog/Multi"); ImGui::SameLine(interval);
+			ImGui::ColorEdit3(UniquePropName("fog"), (float*)&fogC, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
+			ImGui::SameLine();
+			ImGui::SetNextItemWidth(btnSize.x);
+			ImGui::DragFloat("fog_drag", &fogW, 0.1f, 0.0f, 10.0f, "%.1f", 1.0f, true);
+			ImGui::PopID();
+
+			ImGui::PushID("rough");
+			ImGui::Text("Roughness"); ImGui::SameLine(interval);
+			ImGui::SetNextItemWidth(btnSize.x + 30);
+			ImGui::DragFloat("rough_drag", &roughness, 0.1f, 0.0f, 1.0f, "%.1f", 1.0f, true);
+			ImGui::PopID();
+
+			ImGui::PushID("gloss");
+			ImGui::Text("Glossiness"); ImGui::SameLine(interval);
+			ImGui::SetNextItemWidth(btnSize.x + 30);
+			if (ImGui::DragFloat("gloss_drag", &glossiness, 0.1f, 0.0f, 1.0f, "%.1f", 1.0f, true)) {
 				this->prevNeedUpdate = true;
 			}
-			ImGui::SameLine();
-			float btnWidth = ImGui::GetContentRegionAvailWidth() - 20;
-			ImGui::Button("[Texture]", ImVec2(btnWidth, 20));
-			// Diffuse
-			ImGui::Text("Diffuse "); ImGui::SameLine(100.0f);
-			if (ImGui::ColorEdit3(UniquePropName("Kd"), (float*)&Kd, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel)) {
+			ImGui::PopID();
+
+			ImGui::PushID("ior");
+			ImGui::Text("IOR"); ImGui::SameLine(interval);
+			ImGui::SetNextItemWidth(btnSize.x + 30);
+			if (ImGui::DragFloat("ior_drag", &IOR, 0.1f, 1.0f, 10.0f, "%.1f", 1.0f, true)) {
 				this->prevNeedUpdate = true;
 			}
-			ImGui::SameLine();
-			ImGui::Button("[Texture]", ImVec2(btnWidth, 20));
-			// Specular
-			ImGui::Text("Specular "); ImGui::SameLine(100.0f);
-			if (ImGui::ColorEdit3(UniquePropName("Ks"), (float*)&Ks, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel)) {
-				this->prevNeedUpdate = true;
-			}
-			ImGui::SameLine();
-			ImGui::Button("[Texture]", ImVec2(btnWidth, 20));
-			// Specular Exponent
-			ImGui::Text("SpecExpo "); ImGui::SameLine(100.0f);
-			if (ImGui::ColorEdit3(UniquePropName("Ns"), (float*)&Ns, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel)) {
-				this->prevNeedUpdate = true;
-			}
-			ImGui::SameLine();
-			ImGui::Button("[Texture]", ImVec2(btnWidth, 20));
-			// Optical Density
-			ImGui::Text("OptiDens "); ImGui::SameLine(100.0f);
-			if (ImGui::ColorEdit3(UniquePropName("Ni"), (float*)&Ni, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel)) {
-				this->prevNeedUpdate = true;
-			}
-			ImGui::SameLine();
-			ImGui::Button("[Texture]", ImVec2(btnWidth, 20));
-			// Dissolve
-			ImGui::Text("Dissolve "); ImGui::SameLine(100.0f);
-			if (ImGui::ColorEdit3(UniquePropName("d"), (float*)&d, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel)) {
-				this->prevNeedUpdate = true;
-			}
-			ImGui::SameLine();
-			ImGui::Button("[Texture]", ImVec2(btnWidth, 20));
-			// Illumination
-			ImGui::Text("Illumina "); ImGui::SameLine(100.0f);
-			if (ImGui::ColorEdit3(UniquePropName("illum"), (float*)&illum, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel)) {
-				this->prevNeedUpdate = true;
-			}
-			ImGui::SameLine();
-			ImGui::Button("[Texture]", ImVec2(btnWidth, 20));
+			ImGui::PopID();
+
+			ImGui::PushID("dispW");
+			ImGui::Text("DispMulti"); ImGui::SameLine(interval);
+			ImGui::SetNextItemWidth(btnSize.x + 30);
+			ImGui::DragFloat("dispW_drag", &dispW, 0.1f, 0, 0, "%.1f", 1.0f, true);
+			ImGui::PopID();
+
+			ImGui::PushID("aniso");
+			ImGui::Text("Anisotropy"); ImGui::SameLine(interval);
+			ImGui::SetNextItemWidth(btnSize.x + 30);
+			ImGui::DragFloat("aniso_drag", &anisotropy, 0.1f, 0.0f, 1.0f, "%.1f", 1.0f, true);
+			ImGui::PopID();
+
+			ImGui::PushID("anirot");
+			ImGui::Text("AnRotation"); ImGui::SameLine(interval);
+			ImGui::SetNextItemWidth(btnSize.x + 30);
+			ImGui::DragFloat("anirot_drag", &an_rotation, 0.1f, 0.0f, 1.0f, "%.1f", 1.0f, true);
+			ImGui::PopID();
 
 			ImGui::Unindent(10.0f);
 			ImGui::Separator();
@@ -198,16 +283,14 @@ namespace MOON {
 
 	class SEM : public Material {
 	public:
+		Texture* normal;
 		Texture* matcap;
 
 		SEM();
 		SEM(const std::string &name);
 
 		virtual void SetShaderProps(Shader* shader) override {
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, matcap->localID);
-
-			shader->setTexture("tMatCap", 0);
+			shader->setTexture("tMatCap", matcap, 0);
 		}
 
 		virtual void ListProperties() override {

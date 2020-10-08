@@ -10,6 +10,9 @@ void main() {
 	// m = 2.0 * sqrt(pow(r.x, 2.0) + pow(r.y, 2.0) + pow(r.z + 1.0, 2.0));
 	float m = 2.82842712474619 * sqrt(r.z + 1.0);
 
-	vec3 base = texture2D(tMatCap, r.xy / m + 0.5).rgb;
+	vec2 uv = r.xy / m + 0.5;
+	uv.y = 1.0 - uv.y;
+
+	vec3 base = texture2D(tMatCap, uv).rgb;
 	gl_FragColor = vec4(base, 1.0);
 }

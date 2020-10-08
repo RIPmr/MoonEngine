@@ -129,10 +129,11 @@ namespace MOON {
 			return v;
 		}
 
-		inline static void GammaCorrection(Vector3 &GammaSpaceCol) {
-			GammaSpaceCol.x = sqrt(GammaSpaceCol.x);
-			GammaSpaceCol.y = sqrt(GammaSpaceCol.y);
-			GammaSpaceCol.z = sqrt(GammaSpaceCol.z);
+		inline static void GammaCorrection(Vector3 &GammaSpaceCol, const float& gamma = 2.2f) {
+			float invGamma = 1.0f / gamma;
+			GammaSpaceCol.x = std::pow(GammaSpaceCol.x, invGamma);
+			GammaSpaceCol.y = std::pow(GammaSpaceCol.y, invGamma);
+			GammaSpaceCol.z = std::pow(GammaSpaceCol.z, invGamma);
 		}
 
 		inline static double Random01() {
@@ -221,6 +222,14 @@ namespace MOON {
 
 		inline static float clamp(const float &num, const float &min, const float &max) {
 			return std::max(min, std::min(max, num));
+		}
+
+		inline static Vector3 clamp(const Vector3 &num, const float &min, const float &max) {
+			return Vector3(
+				std::max(min, std::min(max, num.x)),
+				std::max(min, std::min(max, num.y)),
+				std::max(min, std::min(max, num.z))
+			);
 		}
 
 		inline static Vector3 Reflect(const Vector3 &v, const Vector3 &n) {

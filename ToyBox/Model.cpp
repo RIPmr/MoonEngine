@@ -1,6 +1,7 @@
 #include "Model.h"
 #include "SceneMgr.h"
 #include "MoonEnums.h"
+#include "Renderer.h"
 
 namespace MOON {
 
@@ -82,6 +83,56 @@ namespace MOON {
 
 	void Model::Select_Append(unsigned int ID, const bool& autoInvertSelect) {
 		MOON_InputManager::Selector::Select_AppendPrototype(meshList, selected_meshes, ID, autoInvertSelect);
+	}
+
+	bool Model::Hit(const Ray &r, HitRecord &rec) const {
+		HitRecord tempRec; tempRec.t = rec.t;
+		bool hitAnything = false;
+
+		if (Renderer::acc == Renderer::acc_NONE) {
+			Ray tray(transform.worldToLocalMat.multVec(r.pos), transform.worldToLocalMat.multDir(r.dir));
+			auto normalMat = transform.worldToLocalMat.transposed();
+			for (auto &iter : meshList) {
+				if (iter->Hit(tray, tempRec)) {
+					hitAnything = true;
+					// surface properties are returned in local space, 
+					// so we need to transform them back to world space
+					tempRec.p = transform.localToWorldMat.multVec(tempRec.p);
+					tempRec.normal = Vector3::Normalize(normalMat.multDir(tempRec.normal));
+					rec = tempRec;
+				}
+			}
+		} else if (Renderer::acc == Renderer::acc_AABB) {
+			if (bbox.intersect(r)) {
+				Ray tray(transform.worldToLocalMat.multVec(r.pos), transform.worldToLocalMat.multDir(r.dir));
+				auto normalMat = transform.worldToLocalMat.transposed();
+				for (auto &iter : meshList) {
+					if (iter->bbox.intersect(tray)) {
+						if (iter->Hit(tray, tempRec)) {
+							hitAnything = true;
+							tempRec.p = transform.localToWorldMat.multVec(tempRec.p);
+							tempRec.normal = Vector3::Normalize(normalMat.multDir(tempRec.normal));
+							rec = tempRec;
+						}
+					}
+				}
+			}
+		} else { // BVH
+			Ray tray(transform.worldToLocalMat.multVec(r.pos), transform.worldToLocalMat.multDir(r.dir));
+			auto normalMat = transform.worldToLocalMat.transposed();
+			for (auto &iter : meshList) {
+				if (iter->bbox.intersect(tray)) {
+					if (iter->localBVH->Hit(tray, tempRec)) {
+						hitAnything = true;
+						tempRec.p = transform.localToWorldMat.multVec(tempRec.p);
+						tempRec.normal = Vector3::Normalize(normalMat.multDir(tempRec.normal));
+						rec = tempRec;
+					}
+				}
+			}
+		}
+
+		return hitAnything;
 	}
 
 }

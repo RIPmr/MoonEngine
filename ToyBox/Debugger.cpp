@@ -2,33 +2,38 @@
 
 #include "Debugger.h"
 #include "SceneMgr.h"
+#include "Matrix4x4.h"
+#include "BoundingBox.h"
 #include "Gizmo.h"
-#include "Model.h"
 
 namespace MOON {
 
-	void DEBUG::DrawBBox(const Model* object, const Vector4 &color, const float &lineWidth) {
+	void DEBUG::DrawBBox(const BoundingBox& bbox, const Vector4 &color, const float &lineWidth, const Matrix4x4& modelMat) {
 		std::vector<Vector3> corners;
-		
-		object->bbox_world.GetCorners(&corners);
-		Line(corners[0], corners[1], color, lineWidth);
-		Line(corners[1], corners[2], color, lineWidth);
-		Line(corners[2], corners[3], color, lineWidth);
-		Line(corners[3], corners[0], color, lineWidth);
+		bbox.GetCorners(&corners);
 
-		Line(corners[4], corners[5], color, lineWidth);
-		Line(corners[5], corners[6], color, lineWidth);
-		Line(corners[6], corners[7], color, lineWidth);
-		Line(corners[7], corners[4], color, lineWidth);
+		std::vector<Vector3> drawList{
+			corners[0], corners[1],
+			corners[1], corners[2],
+			corners[2], corners[3],
+			corners[3], corners[0],
 
-		Line(corners[0], corners[6], color, lineWidth);
-		Line(corners[5], corners[3], color, lineWidth);
-		Line(corners[2], corners[4], color, lineWidth);
-		Line(corners[7], corners[1], color, lineWidth);
+			corners[4], corners[5],
+			corners[5], corners[6],
+			corners[6], corners[7],
+			corners[7], corners[4],
+
+			corners[0], corners[6],
+			corners[5], corners[3],
+			corners[2], corners[4],
+			corners[7], corners[1]
+		};
+
+		Gizmo::DrawLines(drawList, color, lineWidth, true, false, modelMat);
 	}
 
 	void DEBUG::Line(const Vector3 &start, const Vector3 &end, const Vector4 &color, const float &lineWidth) {
-		Gizmo::DrawLineDirect(start, end, color, lineWidth);
+		Gizmo::DrawLine(start, end, color, lineWidth);
 	}
 
 }

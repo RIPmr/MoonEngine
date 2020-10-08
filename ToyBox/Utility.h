@@ -11,6 +11,7 @@
 
 #include "Strutil.h"
 #include "FuzzyMatch.h"
+#include "STB/stb_image.h"
 #include "Vector3.h"
 #include "Vector4.h"
 #include "Color.h"
@@ -28,6 +29,16 @@ namespace MOON {
 		void RemoveElem(std::vector<T*>& set, T* target) {
 			for (auto p = set.begin(); p != set.end(); p++) {
 				if ((*p) == target) {
+					set.erase(p);
+					break;
+				}
+			}
+		}
+		template <class T>
+		void RemoveElemAt(std::vector<T*>& set, const int& id) {
+			int cnt = 0;
+			for (auto p = set.begin(); p != set.end(); p++, cnt++) {
+				if (cnt == id) {
 					set.erase(p);
 					break;
 				}
@@ -105,7 +116,10 @@ namespace MOON {
 			return result;
 		}
 
-		bool LoadTextureFromFile(const std::string &path, std::string &name, GLuint &textureID, int &width, int &height, bool gamma = false);
+		void FreeImageData(void* data);
+		bool LoadTextureFromFile(const std::string &path, std::string &name, GLuint &textureID, int &width, int &height, GLenum& format, bool gamma = false);
+		bool LoadHDRIFromFile(const std::string &path, void*& data, std::string &name, GLuint &textureID, int &width, int &height, GLenum& format, bool gamma = false);
+		bool LoadTextureFromFileEx(const std::string &path, void*& data, std::string &name, GLuint &textureID, int &width, int &height, GLenum& format, bool gamma = false);
 		bool LoadTextureFromArray(GLubyte* data, const int &image_width, const int &image_height, GLuint& textureID);
 		bool LoadTextureFromMemory(const Vector2 &imageSize, GLubyte* imageInMem, GLuint& textureID);
 

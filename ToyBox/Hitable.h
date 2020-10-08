@@ -1,8 +1,9 @@
 #pragma once
 #include "Ray.h"
-#include "MathUtils.h"
-#include "Vector3.h"
 #include "Vector2.h"
+#include "Vector3.h"
+#include "MathUtils.h"
+#include "BoundingBox.h"
 
 namespace MOON {
 	extern class Material;
@@ -20,7 +21,17 @@ namespace MOON {
 
 	class Hitable {
 	public:
-		virtual bool Hit(const Ray &t, HitRecord &rec) const = 0;
+		BoundingBox bbox;
+
+		Hitable() {}
+		Hitable(const BoundingBox& box) : bbox(box) {}
+		virtual ~Hitable() = default;
+
+		virtual bool Hit(const Ray &t, HitRecord &rec) const { return true; };
+		virtual bool bounding_box(Vector2 timeStamp, BoundingBox& box) const {
+			box = bbox;
+			return true;
+		}
 	};
 
 }

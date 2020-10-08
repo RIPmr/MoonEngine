@@ -3,6 +3,8 @@
 
 #include "MoonEnums.h"
 #include "Graphics.h"
+#include "PostFactory.h"
+#include "Utility.h"
 #include "SceneMgr.h"
 #include "HotkeyMgr.h"
 #include "ObjectBase.h"
@@ -11,6 +13,180 @@
 
 namespace MOON {
 
+#pragma region parameters
+	std::vector<PostEffect*>	Graphics::postStack;
+	std::vector<std::string>	Graphics::matchList;
+	bool Graphics::enablePP = false;
+	bool Graphics::showList = false;
+	bool Graphics::focusKey = false;
+	char Graphics::buf[64] = "";
+	int	 Graphics::selection = 0;
+#pragma endregion
+
+#pragma region post_effect
+	Graphics::PostProcessing::PostProcessing(const std::string& name, const std::string& shaderPath) {
+		this->name = name;
+		this->shader = MOON_ShaderManager::CreateShader(
+			shaderPath, "ScreenBuffer.vs", (shaderPath + ".fs").c_str()
+		);
+	}
+
+	Graphics::PostProcessing::PostProcessing(const std::string& name, Shader*& shader) {
+		this->name = name;
+		this->shader = shader;
+	}
+
+	void Graphics::SearchOps_Fuzzy(const char* typeName) {
+		std::map<int, std::string> fuzzyRes;
+
+		for (auto lower = PostFactory::effectList.begin(); lower != PostFactory::effectList.end(); lower++) {
+			int score = -INFINITY_INT; std::string name = (*lower).first;
+			MatchTool::fuzzy_match(typeName, name.c_str(), score);
+			if (score > 0) fuzzyRes.insert(std::pair<int, std::string>(score, name));
+		}
+
+		for (auto it = fuzzyRes.rbegin(); it != fuzzyRes.rend(); it++)
+			matchList.push_back((*it).second);
+	}
+
+	void Graphics::DrawPostProcessingStack() {
+		static auto stackName = std::string(ICON_MD_CAMERA) + " Post-Processing Stack";
+		ImGui::Checkbox("enablePostStack", &enablePP, true); ImGui::SameLine();
+
+		// add operator to stack
+		if (ImGui::Button(ICON_FA_PLUS, ImVec2(22, 22))) {
+			showList = true;
+			focusKey = true;
+		} ImGui::SameLine();
+
+		// show operator list
+		if (showList) ImGui::SetNextItemOpen(true);
+		if (ImGui::CollapsingHeader(stackName.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
+			if (showList) ListEffects();
+			for (int i = 0; i < postStack.size(); i++) {
+				ImGui::PushID(i);
+				ImGui::Checkbox("enablePP", &postStack[i]->enabled, true); ImGui::SameLine();
+				ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.192f, 0.192f, 0.192f, 1.0f));
+
+				if (ImGui::CollapsingHeader(postStack[i]->name.c_str(), &postStack[i]->opened, ImGuiTreeNodeFlags_DefaultOpen, i)) {
+					ImGui::Columns(2, "mycolumns");
+					ImGui::SetColumnWidth(-1, 18);
+					ImGui::NextColumn();
+					// content
+					postStack[i]->ListProperties();
+					ImGui::Columns(1);
+				}
+
+				ImGui::PopStyleColor();
+				if (!postStack[i]->opened) {
+					delete postStack[i];
+					Utility::RemoveElem(postStack, postStack[i]);
+					ImGui::PopID();
+					break;
+				}
+				ImGui::PopID();
+			}
+		}
+	}
+
+	void Graphics::ListEffects() {
+		if (showList) {
+			ImVec2 position = ImGui::GetCursorPos();
+			ImVec2 availableSize = ImGui::GetContentRegionAvail();
+			availableSize.y = 20 * std::min(10, (int)(matchList.empty() ? PostFactory::effectList.size() : matchList.size())) + 50;
+			ImGui::BeginChild(
+				"searchFrame",
+				availableSize, true,
+				ImGuiWindowFlags_NoScrollbar |
+				ImGuiWindowFlags_NoScrollWithMouse
+			);
+
+			bool notEmpty = strcmp(buf, "");
+			if (!notEmpty && focusKey) {
+				focusKey = false;
+				ImGui::SetKeyboardFocusHere();
+			}
+			ImGui::SetNextItemWidth(availableSize.x - (notEmpty ? 45 : 15));
+			// if input changes, clear last search result and restart searching
+			if (ImGui::InputTextWithHint("opSearcher", "type and search", buf, IM_ARRAYSIZE(buf))) {
+				matchList.clear();
+				selection = 0;
+				SearchOps_Fuzzy(buf);
+				availableSize.y = 20 * std::min(10, (int)(matchList.empty() ? PostFactory::effectList.size() : matchList.size())) + 50;
+			}
+			if (notEmpty) {
+				ImGui::SameLine();
+				if (ImGui::Button(ICON_FA_TIMES, ImVec2(22, 22))) {
+					sprintf_s(buf, "");
+					matchList.clear();
+					selection = 0;
+				}
+			}
+
+			// loop search result
+			int maxNum = matchList.size() ? matchList.size() : PostFactory::effectList.size();
+			if (MOON_KeyDown(KEY_DOWN) || MOON_KeyRepeat(KEY_DOWN)) {
+				selection++;
+				if (selection >= maxNum) selection = 0;
+			} else if (MOON_KeyDown(KEY_UP) || MOON_KeyRepeat(KEY_UP)) {
+				selection--;
+				if (selection < 0) selection = maxNum - 1;
+			}
+
+			// showing search result
+			if (ImGui::ListBoxHeader("opList", ImVec2(availableSize.x - 15, availableSize.y - 45))) {
+				if (!matchList.empty()) {
+					for (int i = 0; i < matchList.size(); i++) {
+						if (selection == i && (MOON_KeyDown(KEY_DOWN) || MOON_KeyDown(KEY_UP)))
+							ImGui::SetScrollHereY();
+
+						ImGui::Selectable(matchList[i].c_str(), selection == i);
+						if (ImGui::IsItemClicked() || (selection == i && MOON_KeyDown(KEY_ENTER))) {
+							postStack.push_back(PostFactory::Instantiate(matchList[i]));
+							matchList.clear();
+							showList = false;
+							sprintf_s(buf, "");
+							break;
+						}
+					}
+				} else if (notEmpty) {
+					ImGui::Selectable("no result", false, ImGuiSelectableFlags_Disabled);
+				} else {
+					int loop = 0;
+					for (auto lower = PostFactory::effectList.begin(); lower != PostFactory::effectList.end(); lower++) {
+						if (selection == loop && (MOON_KeyDown(KEY_DOWN) || MOON_KeyDown(KEY_UP)))
+							ImGui::SetScrollHereY();
+
+						ImGui::Selectable((*lower).first.c_str(), selection == loop);
+						if (ImGui::IsItemClicked() || (selection == loop++ && MOON_KeyDown(KEY_ENTER))) {
+							postStack.push_back(PostFactory::Instantiate((*lower).first));
+							showList = false;
+							sprintf_s(buf, "");
+						}
+					}
+				}
+				ImGui::ListBoxFooter();
+			}
+
+			ImGui::EndChild();
+
+			// blocking operations while mouse hovering rect
+			ImVec2 rectmin = ImVec2(
+				position.x + ImGui::GetWindowPos().x,
+				position.y + ImGui::GetWindowPos().y - ImGui::GetScrollY()
+			);
+			if (!ImGui::IsMouseHoveringRect(rectmin,
+				ImVec2(rectmin.x + availableSize.x, rectmin.y + availableSize.y)) &&
+				ImGui::IsAnyMouseDown()) {
+				showList = false;
+				sprintf_s(buf, "");
+				matchList.clear();
+			}
+		}
+	}
+#pragma endregion
+
+#pragma region pipeline_implementation
 	void Graphics::SetShadingMode(ShadingMode shading) {
 		Graphics::shading = shading;
 		if (shading == ShadingMode::WIRE) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -38,6 +214,7 @@ namespace MOON {
 	}
 
 	void Graphics::DrawSceneView(SceneView view) {
+		MOON_DrawTarget = view;
 		auto buffer = MOON_TextureManager::SCENEBUFFERS[view];
 		if (buffer->width == -1) return;
 
@@ -105,6 +282,8 @@ namespace MOON {
 		/// disable anti-aliasing
 		glDisable(GL_LINE_SMOOTH);
 		glDisable(GL_BLEND);
+
+		if (Graphics::shading != WIRE && enablePP) ApplyPostStack(buffer);
 		glViewport(0, 0, MOON_WndSize.x, MOON_WndSize.y);
 	}
 
@@ -176,15 +355,18 @@ namespace MOON {
 
 	void Graphics::DrawCameras() {
 		for (auto &obj : MOON_CameraManager::itemMap) {
-			Gizmo::DrawPointDirect(obj.second->transform.position, Color::RED(), 6.0f);
+			if (obj.second->visible) obj.second->Draw();
 		}
 	}
 
 	void Graphics::DrawSky() {
 		if (MOON_Enviroment == env_hdri && shading != WIRE) {
-			glDepthMask(GL_FALSE);
 			MOON_ModelManager::skyDome->transform.position = MOON_ActiveCamera->transform.position;
-			MOON_ModelManager::skyDome->Draw();
+
+			glDepthMask(GL_FALSE);
+			auto shader = MOON_ShaderManager::GetItem("EnvSphere"); shader->use();
+			shader->setTexture("HDRI", MOON_TextureManager::HDRI, 0);
+			MOON_ModelManager::skyDome->Draw(shader);
 			glDepthMask(GL_TRUE);
 		}
 	}
@@ -205,7 +387,7 @@ namespace MOON {
 				if (Graphics::shading == ShadingMode::WIRE)
 					MOON_ShaderManager::lineShader->setVec4("lineColor", obj.second->wireColor);
 				obj.second->DrawDeliver(overrideShader);
-				if (SceneManager::debug) DEBUG::DrawBBox(obj.second);
+				if (SceneManager::debug) DEBUG::DrawBBox(obj.second->bbox);
 			}
 		}
 		if (Graphics::shading == ShadingMode::DEFWIRE) {
@@ -265,13 +447,52 @@ namespace MOON {
 		}
 		glDisable(GL_STENCIL_TEST);
 	}
+#pragma endregion
 
-	void Graphics::DrawDeferredShading() {
+#pragma region deferred_functions
+	void Graphics::Blit(FrameBuffer*& src, FrameBuffer*& dst, const Shader* shader) {
+
+	}
+
+	void Graphics::ApplyPostStack(FrameBuffer*& buffer) {
+		for (auto& fx : postStack) if (fx->enabled) ApplyPostProcessing(buffer, fx);
+	}
+
+	void Graphics::ApplyPostProcessing(FrameBuffer*& buffer, PostProcessing* renderer) {
+		if (!quadVAO) ConfigureScreenQuad();
+
 		glDisable(GL_DEPTH_TEST);
-		MOON_ShaderManager::screenBufferShader->use();
+		glViewport(0, 0, buffer->width, buffer->height);
+
+		renderer->shader->use();
+		renderer->shader->setTexture("screenBuffer", buffer, 0);
+		renderer->ConfigureProps();
+
+		glBindFramebuffer(GL_FRAMEBUFFER, buffer->fbo);
 		glBindVertexArray(quadVAO);
-		glBindTexture(GL_TEXTURE_2D, MOON_TextureManager::IDLUT->localID);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+		glBindVertexArray(0);
+
+		glEnable(GL_DEPTH_TEST);
+		glViewport(0, 0, MOON_WndSize.x, MOON_WndSize.y);
+	}
+
+	void Graphics::ApplyPostProcessing(FrameBuffer*& buffer, const Shader* shader) {
+		if (!quadVAO) ConfigureScreenQuad();
+
+		glDisable(GL_DEPTH_TEST);
+		glViewport(0, 0, buffer->width, buffer->height);
+
+		shader->use();
+		shader->setTexture("screenBuffer", buffer, 0);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, buffer->fbo);
+		glBindVertexArray(quadVAO);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+		glBindVertexArray(0);
+
+		glEnable(GL_DEPTH_TEST);
+		glViewport(0, 0, MOON_WndSize.x, MOON_WndSize.y);
 	}
 
 	void Graphics::ConfigureScreenQuad() {
@@ -281,9 +502,14 @@ namespace MOON {
 		glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
 		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)0);
 		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+	}
+#pragma endregion
+
+	void Graphics::Clear() {
+		Utility::ReleaseVector(postStack);
 	}
 
 }
