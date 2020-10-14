@@ -7,6 +7,26 @@
 #include "FileManager.h"
 
 namespace MOON {
+	enum ColorSpace {
+		Linear,
+		sRGB,
+		Gamma,
+		Cineon,
+		Canon_CLog,
+		AlexaV3LogC,
+		Panalog,
+		PLogLin,
+		RedLog,
+		Sony_SLog,
+		Sony_SLog2,
+		ViperLog,
+		rec709,
+		rec2020,
+		ACES,
+		ACEScg,
+		ColorSpaceLast = ACEScg
+	};
+
 	enum TexType {
 		defaultType,
 		ambient,
@@ -20,14 +40,16 @@ namespace MOON {
 		metallic,
 		translucent,
 		illuminant,
-		alpha
+		alpha,
+		TexTypeLast = alpha
 	};
 
 	enum TexFilter {
 		Nearest,
 		Bilinear,
 		Trilinear,
-		Anisotropic
+		Anisotropic,
+		TexFilterLast = Anisotropic
 	};
 
 	class Texture : public ObjectBase {
@@ -156,8 +178,8 @@ namespace MOON {
 
 		void Reallocate(const int &_width, const int &_height) {
 			DeleteFrameBuffer();
-			this->height = _height;
-			this->width = _width;
+			height = _height;
+			width = _width;
 			CreateFrameBuffer(format);
 		}
 

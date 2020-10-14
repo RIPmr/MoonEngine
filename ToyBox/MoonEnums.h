@@ -1,7 +1,6 @@
 #pragma once
 
 namespace MOON {
-	#define enum_to_string(x)			#x
 	#define ClassOf(obj)				SceneManager::GetType(obj)
 	#define SuperClassOf(obj)			SceneManager::GetSuperClass(SceneManager::GetType(obj))
 

@@ -27,7 +27,7 @@ namespace MOON {
 			PostProcessing(const std::string& name, const std::string& shaderPath);
 			virtual ~PostProcessing() = default;
 
-			virtual void ListProperties() {}
+			virtual bool ListProperties() { return false; }
 			virtual void ConfigureProps() {}
 		};
 
@@ -58,6 +58,7 @@ namespace MOON {
 		static int	selection;
 		static std::vector<PostProcessing*> postStack;
 		static std::vector<std::string>	matchList;
+		static FrameBuffer ppBuffer;
 		#pragma endregion
 
 		// pipeline functions
@@ -77,6 +78,11 @@ namespace MOON {
 
 		// deferred functions
 		static void Blit(FrameBuffer*& src, FrameBuffer*& dst, const Shader* shader);
+
+		static void ApplyPostProcessing(FrameBuffer*& src, FrameBuffer*& dst, const Shader* shader);
+		static void ApplyPostProcessing(FrameBuffer*& src, FrameBuffer*& dst, PostProcessing* renderer);
+		static void ApplyPostStack(FrameBuffer*& src, FrameBuffer*& dst);
+
 		static void ApplyPostProcessing(FrameBuffer*& buffer, const Shader* shader);
 		static void ApplyPostProcessing(FrameBuffer*& buffer, PostProcessing* renderer);
 		static void ApplyPostStack(FrameBuffer*& buffer);

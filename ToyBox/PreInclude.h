@@ -124,7 +124,6 @@ bool MainUI::show_explorer_window			= true;
 bool MainUI::show_scene_window				= true;
 
 bool MainUI::show_demo_window				= false;
-bool MainUI::show_VFB_window				= false;
 bool MainUI::show_preference_window			= false;
 bool MainUI::show_about_window				= false;
 
@@ -208,7 +207,6 @@ unsigned int MOON_InputManager::hoverID			= MOON_UNSPECIFIEDID;
 Shader* MOON_ShaderManager::lineShader			= MOON_UNSPECIFIEDID;
 Shader* MOON_ShaderManager::outlineShader		= MOON_UNSPECIFIEDID;
 Shader* MOON_ShaderManager::overlayShader		= MOON_UNSPECIFIEDID;
-Shader* MOON_ShaderManager::screenBufferShader	= MOON_UNSPECIFIEDID;
 Material* MOON_MaterialManager::defaultMat		= MOON_UNSPECIFIEDID;
 FrameBuffer* MOON_TextureManager::SHADOWMAP		= MOON_UNSPECIFIEDID;
 FrameBuffer* MOON_TextureManager::IDLUT			= MOON_UNSPECIFIEDID;
@@ -265,10 +263,15 @@ MObject* HotKeyManager::globalEditTarget		= nullptr;
 unsigned int BVH::divisionAxis					= 0;
 
 // regist post-processing effects
-std::map<std::string, EffectCreator> PostFactory::effectList;
+std::map<std::string, EffectCreator>			  PostFactory::effectList;
 REGIST_POST_EFFECT(ScreenSpaceReflection);
+REGIST_POST_EFFECT(ColorSpaceConverter);
+REGIST_POST_EFFECT(ColorCorrection);
 REGIST_POST_EFFECT(ToneMapping);
 REGIST_POST_EFFECT(Exposure);
-REGIST_POST_EFFECT(Bloom);
+REGIST_POST_EFFECT(Levels);
 REGIST_POST_EFFECT(Curve);
+REGIST_POST_EFFECT(Bloom);
+REGIST_POST_EFFECT(Flare);
 REGIST_POST_EFFECT(SSAO);
+REGIST_POST_EFFECT(FXAA);

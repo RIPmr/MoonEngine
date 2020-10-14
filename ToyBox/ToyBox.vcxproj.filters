@@ -273,6 +273,9 @@
     <ClCompile Include="PostFactory.cpp">
       <Filter>SourceFiles\Component</Filter>
     </ClCompile>
+    <ClCompile Include="VFB.cpp">
+      <Filter>SourceFiles\Component\RABBIT</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Vector3.h">
@@ -566,6 +569,9 @@
     <ClInclude Include="PostEffects.h">
       <Filter>HeadFiles\Component</Filter>
     </ClInclude>
+    <ClInclude Include="VFB.h">
+      <Filter>HeadFiles\Component\RABBIT</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -652,6 +658,21 @@
     </None>
     <None Include="ScreenBuffer.fs">
       <Filter>Shaders\PostProcessing\ScreenBuffer</Filter>
+    </None>
+    <None Include="FXAA.fs">
+      <Filter>Shaders\PostProcessing</Filter>
+    </None>
+    <None Include="Flare.fs">
+      <Filter>Shaders\PostProcessing</Filter>
+    </None>
+    <None Include="Levels.fs">
+      <Filter>Shaders\PostProcessing</Filter>
+    </None>
+    <None Include="ColorCorrection.fs">
+      <Filter>Shaders\PostProcessing</Filter>
+    </None>
+    <None Include="ColorSpace.fs">
+      <Filter>Shaders\PostProcessing</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

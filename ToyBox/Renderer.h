@@ -15,6 +15,7 @@
 #include <conio.h>
 
 #include "BVH.h"
+#include "VFB.h"
 #include "Vector2.h"
 #include "Utility.h"
 #include "Hitable.h"
@@ -44,7 +45,7 @@ namespace MOON {
 		static float aspect;
 		static Vector2 OUTPUT_SIZE;
 		static GLubyte *matPrevImage;
-		static GLfloat *outputImage;
+		static GLfloat *outputRAW;
 		static FrameBuffer* output;
 		//static GLuint outputTexID;
 
@@ -75,6 +76,7 @@ namespace MOON {
 		static void SetOutputSize(unsigned int width, unsigned int height);
 
 		static void Clear() {
+			VFB::Clear();
 			if (output != nullptr) delete output;
 		}
 

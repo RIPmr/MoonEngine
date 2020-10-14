@@ -77,6 +77,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>.\opengl\include;.\glm;.\assimp;.\assimp\include;.\imgui;..\packages\Pre-built.2\include;..\packages\Pre-built.2\dll\x64;$(IncludePath)</IncludePath>
     <LibraryPath>.\opengl\lib;.\assimp\lib;E:\Workspaces\VS\ToyBox\ToyBox\opengl\lib\x64\Debug;E:\Workspaces\VS\ToyBox\ToyBox\opengl\lib\x64\Release;..\packages\Pre-built.2\lib\x64;E:\Workspaces\VS\ToyBox\ToyBox\opengl\lib;.\opengl\lib\x64\Debug;$(LibraryPath)</LibraryPath>
+    <IntDir>D:\vsTmp</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -189,6 +190,7 @@
     <ClCompile Include="Vector2.cpp" />
     <ClCompile Include="Vector3.cpp" />
     <ClCompile Include="Vector4.cpp" />
+    <ClCompile Include="VFB.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Bone.h" />
@@ -285,6 +287,7 @@
     <ClInclude Include="Vector3.h" />
     <ClInclude Include="ObjectBase.h" />
     <ClInclude Include="Vector4.h" />
+    <ClInclude Include="VFB.h" />
     <ClInclude Include="Volume.h" />
     <ClInclude Include="WideNDeep.h" />
     <ClInclude Include="WinDiagHandler.h" />
@@ -292,14 +295,19 @@
   <ItemGroup>
     <None Include="BlinnPhong.fs" />
     <None Include="Bloom.fs" />
+    <None Include="ColorCorrection.fs" />
+    <None Include="ColorSpace.fs" />
     <None Include="ConstColor.fs" />
     <None Include="ConstColor.vs" />
     <None Include="Curve.fs" />
     <None Include="EnvSphere.fs" />
     <None Include="EnvSphere.vs" />
     <None Include="Exposure.fs" />
+    <None Include="Flare.fs" />
     <None Include="Flat.fs" />
     <None Include="Flat.vs" />
+    <None Include="FXAA.fs" />
+    <None Include="Levels.fs" />
     <None Include="Outline.fs" />
     <None Include="Outline.vs" />
     <None Include="packages.config" />

@@ -122,7 +122,7 @@ namespace MOON {
 		auto right = transform.GetLocalAxis(RIGHT);
 		auto up = transform.GetLocalAxis(UP);
 
-		float focus_dist = forward.magnitude();
+		float focus_dist = (tarPos - transform.position).magnitude();
 		lower_left_corner = transform.position - focus_dist * (half_width * right + half_height * up - forward);
 
 		horizontal = aspect * half_width * focus_dist * right;
@@ -284,7 +284,7 @@ namespace MOON {
 			UpdateMatrix();
 		}
 		if (isortho) {
-			ImGui::SameLine(); SwitchButton(ICON_FA_LOCK, ICON_FA_LOCK, lockSize);
+			ImGui::SameLine(); ButtonEx::SwitchButton(ICON_FA_LOCK, ICON_FA_LOCK, lockSize);
 
 			ImGui::Text("ScrSize"); ImGui::SameLine(80.0f);
 			if (lockSize) {

@@ -2,7 +2,7 @@
 //#define MOON_DEBUG_MODE
 
 // global settings ------------------------------------------------
-const char *title = "MoonEngine - v0.10 WIP";
+const char *title = "MoonEngine - v0.12 WIP";
 
 Vector2 MOON_WndSize = Vector2(1600, 900);
 Vector2 MOON_ScrSize = Vector2(800, 450);
@@ -61,8 +61,11 @@ int main() {
 	sp->transform.Translate(Vector3::WORLD(UP));
 	sp->transform.Rotate(Quaternion(Vector3(0, 90, 0)));
 
+	Graphics::enviroment = env_hdri;
+	Graphics::postStack.push_back(new ToneMapping());
+
 	// duplicate random spheres
-	/*for (int i = 0; i < 10; i++) {
+	/*for (int i = 0; i < 3; i++) {
 		Model* dup = MOON_ModelManager::CreateSmartMesh(SmartMesh::sphere, "sphere_" + std::to_string(i));
 		dup->transform.Translate(Vector3(
 			MoonMath::RandomRange(-10, 10),
@@ -419,9 +422,11 @@ void MOON_GenerateGround(const float &space, const int &gridCnt) {
 
 void MOON_DrawMainUI() {
 	MainUI::ShowDockSpace(true);
+	if (VFB::show)						VFB::Draw();
+	if (MainUI::show_ribbon)			MainUI::RibbonBar();
+	if (MainUI::show_timeline)			MainUI::ShowTimeline();
 	if (MainUI::show_control_window)	MainUI::ControlPanel();
 	if (MainUI::show_preference_window)	MainUI::PreferencesWnd();
-	if (MainUI::show_VFB_window)		MainUI::ShowVFB();
 	if (MainUI::show_about_window)		MainUI::AboutWnd();
 	if (MainUI::show_scene_window)		MainUI::SceneWnd();
 	if (MainUI::show_inspector_window)	MainUI::InspectorWnd();
@@ -429,10 +434,8 @@ void MOON_DrawMainUI() {
 	if (MainUI::show_console_window)	MainUI::ConsoleWnd();
 	if (MainUI::show_project_window)	MainUI::ProjectWnd();
 	if (MainUI::show_create_window)		MainUI::CreateWnd();
-	if (MainUI::show_ribbon)			MainUI::RibbonBar();
 	if (MainUI::show_enviroment_editor) MainUI::EnviromentWnd();
 	if (MainUI::show_code_editor)		MainUI::CodeEditor();
-	if (MainUI::show_timeline)			MainUI::ShowTimeline();
 	if (MainUI::show_material_editor)	MainUI::MaterialEditorWnd();
 	if (MainUI::show_render_setting)	MainUI::RenderSettingWnd();
 	if (MainUI::show_profiler)			MainUI::Profiler();
@@ -443,17 +446,7 @@ void MOON_DrawMainUI() {
 
 	// update output image realtime while rendering
 	if (Renderer::progress && !Renderer::prevInQueue) {
-		//glBindTexture(GL_TEXTURE_2D, Renderer::outputTexID);
-		glBindTexture(GL_TEXTURE_2D, MOON_OutputTexID);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, MOON_OutputSize.x, 
-			MOON_OutputSize.y, 0, GL_RGB, GL_FLOAT, Renderer::outputImage);
-		if (Graphics::enablePP) {
-			auto shading = Graphics::shading;
-			Graphics::SetShadingMode(DEFAULT);
-			Graphics::ApplyPostStack(Renderer::output);
-			glBindFramebuffer(GL_FRAMEBUFFER, 0);
-			Graphics::SetShadingMode(shading);
-		}
+		VFB::UpdateOutput();
 		if (Renderer::progress < 0) {
 			Renderer::progress = 0;
 			glBindTexture(GL_TEXTURE_2D, 0);

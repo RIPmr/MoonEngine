@@ -126,7 +126,8 @@ namespace MOON {
 		roughness = 0.0f; glossiness = 0.0f; IOR = 1.33f; fogW = 0.0f;
 		dispW = 1.0f; anisotropy = 0.0f; an_rotation = 0.0f;
 
-		shader = MOON_ShaderManager::CreateShader("BlinnPhong", "SimplePhong.vs", "BlinnPhong.fs");
+		//shader = MOON_ShaderManager::CreateShader("BlinnPhong", "SimplePhong.vs", "BlinnPhong.fs");
+		shader = MOON_ShaderManager::CreateShader("PBR", "PBR.vs", "PBR.fs");
 	}
 
 	MoonMtl::MoonMtl(const std::string &name) : Material(name) {
@@ -139,7 +140,8 @@ namespace MOON {
 		roughness = 0.0f; glossiness = 0.0f; IOR = 1.33f; fogW = 0.0f;
 		dispW = 1.0f; anisotropy = 0.0f; an_rotation = 0.0f;
 
-		shader = MOON_ShaderManager::CreateShader("BlinnPhong", "SimplePhong.vs", "BlinnPhong.fs");
+		//shader = MOON_ShaderManager::CreateShader("BlinnPhong", "SimplePhong.vs", "BlinnPhong.fs");
+		shader = MOON_ShaderManager::CreateShader("PBR", "PBR.vs", "PBR.fs");
 	}
 
 	MoonMtl::~MoonMtl() {

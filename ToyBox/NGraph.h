@@ -196,7 +196,7 @@ namespace MOON {
 
 				ImGui::SetCursorPos(gap);
 				ImGui::BeginGroup();
-				SwitchButton(ICON_FA_PAUSE, ICON_FA_PLAY, isPlay, btnSize);
+				ButtonEx::SwitchButton(ICON_FA_PAUSE, ICON_FA_PLAY, isPlay, btnSize);
 				ImGui::SameLine();
 				if (ImGui::Button(ICON_FA_STEP_FORWARD, btnSize)) {
 					if (currentStep < epoch) {

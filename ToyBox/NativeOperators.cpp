@@ -43,31 +43,31 @@ namespace MOON {
 						int& editMode = GetSingle(0);
 						ImGui::Text("Element:");
 						#pragma region buttons
-						SwitchButtonEx(
+						ButtonEx::SwitchButtonEx(
 							ICON_MD_GRAIN, ICON_MD_GRAIN, editMode == VERT,
 							[&editMode]() -> void { editMode = -1; HotKeyManager::state = FREE; MOON_EditTarget = nullptr; },
 							[&editMode, &node]() -> void { editMode = VERT; MOON_EditElem = VERT; MOON_EditTarget = node->processed; },
 							ImVec2(22, 20)
 						); ImGui::SameLine();
-						SwitchButtonEx(
+						ButtonEx::SwitchButtonEx(
 							ICON_MD_SHOW_CHART, ICON_MD_SHOW_CHART, editMode == EDGE,
 							[&editMode]() -> void { editMode = -1; HotKeyManager::state = FREE; MOON_EditTarget = nullptr; },
 							[&editMode, &node]() -> void { editMode = EDGE;  MOON_EditElem = EDGE; MOON_EditTarget = node->processed; },
 							ImVec2(22, 20)
 						); ImGui::SameLine();
-						SwitchButtonEx(
+						ButtonEx::SwitchButtonEx(
 							ICON_MD_MULTILINE_CHART, ICON_MD_MULTILINE_CHART, editMode == LOOP,
 							[&editMode]() -> void { editMode = -1; HotKeyManager::state = FREE; MOON_EditTarget = nullptr; },
 							[&editMode, &node]() -> void { editMode = LOOP;  MOON_EditElem = LOOP; MOON_EditTarget = node->processed; },
 							ImVec2(22, 20)
 						); ImGui::SameLine();
-						SwitchButtonEx(
+						ButtonEx::SwitchButtonEx(
 							ICON_MD_SIGNAL_CELLULAR_NULL, ICON_MD_SIGNAL_CELLULAR_NULL, editMode == FACE,
 							[&editMode]() -> void { editMode = -1; HotKeyManager::state = FREE; MOON_EditTarget = nullptr; },
 							[&editMode, &node]() -> void { editMode = FACE;  MOON_EditElem = FACE; MOON_EditTarget = node->processed; },
 							ImVec2(22, 20)
 						); ImGui::SameLine();
-						SwitchButtonEx(
+						ButtonEx::SwitchButtonEx(
 							ICON_MD_WIDGETS, ICON_MD_WIDGETS, editMode == ELEM,
 							[&editMode]() -> void { editMode = -1; HotKeyManager::state = FREE; MOON_EditTarget = nullptr; },
 							[&editMode, &node]() -> void { editMode = ELEM;  MOON_EditElem = ELEM; MOON_EditTarget = node->processed; },

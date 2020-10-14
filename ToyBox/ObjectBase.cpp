@@ -171,7 +171,7 @@ namespace MOON {
 		if (transform.parent != nullptr) {
 			float width = ImGui::GetContentRegionAvailWidth(); width /= 4.0f;
 			ImGui::SameLine(ImGui::GetCursorPosX() + width * 3.0f);
-			SwitchButton("Local", "World", isLocal, ImVec2(width, 22));
+			ButtonEx::SwitchButton("Local", "World", isLocal, ImVec2(width, 22));
 			if (isLocal) {
 				ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.5, 0.5, 0.8, 1));
 				euler = transform.localRotation.eulerAngles;

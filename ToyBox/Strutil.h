@@ -7,7 +7,14 @@
 #include <string>
 #include <vector>
 
+#define loopEnum(item, type)		for(type item = (type)0; item <= type::type##Last; item = (type)(item+1))
+#define enum_to_string(x)			Strutil::rslice(#x, ':')
+
 namespace Strutil {
+
+	static std::string rslice(const std::string& str, const char& slicer) {
+		return str.substr(str.rfind(slicer) + 1);
+	}
 
 	template <typename T>
 	static std::string to_string_precision(const T a_value, const int precision = 6, const int width = 6) {

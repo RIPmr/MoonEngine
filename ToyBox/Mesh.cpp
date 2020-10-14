@@ -46,14 +46,40 @@ namespace MOON {
 		shader->setMat4("view", MOON_ActiveCamera->view);
 		shader->setMat4("projection", MOON_ActiveCamera->projection);
 
-		shader->setVec3("lightColor", Vector3(1.0, 1.0, 1.0));
-		shader->setVec3("lightPos", MOON_ActiveCamera->transform.position);
-		shader->setVec3("viewPos", MOON_ActiveCamera->transform.position);
-		shader->setBool("isHovered", hovered);
-		shader->setBool("isSelected", selected);
+		//shader->setVec3("lightColor", Vector3(1.0, 1.0, 1.0));
+		//shader->setVec3("lightPos", MOON_ActiveCamera->transform.position);
+		//shader->setVec3("viewPos", MOON_ActiveCamera->transform.position);
+		//shader->setBool("isHovered", hovered);
+		//shader->setBool("isSelected", selected);
+
+		// PBR props ----------------------
+		Vector3 lightPositions[] = {
+			Vector3(-10.0f,  10.0f, 10.0f),
+			Vector3(10.0f,  10.0f, 10.0f),
+			Vector3(-10.0f, -10.0f, 10.0f),
+			Vector3(10.0f, -10.0f, 10.0f),
+		};
+		Vector3 lightColors[] = {
+			Vector3(300.0f, 300.0f, 300.0f),
+			Vector3(300.0f, 300.0f, 300.0f),
+			Vector3(300.0f, 300.0f, 300.0f),
+			Vector3(300.0f, 300.0f, 300.0f)
+		};
+		shader->setVec3("camPos", MOON_ActiveCamera->transform.position);
+
+		shader->setVec3("albedo", 0.5f, 0.0f, 0.0f);
+		shader->setFloat("ao", 1.0f);
+		shader->setFloat("metallic", 0.0f);
+		shader->setFloat("roughness", 0.1f);
+
+		for (unsigned int i = 0; i < sizeof(lightPositions) / sizeof(lightPositions[0]); ++i) {
+			shader->setVec3("lightPositions[" + std::to_string(i) + "]", lightPositions[i]);
+			shader->setVec3("lightColors[" + std::to_string(i) + "]", lightColors[i]);
+		}
+		// -------------------------------
 
 		// material prop configuration
-		material->SetShaderProps(shader);
+		//material->SetShaderProps(shader);
 
 		// draw mesh
 		if (!VAO) SetupMesh();

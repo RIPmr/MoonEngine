@@ -7,7 +7,7 @@ uniform float gamma; // default 2.2
 uniform sampler2D screenBuffer;
 uniform sampler2D FilmLut;
 
-float a = 2.51f, b = 0.03f, c = 2.43f, d = 0.59f, e = 0.14f;
+float a = 2.51, b = 0.03, c = 2.43, d = 0.59, e = 0.14;
 float A = 0.15, B = 0.50, C = 0.10, D = 0.20, E = 0.02, F = 0.30, W = 11.2;
 
 vec3 Uncharted2Tonemap(vec3 x) {
@@ -26,10 +26,10 @@ vec3 UnchartedStyleTonemap(vec3 texColor) {
 }
 
 vec3 log10(vec3 x) {
-	return log2(x) / log2(10);
+	return log2(x) / log2(10.0);
 }
 vec3 Cineon(vec3 texColor) {
-   texColor *= 16;  // Hardcoded Exposure Adjustment
+   texColor *= 16.0;  // Hardcoded Exposure Adjustment
 
    vec3 ld = vec3(0.002);
    float linReference = 0.18;
@@ -40,8 +40,8 @@ vec3 Cineon(vec3 texColor) {
    LogColor /= 1023.0;
    LogColor.rgb = clamp(LogColor.rgb, 0.0, 1.0);
       
-   float FilmLutWidth = 256;
-   float Padding = 0.5/FilmLutWidth;
+   float FilmLutWidth = 256.0;
+   float Padding = 0.5 / FilmLutWidth;
       
    //  apply response lookup and color grading for target display
    vec3 retColor;
@@ -70,8 +70,12 @@ void main() {
 		mapped = UnchartedStyleTonemap(hdrColor);
 	}
 
-	// Gamma correction
-	mapped = pow(mapped, vec3(1.0 / gamma));
+	if (type == 4){ // applyLUT
+		// TODO
+	} else {
+		// Gamma correction
+		mapped = pow(mapped, vec3(1.0 / gamma));
+	}
 
     FragColor = vec4(mapped, 1.0);
 }

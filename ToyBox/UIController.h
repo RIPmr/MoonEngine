@@ -53,7 +53,6 @@ namespace MOON {
 		// bool for wnds
 		static bool show_control_window;
 		static bool show_demo_window;
-		static bool show_VFB_window;
 		static bool show_preference_window;
 		static bool show_about_window;
 
@@ -83,6 +82,9 @@ namespace MOON {
 		// class-like wnds
 		static MaterialEditor matEditor;
 		static CodeEditor CEditor;
+
+		// VFB parameters
+		static std::string VFB_History_Path;
 	#pragma endregion
 
 		static void CleanUp() {
@@ -206,11 +208,11 @@ namespace MOON {
 					MainUI::show_enviroment_editor = !MainUI::show_enviroment_editor;
 				}
 				ImGui::Separator();
-				if (ImGui::MenuItem("VFB Window", NULL, MainUI::show_VFB_window)) {
-					MainUI::show_VFB_window = !MainUI::show_VFB_window;
+				if (ImGui::MenuItem("VFB Window", NULL, VFB::show)) {
+					VFB::show = !VFB::show;
 				}
 				if (ImGui::MenuItem("Render", "F9")) {
-					MainUI::show_VFB_window = true;
+					VFB::show = true;
 					Renderer::StartRendering();
 				}
 				if (ImGui::MenuItem("Settings", "F10", MainUI::show_render_setting)) {
@@ -388,26 +390,22 @@ namespace MOON {
 			if (ImGui::InputInt("ref_depth", &rd, 1, 5, 0, true))
 				Renderer::maxReflectionDepth = rd;
 
-			const char* accitems[] = { "NONE", "AABB", "BVH", "BSP", "KDTree" };
+			const static char* accitems[] = { "NONE", "AABB", "BVH", "BSP", "KDTree" };
 			ImGui::AlignTextToFramePadding();
 			ImGui::Text("Ray Acceleration:");
-			ImGui::PushID("accType");
-			ImGui::Combo("", (int*)&Renderer::acc, accitems, IM_ARRAYSIZE(accitems));
-			ImGui::PopID();
+			ButtonEx::ComboNoLabel("accType", (int*)&Renderer::acc, accitems, IM_ARRAYSIZE(accitems));
 
-			const char* filteritems[] = { "Nearest", "Bilinear", "Trilinear", "Anisotropic" };
+			const static char* filteritems[] = { "Nearest", "Bilinear", "Trilinear", "Anisotropic" };
 			ImGui::AlignTextToFramePadding();
 			ImGui::Text("Texture Filter:");
-			ImGui::PushID("filterType");
-			ImGui::Combo("", (int*)&Renderer::filter, filteritems, IM_ARRAYSIZE(filteritems));
-			ImGui::PopID();
+			ButtonEx::ComboNoLabel("filterType", (int*)&Renderer::filter, filteritems, IM_ARRAYSIZE(filteritems));
 
 			ImGui::Checkbox("Depth of field ", &Renderer::depth);
 			ImGui::Checkbox("Motion blur ", &Renderer::motion);
 
 			ImGui::Spacing();
 			if (ImGui::Button("Rendering")) {
-				MainUI::show_VFB_window = true;
+				VFB::show = true;
 				Renderer::StartRendering();
 			}
 
@@ -446,11 +444,8 @@ namespace MOON {
 					const char* items[] = { "MSAA", "TAA", "SRAA" };
 					ImGui::AlignTextToFramePadding();
 					ImGui::Text("Type"); ImGui::SameLine(80);
-					ImGui::PushID("Type");
-					if (ImGui::Combo("", (int*)&Graphics::AAType, items, IM_ARRAYSIZE(items))) {
+					ButtonEx::ComboNoLabel("aaType", (int*)&Graphics::AAType, items, IM_ARRAYSIZE(items));
 
-					}
-					ImGui::PopID();
 					ImGui::Unindent(10.0f);
 					ImGui::Separator();
 
@@ -531,6 +526,7 @@ namespace MOON {
 				MOON_ActiveView = view;
 				MOON_ActiveCamera = MOON_SceneCameras[view];
 				MOON_MousePos.setValue(-2, -2);
+				SceneManager::SetWndSize(wndSize.x, wndSize.y, view);
 			}
 			if (focus) ImGui::SetWindowFocus();
 			DrawScene(wndSize, view);
@@ -643,70 +639,6 @@ namespace MOON {
 			SplitSceneWnd("persp", persp, docked, switchControl);
 		}
 
-		static void ShowVFB() {
-			ImGui::SetNextWindowSize(ImVec2(MOON_OutputSize.x < 100 ? 100 : MOON_OutputSize.x + 18,
-				MOON_OutputSize.y < 100 ? 100 : MOON_OutputSize.y + 115));
-
-			ImGui::Begin(Icon_Name_To_ID(ICON_FA_FILM, " VFB"), &MainUI::show_VFB_window, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize);
-
-			auto rightCorner = ImGui::GetContentRegionAvailWidth() - 22;
-			ImGui::Button(ICON_FA_CLOCK_O, ImVec2(22, 22)); ImGui::SameLine();
-			ImGui::Text(u8"|"); ImGui::SameLine();
-			ImGui::Button(ICON_FA_OBJECT_GROUP, ImVec2(22, 22)); ImGui::SameLine();
-			ImGui::Button(ICON_FA_ADJUST, ImVec2(22, 22)); ImGui::SameLine();
-			ImGui::Button(ICON_FA_COG, ImVec2(22, 22));
-			ImGui::SameLine(rightCorner);
-			if (ImGui::Button(ICON_FA_CAMERA, ImVec2(22, 22))) {
-				Renderer::StartRendering();
-			}
-			ImGui::Separator();
-			
-			std::string sep = Renderer::timeStamp._Equal("") ? "" : " | ";
-			ImGui::Text((
-				u8"%.0f ¡Á %.0f" + sep +
-				Renderer::timeStamp).c_str(), 
-				MOON_OutputSize.x, MOON_OutputSize.y
-			);
-
-			ImVec2 pos = ImGui::GetCursorScreenPos();
-			ImVec2 mousePos = ImGui::GetMousePos();
-			if (MOON_OutputTexID != -1)
-				ImGui::Image((void*)(intptr_t)MOON_OutputTexID, ImVec2(MOON_OutputSize.x, MOON_OutputSize.y));
-
-			if (ImGui::IsItemHovered() && ImGui::IsMouseDown(1)) {
-				ImGui::BeginTooltip();
-				float region_sz = 32.0f, zoom = 4.0f;
-				Vector2 region(mousePos.x - pos.x - region_sz * 0.5f, mousePos.y - pos.y - region_sz * 0.5f);
-				region.x = MoonMath::clamp(region.x, 0, MOON_OutputSize.x - region_sz);
-				region.y = MoonMath::clamp(region.y, 0, MOON_OutputSize.y - region_sz);
-
-				ImGui::Text("Min: (%.2f, %.2f)", region.x, region.y);
-				ImGui::Text("Max: (%.2f, %.2f)", region.x + region_sz, region.y + region_sz);
-				ImVec2 uv0 = ImVec2(region.x / MOON_OutputSize.x, region.y / MOON_OutputSize.y);
-				ImVec2 uv1 = ImVec2((region.x + region_sz) / MOON_OutputSize.x, (region.y + region_sz) / MOON_OutputSize.y);
-				ImGui::Image((void*)(intptr_t)MOON_OutputTexID, ImVec2(region_sz * zoom, region_sz * zoom), uv0, uv1, ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.5f));
-				ImGui::EndTooltip();
-			}
-			if (Renderer::progress > 0 && !Renderer::prevInQueue) {
-				if (ImGui::Button("Abort")) {
-					Renderer::isAbort = true;
-				}
-				ImGui::SameLine();
-				ImGui::ProgressBar(Renderer::progress);
-			}
-			if (Renderer::end != -1) {
-				float timeInSec = (float)(Renderer::end - Renderer::start) / CLOCKS_PER_SEC;
-				int timeInMin = timeInSec / 60.0f;
-				if (timeInMin > 0) {
-					timeInSec -= timeInMin * 60.0f;
-					ImGui::Text("Total time: %d m: %.1f s", timeInMin, timeInSec);
-				} else {
-					ImGui::Text("Total time: %.3f s", timeInSec);
-				}
-			}
-			ImGui::End();
-		}
-
 		static void AboutWnd() {
 			if (logo == NULL) logo = MOON_TextureManager::GetItem("moon_logo");
 
@@ -765,17 +697,17 @@ namespace MOON {
 			ImGui::SetColumnWidth(-1, 32);
 			ImGui::BeginChild("categories", ImVec2(25, 0), false, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 			//ImGui::Checkbox("All", &showAll);
-			SwitchButton("A", "N", showAll, ImVec2(22, 22));
+			ButtonEx::SwitchButton("A", "N", showAll, ImVec2(22, 22));
 
-			SwitchButton(ICON_FA_CUBE, ICON_FA_CUBE, showModel);
-			SwitchButton(ICON_FA_GLOBE, ICON_FA_GLOBE, showMat);
-			SwitchButton(ICON_FA_FILE_IMAGE_O, ICON_FA_FILE_IMAGE_O, showTex);
-			SwitchButton(ICON_FA_LIGHTBULB_O, ICON_FA_LIGHTBULB_O, showLight);
-			SwitchButton(ICON_FA_VIDEO_CAMERA, ICON_FA_VIDEO_CAMERA, showCam);
-			SwitchButton(ICON_FA_FILE_CODE_O, ICON_FA_FILE_CODE_O, showShader);
-			SwitchButton(ICON_FA_LEMON_O, ICON_FA_LEMON_O, showShape);
-			SwitchButton(ICON_FA_THUMB_TACK, ICON_FA_THUMB_TACK, showHelper);
-			SwitchButton("FX", "FX", showFX);
+			ButtonEx::SwitchButton(ICON_FA_CUBE, ICON_FA_CUBE, showModel);
+			ButtonEx::SwitchButton(ICON_FA_GLOBE, ICON_FA_GLOBE, showMat);
+			ButtonEx::SwitchButton(ICON_FA_FILE_IMAGE_O, ICON_FA_FILE_IMAGE_O, showTex);
+			ButtonEx::SwitchButton(ICON_FA_LIGHTBULB_O, ICON_FA_LIGHTBULB_O, showLight);
+			ButtonEx::SwitchButton(ICON_FA_VIDEO_CAMERA, ICON_FA_VIDEO_CAMERA, showCam);
+			ButtonEx::SwitchButton(ICON_FA_FILE_CODE_O, ICON_FA_FILE_CODE_O, showShader);
+			ButtonEx::SwitchButton(ICON_FA_LEMON_O, ICON_FA_LEMON_O, showShape);
+			ButtonEx::SwitchButton(ICON_FA_THUMB_TACK, ICON_FA_THUMB_TACK, showHelper);
+			ButtonEx::SwitchButton("FX", "FX", showFX);
 
 			ImGui::EndChild();
 			ImGui::NextColumn();
@@ -1031,9 +963,7 @@ namespace MOON {
 			const char* items[] = { "HDRI", "CubeMap", "PureColor", "ProSky" };
 			ImGui::AlignTextToFramePadding();
 			ImGui::Text("Enviroment"); ImGui::SameLine();
-			if (ImGui::Combo("", (int*)&MOON_Enviroment, items, IM_ARRAYSIZE(items))) {
-				
-			}
+			ButtonEx::ComboNoLabel("envType", (int*)&MOON_Enviroment, items, IM_ARRAYSIZE(items));
 
 			if (MOON_Enviroment == EnviromentType::env_pure_color) {
 				ImGui::Text("Pure Color:");
@@ -1163,30 +1093,30 @@ namespace MOON {
 
 			ImGui::Text(u8"|"); ImGui::SameLine();
 
-			RatioButton(ICON_FA_LINK, Gizmo::gizmoMode == GizmoMode::link,
+			ButtonEx::RatioButton(ICON_FA_LINK, Gizmo::gizmoMode == GizmoMode::link,
 				[]() { Gizmo::gizmoMode = GizmoMode::link; }); ImGui::SameLine();
 			ImGui::Button(ICON_FA_CHAIN_BROKEN, ImVec2(22, 22)); ImGui::SameLine();
 
 			ImGui::Text(u8"|"); ImGui::SameLine();
 
-			SwitchButtonEx(ICON_FA_TOGGLE_OFF, ICON_FA_TOGGLE_ON, Gizmo::manipCoord == CoordSys::WORLD,
+			ButtonEx::SwitchButtonEx(ICON_FA_TOGGLE_OFF, ICON_FA_TOGGLE_ON, Gizmo::manipCoord == CoordSys::WORLD,
 						[]() { Gizmo::manipCoord = CoordSys::LOCAL; },
 						[]() { Gizmo::manipCoord = CoordSys::WORLD; }); ImGui::SameLine();
-			SwitchButton(ICON_FA_MAGNET, ICON_FA_MAGNET, HotKeyManager::enableSnap, ImVec2(22, 22)); ImGui::SameLine();
-			SwitchButtonEx(ICON_FA_DOT_CIRCLE_O, ICON_FA_LIFE_RING, Gizmo::gizmoPos == GizmoPos::pivot,
+			ButtonEx::SwitchButton(ICON_FA_MAGNET, ICON_FA_MAGNET, HotKeyManager::enableSnap, ImVec2(22, 22)); ImGui::SameLine();
+			ButtonEx::SwitchButtonEx(ICON_FA_DOT_CIRCLE_O, ICON_FA_LIFE_RING, Gizmo::gizmoPos == GizmoPos::pivot,
 				[]() { Gizmo::gizmoPos = GizmoPos::center; },
 				[]() { Gizmo::gizmoPos = GizmoPos::pivot; });
 			ImGui::SameLine();
 
 			ImGui::Text(u8"|"); ImGui::SameLine();
 
-			RatioButton(ICON_FA_MOUSE_POINTER, Gizmo::gizmoMode == GizmoMode::none,
+			ButtonEx::RatioButton(ICON_FA_MOUSE_POINTER, Gizmo::gizmoMode == GizmoMode::none,
 				[]() { Gizmo::gizmoMode = GizmoMode::none; }); ImGui::SameLine();
-			RatioButton(ICON_FA_ARROWS, Gizmo::gizmoMode == GizmoMode::translate,
+			ButtonEx::RatioButton(ICON_FA_ARROWS, Gizmo::gizmoMode == GizmoMode::translate,
 				[]() { Gizmo::gizmoMode = GizmoMode::translate; }); ImGui::SameLine();
-			RatioButton(ICON_FA_REFRESH, Gizmo::gizmoMode == GizmoMode::rotate,
+			ButtonEx::RatioButton(ICON_FA_REFRESH, Gizmo::gizmoMode == GizmoMode::rotate,
 				[]() { Gizmo::gizmoMode = GizmoMode::rotate; }); ImGui::SameLine();
-			RatioButton(ICON_FA_EXPAND, Gizmo::gizmoMode == GizmoMode::scale,
+			ButtonEx::RatioButton(ICON_FA_EXPAND, Gizmo::gizmoMode == GizmoMode::scale,
 				[]() { Gizmo::gizmoMode = GizmoMode::scale; }); ImGui::SameLine();
 
 			//ImGui::Text(u8"|"); ImGui::SameLine();
@@ -1222,10 +1152,10 @@ namespace MOON {
 			if (ImGui::Button(ICON_FA_LIST_ALT, ImVec2(22, 22))) {
 				MainUI::show_render_setting = !MainUI::show_render_setting;
 			} ImGui::SameLine();
-			SwitchButton(ICON_FA_WINDOW_MAXIMIZE, ICON_FA_WINDOW_MAXIMIZE, MainUI::show_VFB_window);
+			ButtonEx::SwitchButton(ICON_FA_WINDOW_MAXIMIZE, ICON_FA_WINDOW_MAXIMIZE, VFB::show);
 			ImGui::SameLine();
 			if (ImGui::Button(ICON_FA_CAMERA, ImVec2(22, 22))) {
-				MainUI::show_VFB_window = true;
+				VFB::show = true;
 				Renderer::StartRendering();
 			} ImGui::SameLine();
 

@@ -62,7 +62,7 @@ namespace MOON {
 				if (item->transform.childs.size()) {
 					if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(0)) MOON_InputManager::Select(item->ID);
 					// drag and drop
-					MakeDragAndDropWidget<MObject>(item, "MObject", (SceneManager::GetTypeIcon(item) + " " + item->name).c_str(),
+					ButtonEx::MakeDragAndDropWidget<MObject>(item, "MObject", (SceneManager::GetTypeIcon(item) + " " + item->name).c_str(),
 						[](MObject* &payload, MObject* &input) -> void { input->transform.SetParent(&payload->transform); });
 
 					ImGui::NextColumn(); ImGui::Text(std::to_string(item->ID).c_str()); ImGui::NextColumn();
@@ -73,7 +73,7 @@ namespace MOON {
 				} else {
 					if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(0)) MOON_InputManager::Select(item->ID);
 					// drag and drop
-					MakeDragAndDropWidget<MObject>(item, "MObject", (SceneManager::GetTypeIcon(item) + " " + item->name).c_str(),
+					ButtonEx::MakeDragAndDropWidget<MObject>(item, "MObject", (SceneManager::GetTypeIcon(item) + " " + item->name).c_str(),
 						[](MObject* &payload, MObject* &input) -> void { input->transform.SetParent(&payload->transform); });
 
 					ImGui::NextColumn(); ImGui::Text(std::to_string(item->ID).c_str()); ImGui::NextColumn();
@@ -103,7 +103,7 @@ namespace MOON {
 						if (ImGui::TreeNodeEx((SceneManager::GetTypeIcon(m) + "  " + iter->first).c_str(), baseFlag)) {
 							if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(0)) MOON_InputManager::Select(m->ID);
 							// drag and drop
-							MakeDragAndDropWidget<MObject>(m, "MObject", (SceneManager::GetTypeIcon(m) + " " + m->name).c_str(),
+							ButtonEx::MakeDragAndDropWidget<MObject>(m, "MObject", (SceneManager::GetTypeIcon(m) + " " + m->name).c_str(),
 								[](MObject* &payload, MObject* &input) -> void { input->transform.SetParent(&payload->transform); });
 
 							ImGui::NextColumn(); ImGui::Text(std::to_string(m->ID).c_str()); ImGui::NextColumn();
@@ -114,7 +114,7 @@ namespace MOON {
 						} else {
 							if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(0)) MOON_InputManager::Select(m->ID);
 							// drag and drop
-							MakeDragAndDropWidget<MObject>(m, "MObject", (SceneManager::GetTypeIcon(m) + " " + m->name).c_str(),
+							ButtonEx::MakeDragAndDropWidget<MObject>(m, "MObject", (SceneManager::GetTypeIcon(m) + " " + m->name).c_str(),
 								[](MObject* &payload, MObject* &input) -> void { input->transform.SetParent(&payload->transform); });
 
 							ImGui::NextColumn(); ImGui::Text(std::to_string(m->ID).c_str()); ImGui::NextColumn();
@@ -124,7 +124,7 @@ namespace MOON {
 					if (ImGui::TreeNodeEx((SceneManager::GetTypeIcon(iter->second) + "  " + iter->first).c_str(), baseFlag | ImGuiTreeNodeFlags_Leaf)) {
 						if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(0)) MOON_InputManager::Select(iter->second->ID);
 						// drag and drop
-						MakeDragAndDropWidget(iter->second, SceneManager::GetType(iter->second).c_str(), 
+						ButtonEx::MakeDragAndDropWidget(iter->second, SceneManager::GetType(iter->second).c_str(), 
 							(SceneManager::GetTypeIcon(iter->second) + " " + iter->second->name).c_str());
 
 						ImGui::NextColumn(); ImGui::Text(GetIDText(iter->second).c_str()); ImGui::NextColumn();
@@ -132,7 +132,7 @@ namespace MOON {
 					} else {
 						if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(0)) MOON_InputManager::Select(iter->second->ID);
 						// drag and drop
-						MakeDragAndDropWidget(iter->second, SceneManager::GetType(iter->second).c_str(),
+						ButtonEx::MakeDragAndDropWidget(iter->second, SceneManager::GetType(iter->second).c_str(),
 							(SceneManager::GetTypeIcon(iter->second) + " " + iter->second->name).c_str());
 
 						ImGui::NextColumn(); ImGui::Text(GetIDText(iter->second).c_str()); ImGui::NextColumn();
@@ -414,14 +414,15 @@ namespace MOON {
 		}
 
 		static void SetWndSize(unsigned int width, unsigned int height, SceneView view) {
-			if (view == MOON_ActiveView) {
-				SCR_SIZE.setValue(width, height);
-				aspect = (float)width / height;
-			}
-			MOON_SceneCameras[view]->aspect = aspect;
+			MOON_SceneCameras[view]->aspect = (float)width / height;
 			MOON_SceneCameras[view]->width = width / 25.0f;
 			MOON_SceneCameras[view]->height = height / 25.0f;
 			MOON_SceneCameras[view]->UpdateMatrix();
+
+			if (view == MOON_ActiveView) {
+				MOON_ScrSize.setValue(width, height);
+				aspect = MOON_SceneCameras[view]->aspect;
+			}
 		}
 
 		static void PrintAllObjects() {
@@ -447,7 +448,7 @@ namespace MOON {
 				if (ImGui::TreeNodeEx((SceneManager::GetTypeIcon(item) + "  " + item->name).c_str(), baseFlag)) {
 					if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(0)) MOON_InputManager::Select(item->ID);
 					// drag & drop
-					MakeDragAndDropWidget(item, "MObject", (SceneManager::GetTypeIcon(item) + " " + item->name).c_str());
+					ButtonEx::MakeDragAndDropWidget(item, "MObject", (SceneManager::GetTypeIcon(item) + " " + item->name).c_str());
 
 					ImGui::NextColumn(); ImGui::Text(std::to_string(item->ID).c_str()); ImGui::NextColumn();
 					ImGui::TreePop();
@@ -635,7 +636,7 @@ namespace MOON {
 		static void Init() {
 			TextureManager::LoadImagesForUI();
 			std::cout << "- Images For UI Loaded." << std::endl;
-			TextureManager::LoadHDRI("./Assets/Textures/HDRI/DS360_041_Extra_Ref.hdr");
+			TextureManager::LoadHDRI("./Assets/Textures/HDRI/DS360_041_Extra_Env.hdr");
 			std::cout << "- Default HDRI Loaded." << std::endl;
 			ShaderManager::LoadDefaultShaders();
 			std::cout << "- Default Shaders Loaded." << std::endl;
@@ -878,11 +879,11 @@ namespace MOON {
 			static unsigned int GetIDFromLUT(const Vector2& screenPos) {
 				Vector4 col;
 
-				//glBindFramebuffer(GL_READ_FRAMEBUFFER, TextureManager::IDLUT->fbo);
+				glBindFramebuffer(GL_READ_FRAMEBUFFER, TextureManager::IDLUT->fbo);
 				glReadBuffer(GL_COLOR_ATTACHMENT0);
-				glReadPixels(screenPos.x, MOON_ScrSize.y - screenPos.y - 1, 1, 1, GL_RGBA, GL_FLOAT, &col[0]);
+				glReadPixels(screenPos.x, TextureManager::IDLUT->height - screenPos.y - 1, 1, 1, GL_RGBA, GL_FLOAT, &col[0]);
 				glReadBuffer(GL_NONE);
-				//glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+				glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 
 				hoverID = isHoverUI ? 0 : Color::IDDecoder(col);
 				//std::cout << hoverID << std::endl;
@@ -948,19 +949,18 @@ namespace MOON {
 			static Shader* lineShader;
 			static Shader* overlayShader;
 			static Shader* outlineShader;
-			static Shader* screenBufferShader;
+			//static Shader* screenBufferShader;
 
 			static void LoadDefaultShaders() {
 				//AddItem(new Shader("SimplePhong", "SimplePhong.vs", "SimplePhong.fs"));
 				lineShader = new Shader("ConstColor", "ConstColor.vs", "ConstColor.fs");
 				outlineShader = new Shader("Outline", "Outline.vs", "Outline.fs");
-				screenBufferShader = new Shader("ScreenBuffer", "ScreenBuffer.vs", "ScreenBuffer.fs");
+				//AddItem(new Shader("ScreenBuffer", "ScreenBuffer.vs", "ScreenBuffer.fs"));
 				AddItem(new Shader("FlatShader", "Flat.vs", "Flat.fs")); 
 				AddItem(new Shader("VertexID", "VertexID.vs", "VertexID.fs")); 
 				AddItem(new Shader("EnvSphere", "EnvSphere.vs", "EnvSphere.fs")); 
 				AddItem(lineShader);
 				AddItem(outlineShader);
-				AddItem(screenBufferShader);
 			}
 
 			static Shader* CreateShader(const std::string &name, const char *vs, const char *fs) {

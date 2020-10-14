@@ -16,7 +16,7 @@ namespace MOON {
 #pragma region renderer_params
 	Camera		 Renderer::matCamera = Camera("matCamera", Vector3(0, 0, -4));
 	Camera*		 Renderer::targetCamera = MOON_UNSPECIFIEDID;
-	GLfloat*	 Renderer::outputImage = MOON_UNSPECIFIEDID;
+	GLfloat*	 Renderer::outputRAW = MOON_UNSPECIFIEDID;
 	GLubyte*	 Renderer::matPrevImage = MOON_UNSPECIFIEDID;
 	//GLuint	 Renderer::outputTexID = MOON_AUTOID;
 	FrameBuffer* Renderer::output = MOON_UNSPECIFIEDID;
@@ -29,7 +29,7 @@ namespace MOON {
 	bool		 Renderer::prevInQueue = false;
 	std::string Renderer::timeStamp = "";
 	Renderer::AccStruct Renderer::acc = acc_AABB;
-	ToneMappingMethod Renderer::tone = Reinhard;
+	ToneMappingMethod Renderer::tone = Tone_Reinhard;
 	TexFilter Renderer::filter = Nearest;
 #pragma endregion
 
@@ -50,21 +50,21 @@ namespace MOON {
 
 	bool Renderer::PrepareVFB() {
 		// delete old texture
-		//if (outputTexID != -1) free(outputImage);
+		//if (outputTexID != -1) free(outputRAW);
 		if (output == nullptr) {
 			output = new FrameBuffer(
 				MOON_OutputSize.x, MOON_OutputSize.y,
-				"output", MOON_AUTOID, GL_RGB16F
+				"output", MOON_UNSPECIFIEDID, GL_RGB16F
 			);
 		} else if (output->width != MOON_OutputSize.x || output->height != MOON_OutputSize.y) {
 			output->Reallocate(MOON_OutputSize.x, MOON_OutputSize.y);
 		}
 		// malloc space for new output image
-		outputImage = (GLfloat *)malloc(OUTPUT_SIZE.x * OUTPUT_SIZE.y * 3 * sizeof(GLfloat));
+		outputRAW = (GLfloat *)malloc(OUTPUT_SIZE.x * OUTPUT_SIZE.y * 3 * sizeof(GLfloat));
 		// TODO: initialize new output image
 
 		// load init blank image
-		//bool ret = Utility::LoadTextureFromMemory(OUTPUT_SIZE, outputImage, outputTexID);
+		//bool ret = Utility::LoadTextureFromMemory(OUTPUT_SIZE, outputRAW, outputTexID);
 		//IM_ASSERT(ret);
 
 		return true;
@@ -116,7 +116,7 @@ namespace MOON {
 					float v = float(i + MoonMath::drand48()) / height;
 					Ray ray = targetCamera->GetRay(u, v, aspect);
 
-					if (!s) {
+					if (!depth && !s) {
 						HitRecord tmp;
 						if (!MOON_ModelManager::Hit(ray, tmp, acc)) {
 							Ray sray = targetCamera->GetRay((float)j / width, (float)i / height, aspect);
@@ -134,13 +134,13 @@ namespace MOON {
 				//MoonMath::GammaCorrection(col);
 				//col.setValue(MoonMath::clamp(col, 0.0f, 1.0f));
 
-				//outputImage[stp] = (GLubyte)(255.0f * col.x);
-				//outputImage[stp + 1] = (GLubyte)(255.0f * col.y);
-				//outputImage[stp + 2] = (GLubyte)(255.0f * col.z);
+				//outputRAW[stp] = (GLubyte)(255.0f * col.x);
+				//outputRAW[stp + 1] = (GLubyte)(255.0f * col.y);
+				//outputRAW[stp + 2] = (GLubyte)(255.0f * col.z);
 
-				outputImage[stp] = col.x;
-				outputImage[stp + 1] = col.y;
-				outputImage[stp + 2] = col.z;
+				outputRAW[stp] = col.x;
+				outputRAW[stp + 1] = col.y;
+				outputRAW[stp + 2] = col.z;
 			}
 			currLine++;
 			progress = currLine / OUTPUT_SIZE.y;
@@ -177,9 +177,9 @@ namespace MOON {
 					if (isAbort) continue;
 					int sss = pow(randGen(seed), 1000);
 				}
-				outputImage[stp] = (GLubyte)randGen(seed);
-				outputImage[stp + 1] = (GLubyte)randGen(seed);
-				outputImage[stp + 2] = (GLubyte)randGen(seed);
+				outputRAW[stp] = (GLubyte)randGen(seed);
+				outputRAW[stp + 1] = (GLubyte)randGen(seed);
+				outputRAW[stp + 2] = (GLubyte)randGen(seed);
 			}
 			currLine++;
 			progress = currLine / OUTPUT_SIZE.y;

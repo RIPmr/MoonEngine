@@ -181,7 +181,7 @@ namespace MOON {
 			if (!type) return;
 			if (type == BEZIER) {
 				ImGui::Indent(100.0f);
-				SwitchButton("Constraint", "FreeHandle", constraint, ImVec2(75, 22));
+				ButtonEx::SwitchButton("Constraint", "FreeHandle", constraint, ImVec2(75, 22));
 				ImGui::Unindent(100.0f);
 				ImGui::SameLine(50.0f);
 				//ImGui::Checkbox("constraint", &constraint);
