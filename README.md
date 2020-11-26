@@ -15,30 +15,50 @@ A toy DCC software implemented based on OpenGL and imgui
 
 ## Quick tutorial
 ### viewport hotkeys
-|operation                  |hotkey             |
+|Operation                  |Hotkey             |
 |:-                         |:-:                |
 |Gizmo::Move                |w                  |
 |Gizmo::Rotate              |e                  |
 |Gizmo::Scale               |r                  |
-|Camera::Pan                |middle mouse       |
+|Camera::Pan                |middle mouse (Hold)|
 |Camera::Zoom               |mouse wheel        |
 |Camera::Rotate             |alt + middle mouse |
-|Selecting Object           |left click         |
-|Select multiple Object     |ctrl + left click  |
+|Select Object              |left click         |
+|Delete Object              |delete             |
+|Select Multiple Object     |ctrl + left click  |
 |Centering Selected Object  |z                  |
-|Flow Menu                  |right click        |
+|Flow Menu                  |right click (Hold) |
 |Open Material Editor       |m                  |
+|Open MOON NN Editor        |n                  |
+|Search Node                |s                  |
+|Change Shading Mode        |F1-F4              |
+|Switch Split/Single View   |space              |
 
 ### load OBJ model
 ```
 auto boxes = MOON_ModelManager::LoadModel("Assets\\Models\\box_stack.obj");
 ```
 
-### transform an object
+### Transform an object
 ```
 boxes->transform.Translate(Vector3(0.0f, 1.0f, 0.0f), LOCAL);
 boxes->transform.Rotate(Quaternion(Vector3(90.0f, 0, 0)), WORLD);
 boxes->transform.Scale(Vector3(0.2f, 0.2f, 0.2f));
+```
+
+### Create SmartMesh
+```
+Model* sphere = MOON_ModelManager::CreateSmartMesh(SmartMesh::sphere, "sphere");
+```
+
+### Set parent
+```
+boxes->transform.SetParent(&sphere->transform);
+```
+
+### Create Light
+```
+auto light = MOON_LightManager::CreateLight(point_light, "pointLight", Vector3(-10.0f, 10.0f, 10.0f));
 ```
 
 ### create a material
@@ -129,7 +149,9 @@ opt->ClearGrad();
 
 
 ## Video links
-:full_moon: [MOON ENGINE](https://www.bilibili.com/video/BV1iK4y1C7h7)
+:full_moon: [MOON ENGINE v0.20](https://www.bilibili.com/video/BV1iK4y1C7h7)
+
+:full_moon: [MOON ENGINE v0.03](https://www.bilibili.com/video/BV1iK4y1C7h7)
 
 :new_moon: [MOON NN](https://www.bilibili.com/video/BV1GT4y137kx)
 
