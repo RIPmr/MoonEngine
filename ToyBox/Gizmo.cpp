@@ -257,6 +257,7 @@ namespace MOON {
 		// delete buffer object
 		glDeleteVertexArrays(1, &VAO);
 		glDeleteBuffers(1, &VBO);
+		glLineWidth(1.0);
 	}
 
 	void Gizmo::DrawLinePrototype(const std::vector<float> &data, const Vector4 &color, const float &lineWidth, const bool &isStrip, const Matrix4x4 model, const Shader* overrideShader) {
@@ -293,6 +294,7 @@ namespace MOON {
 		// delete buffer object
 		glDeleteVertexArrays(1, &VAO);
 		glDeleteBuffers(1, &VBO);
+		glLineWidth(1.0);
 	}
 
 	void Gizmo::DrawLinePrototype(const std::vector<Vector3> &data, const Vector4 &color, const float &lineWidth, const bool &isStrip, const Matrix4x4 model, const Shader* overrideShader) {
@@ -329,6 +331,7 @@ namespace MOON {
 		// delete buffer object
 		glDeleteVertexArrays(1, &VAO);
 		glDeleteBuffers(1, &VBO);
+		glLineWidth(1.0);
 	}
 
 	void Gizmo::DrawPointPrototype(const std::vector<float> &data, const Vector4 &color, const float &pointSize, const Matrix4x4 model) {
@@ -457,14 +460,13 @@ namespace MOON {
 
 		if (!drawActiveViewOnly) {
 			for (int i = 0; i < 4; i++) {
-				if (i != MOON_ActiveView) {
-					Graphics::SetDrawTarget((SceneView)i, depthTest);
-					DrawPointPrototype(data, color, pointSize, model);
-				}
+				Graphics::SetDrawTarget((SceneView)i, depthTest);
+				DrawPointPrototype(data, color, pointSize, model);
 			}
+		} else {
+			Graphics::SetDrawTarget(MOON_ActiveView, depthTest);
+			DrawPointPrototype(data, color, pointSize, model);
 		}
-		Graphics::SetDrawTarget(MOON_ActiveView, depthTest);
-		DrawPointPrototype(data, color, pointSize, model);
 
 		if (Graphics::process == sys_draw_ui) glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		else if (Graphics::process == sys_draw_scene) Graphics::SetDrawTarget(MOON_DrawTarget, depthTest);
@@ -475,14 +477,13 @@ namespace MOON {
 
 		if (!drawActiveViewOnly) {
 			for (int i = 0; i < 4; i++) {
-				if (i != MOON_ActiveView) {
-					Graphics::SetDrawTarget((SceneView)i, depthTest);
-					DrawPointPrototype(points, color, pointSize, model);
-				}
+				Graphics::SetDrawTarget((SceneView)i, depthTest);
+				DrawPointPrototype(points, color, pointSize, model);
 			}
+		} else {
+			Graphics::SetDrawTarget(MOON_ActiveView, depthTest);
+			DrawPointPrototype(points, color, pointSize, model);
 		}
-		Graphics::SetDrawTarget(MOON_ActiveView, depthTest);
-		DrawPointPrototype(points, color, pointSize, model);
 
 		if (Graphics::process == sys_draw_ui) glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		else if (Graphics::process == sys_draw_scene) Graphics::SetDrawTarget(MOON_DrawTarget, depthTest);
@@ -493,14 +494,13 @@ namespace MOON {
 
 		if (!drawActiveViewOnly) {
 			for (int i = 0; i < 4; i++) {
-				if (i != MOON_ActiveView) {
-					Graphics::SetDrawTarget((SceneView)i, depthTest);
-					DrawPointPrototype(VAO, pointNum, color, pointSize, model);
-				}
+				Graphics::SetDrawTarget((SceneView)i, depthTest);
+				DrawPointPrototype(VAO, pointNum, color, pointSize, model);
 			}
+		} else {
+			Graphics::SetDrawTarget(MOON_ActiveView, depthTest);
+			DrawPointPrototype(VAO, pointNum, color, pointSize, model);
 		}
-		Graphics::SetDrawTarget(MOON_ActiveView, depthTest);
-		DrawPointPrototype(VAO, pointNum, color, pointSize, model);
 
 		if (Graphics::process == sys_draw_ui) glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		else if (Graphics::process == sys_draw_scene) Graphics::SetDrawTarget(MOON_DrawTarget, depthTest);
@@ -513,14 +513,13 @@ namespace MOON {
 
 		if (!drawActiveViewOnly) {
 			for (int i = 0; i < 4; i++) {
-				if (i != MOON_ActiveView) {
-					Graphics::SetDrawTarget((SceneView)i, depthTest);
-					DrawLinePrototype(data, color, lineWidth, false, model);
-				}
+				Graphics::SetDrawTarget((SceneView)i, depthTest);
+				DrawLinePrototype(data, color, lineWidth, false, model);
 			}
+		} else {
+			Graphics::SetDrawTarget(MOON_ActiveView, depthTest);
+			DrawLinePrototype(data, color, lineWidth, false, model);
 		}
-		Graphics::SetDrawTarget(MOON_ActiveView, depthTest);
-		DrawLinePrototype(data, color, lineWidth, false, model);
 
 		if (Graphics::process == sys_draw_ui) glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		else if (Graphics::process == sys_draw_scene) Graphics::SetDrawTarget(MOON_DrawTarget, depthTest);
@@ -531,14 +530,13 @@ namespace MOON {
 
 		if (!drawActiveViewOnly) {
 			for (int i = 0; i < 4; i++) {
-				if (i != MOON_ActiveView) {
-					Graphics::SetDrawTarget((SceneView)i, depthTest);
-					DrawLinePrototype(lines, color, lineWidth, isStrip, model, overrideShader);
-				}
+				Graphics::SetDrawTarget((SceneView)i, depthTest);
+				DrawLinePrototype(lines, color, lineWidth, isStrip, model, overrideShader);
 			}
+		} else {
+			Graphics::SetDrawTarget(MOON_ActiveView, depthTest);
+			DrawLinePrototype(lines, color, lineWidth, isStrip, model, overrideShader);
 		}
-		Graphics::SetDrawTarget(MOON_ActiveView, depthTest);
-		DrawLinePrototype(lines, color, lineWidth, isStrip, model, overrideShader);
 
 		if (Graphics::process == sys_draw_ui) glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		else if (Graphics::process == sys_draw_scene) Graphics::SetDrawTarget(MOON_DrawTarget, depthTest);

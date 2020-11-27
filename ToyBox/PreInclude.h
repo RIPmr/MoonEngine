@@ -11,8 +11,8 @@
 *	  \/__/         \/__/         \/__/         \/__/
 *
 * @author	HZT
-* @date		2020-10-07
-* @version	0.1.2
+* @date		2020-10-15
+* @version	0.1.8
 */
 
 #pragma once
@@ -58,6 +58,7 @@
 #include "Shapes.h"
 #include "Helpers.h"
 #include "Model.h"
+#include "Volume.h"
 #include "Light.h"
 #include "OBJMgr.h"
 #include "HotkeyMgr.h"
@@ -106,14 +107,22 @@ GLfloat Graphics::quadVertices[20] = {
 };
 PipelineMode Graphics::pipeline				= PipelineMode::FORWARD_SHADING;
 ShadingMode Graphics::shading				= ShadingMode::DEFAULT;
+LightModel Graphics::lightModel				= LightModel::PBR;
 SystemProcess Graphics::process				= SystemProcess::sys_init;
 SceneView Graphics::currDrawTarget			= SceneView::top;
 int Graphics::enviroment					= EnviromentType::env_pure_color;
 int Graphics::AAType						= AntiAliasingType::MSAA;
 unsigned int Graphics::quadVAO				= MOON_UNSPECIFIEDID;
 unsigned int Graphics::quadVBO				= MOON_UNSPECIFIEDID;
-float Graphics::shadowDistance				= 1000;
+Vector4 Graphics::shadowDistance			= Vector4(1000, 2000, 3000, 4000);
 bool Graphics::antiAliasing					= false;
+bool Graphics::enableShadow					= false;
+bool Graphics::cascadeShadow				= false; 
+bool Graphics::enableFog					= false;
+bool Graphics::enableScatter				= false;
+Vector3 Graphics::fogColor					= Vector3(0.8f, 0.8f, 0.8f);
+FogType Graphics::fogType					= fog_exponential;
+float Graphics::density						= 0.01f;
 
 Model* MOON_ModelManager::skyDome			= MOON_UNSPECIFIEDID;
 
@@ -158,7 +167,6 @@ unsigned int PlotManager::cnt				= 0;
 std::string									  OBJLoader::info;
 std::vector<Vertex>							  OBJLoader::LoadedVertices;
 std::vector<unsigned int>					  OBJLoader::LoadedIndices;
-bool OBJLoader::gammaCorrection				= false;
 float OBJLoader::progress					= 0;
 // init Thread Pool
 std::vector<std::thread*>					  ThreadPool::pool;
@@ -178,6 +186,7 @@ bool SceneManager::exitFlag					= false;
 BVH* SceneManager::sceneBVH					= MOON_UNSPECIFIEDID;
 
 ShadingMode SceneManager::splitShading[4]	= { DEFAULT , WIRE , WIRE , WIRE };
+LightModel SceneManager::lightModel[4]		= { PBR, PBR, PBR, PBR };
 
 std::vector<ObjectBase*>					  SceneManager::objectList;
 std::vector<ObjectBase*>					  SceneManager::matchedList;
@@ -191,6 +200,7 @@ std::multimap<std::string, Model*>			  MOON_ModelManager::itemMap;
 std::multimap<std::string, Camera*>			  MOON_CameraManager::itemMap;
 std::multimap<std::string, Shape*>			  MOON_ShapeManager::itemMap;
 std::multimap<std::string, Helper*>			  MOON_HelperManager::itemMap;
+std::multimap<std::string, Volume*>			  MOON_VolumeManager::itemMap;
 
 // init Managers
 bool MOON_LightManager::sizeFlag				= true;
@@ -201,6 +211,7 @@ bool MOON_ModelManager::sizeFlag				= true;
 bool MOON_CameraManager::sizeFlag				= true;
 bool MOON_ShapeManager::sizeFlag				= true;
 bool MOON_HelperManager::sizeFlag				= true;
+bool MOON_VolumeManager::sizeFlag				= true;
 bool MOON_InputManager::lockSelection			= false;
 bool MOON_InputManager::isSelectionChanged		= false;
 unsigned int MOON_InputManager::hoverID			= MOON_UNSPECIFIEDID;
@@ -210,7 +221,11 @@ Shader* MOON_ShaderManager::overlayShader		= MOON_UNSPECIFIEDID;
 Material* MOON_MaterialManager::defaultMat		= MOON_UNSPECIFIEDID;
 FrameBuffer* MOON_TextureManager::SHADOWMAP		= MOON_UNSPECIFIEDID;
 FrameBuffer* MOON_TextureManager::IDLUT			= MOON_UNSPECIFIEDID;
+FrameBuffer* MOON_TextureManager::Irradiance	= MOON_UNSPECIFIEDID;
+FrameBuffer* MOON_TextureManager::prefilterMap	= MOON_UNSPECIFIEDID;
+FrameBuffer* MOON_TextureManager::brdfLUT		= MOON_UNSPECIFIEDID;
 Texture* MOON_TextureManager::HDRI				= MOON_UNSPECIFIEDID;
+Shader* ProceduralMapGenerator::NoiseShader		= MOON_UNSPECIFIEDID;
 std::vector<FrameBuffer*>						  MOON_TextureManager::SCENEBUFFERS;
 
 Vector2 MOON_MousePos							= Vector2(-2.0f, -2.0f);
@@ -267,7 +282,11 @@ std::map<std::string, EffectCreator>			  PostFactory::effectList;
 REGIST_POST_EFFECT(ScreenSpaceReflection);
 REGIST_POST_EFFECT(ColorSpaceConverter);
 REGIST_POST_EFFECT(ColorCorrection);
+REGIST_POST_EFFECT(DepthOfField);
 REGIST_POST_EFFECT(ToneMapping);
+REGIST_POST_EFFECT(RaindropFX);
+REGIST_POST_EFFECT(Chromatic);
+REGIST_POST_EFFECT(Vignette);
 REGIST_POST_EFFECT(Exposure);
 REGIST_POST_EFFECT(Levels);
 REGIST_POST_EFFECT(Curve);
@@ -275,3 +294,5 @@ REGIST_POST_EFFECT(Bloom);
 REGIST_POST_EFFECT(Flare);
 REGIST_POST_EFFECT(SSAO);
 REGIST_POST_EFFECT(FXAA);
+REGIST_POST_EFFECT(Blur);
+REGIST_POST_EFFECT(CRT);

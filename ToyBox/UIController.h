@@ -40,7 +40,6 @@ namespace MOON {
 	class MainUI {
 	public:
 	#pragma region parameters
-		static Vector4 clearColor;
 		static bool sceneWndFocused;
 
 		// image resources
@@ -370,12 +369,12 @@ namespace MOON {
 
 			ImGui::Text("Output Size:");
 			ImGui::SetNextItemWidth(availWidth);
-			ImGui::InputInt("output_width", &width, 100, 1000, 0, true);
+			ButtonEx::InputIntNoLabel("output_width", &width, 100, 1000, 0);
 			ImGui::SameLine();
 			ImGui::Text(u8"¡Á");
 			ImGui::SameLine();
 			ImGui::SetNextItemWidth(availWidth);
-			ImGui::InputInt("output_height", &height, 100, 1000, 0, true);
+			ButtonEx::InputIntNoLabel("output_height", &height, 100, 1000, 0);
 
 			if (MOON_OutputSize.x != width || MOON_OutputSize.y != height) {
 				if (width < 1) width = 1; if (height < 1) height = 1;
@@ -383,11 +382,11 @@ namespace MOON {
 			}
 
 			ImGui::Text("Sampling Rate:");
-			if (ImGui::InputInt("samplint_rate", &sr, 1, 10, 0, true))
+			if (ButtonEx::InputIntNoLabel("samplint_rate", &sr, 1, 10, 0))
 				Renderer::samplingRate = sr;
 
 			ImGui::Text("Max Reflection Depth:");
-			if (ImGui::InputInt("ref_depth", &rd, 1, 5, 0, true))
+			if (ButtonEx::InputIntNoLabel("ref_depth", &rd, 1, 5, 0))
 				Renderer::maxReflectionDepth = rd;
 
 			const static char* accitems[] = { "NONE", "AABB", "BVH", "BSP", "KDTree" };
@@ -402,6 +401,7 @@ namespace MOON {
 
 			ImGui::Checkbox("Depth of field ", &Renderer::depth);
 			ImGui::Checkbox("Motion blur ", &Renderer::motion);
+			ImGui::Checkbox("Auto update preview ", &Material::autoPrevUpdate);
 
 			ImGui::Spacing();
 			if (ImGui::Button("Rendering")) {
@@ -432,15 +432,24 @@ namespace MOON {
 					ImGui::Spacing(); ImGui::AlignTextToFramePadding();
 					ImGui::Text("Shadow:");
 					ImGui::Indent(10.0f);
+					ImGui::Text("Enable"); ImGui::SameLine(80);
+					ButtonEx::CheckboxNoLabel("enableShadow", &Graphics::enableShadow);
+					ImGui::SameLine(0, 10.0f);
+					ImGui::Text("Cascade"); ImGui::SameLine(0, 20.0f);
+					ButtonEx::CheckboxNoLabel("CSM", &Graphics::cascadeShadow);
 					ImGui::Text("Distance:"); ImGui::SameLine(80);
-					ImGui::DragFloat("shadowDist", &Graphics::shadowDistance, 1.0f, 0, 0, "%.1f", 1.0f, true);
+					if (Graphics::cascadeShadow) {
+						ButtonEx::DragVec4NoLabel("csmDist", &Graphics::shadowDistance[0], 1.0f, 0, 0, "%.1f", 1.0f);
+					} else {
+						ButtonEx::DragFloatNoLabel("shadowDist", &Graphics::shadowDistance[0], 1.0f, 0, 0, "%.1f", 1.0f);
+					}
 					ImGui::Unindent(10.0f);
 					ImGui::Separator();
 
 					ImGui::Text("Anti-Aliasing:");
 					ImGui::Indent(10.0f);
 					ImGui::Text("Enable"); ImGui::SameLine(80);
-					ImGui::Checkbox("enableAA", &Graphics::antiAliasing, true);
+					ButtonEx::CheckboxNoLabel("enableAA", &Graphics::antiAliasing);
 					const char* items[] = { "MSAA", "TAA", "SRAA" };
 					ImGui::AlignTextToFramePadding();
 					ImGui::Text("Type"); ImGui::SameLine(80);
@@ -544,7 +553,8 @@ namespace MOON {
 				"CHECKER", "OVERLAY"
 			};
 			auto& shading = SceneManager::splitShading[view];
-			if (ImGui::SmallButton(shadeStr[shading])) ImGui::OpenPopup("Shading");
+			auto& lightModel = SceneManager::lightModel[view];
+			if (ImGui::SmallButton(shadeStr[shading])) ImGui::OpenPopup("ShadingControl");
 
 			if (ImGui::BeginPopup("ViewControl")) {
 				if (ImGui::MenuItem("Persp", 0, view == persp)) {}
@@ -554,7 +564,13 @@ namespace MOON {
 				ImGui::EndPopup();
 			}
 
-			if (ImGui::BeginPopup("Shading")) {
+			if (ImGui::BeginPopup("ShadingControl")) {
+				if (ImGui::BeginMenu("Shading")) {
+					if (ImGui::MenuItem("Blinn", 0, lightModel == PHONG)) { lightModel = PHONG; }
+					if (ImGui::MenuItem("PBR", 0, lightModel == PBR)) { lightModel = PBR; }
+					ImGui::EndMenu();
+				}
+				ImGui::Separator();
 				if (ImGui::MenuItem("Default", 0, shading == DEFAULT)) { shading = DEFAULT; }
 				if (ImGui::MenuItem("Facet", 0, shading == FACET)) { shading = FACET; }
 				if (ImGui::MenuItem("Wire", 0, shading == WIRE)) { shading = WIRE; }
@@ -563,6 +579,8 @@ namespace MOON {
 				if (ImGui::BeginMenu("Overlay")) {
 					if (ImGui::MenuItem("Albedo", 0, shading == ALBEDO)) { shading = ALBEDO; }
 					if (ImGui::MenuItem("Normal", 0, shading == NORMAL)) { shading = NORMAL; }
+					if (ImGui::MenuItem("Roughness", 0, shading == ROUGHNESS)) { shading = ROUGHNESS; }
+					if (ImGui::MenuItem("Metallic", 0, shading == METALLIC)) { shading = METALLIC; }
 					if (ImGui::MenuItem("Checker", 0, shading == CHECKER)) { shading = CHECKER; }
 					ImGui::EndMenu();
 				}
@@ -688,6 +706,7 @@ namespace MOON {
 			static bool showShape	= true;
 			static bool showFX		= true;
 			static bool showHelper	= true;
+			static bool showVolume	= true;
 
 			static bool allFlag = true;
 			static char pattern[128] = "";
@@ -700,6 +719,7 @@ namespace MOON {
 			ButtonEx::SwitchButton("A", "N", showAll, ImVec2(22, 22));
 
 			ButtonEx::SwitchButton(ICON_FA_CUBE, ICON_FA_CUBE, showModel);
+			ButtonEx::SwitchButton(ICON_FA_CLOUD, ICON_FA_CLOUD, showVolume);
 			ButtonEx::SwitchButton(ICON_FA_GLOBE, ICON_FA_GLOBE, showMat);
 			ButtonEx::SwitchButton(ICON_FA_FILE_IMAGE_O, ICON_FA_FILE_IMAGE_O, showTex);
 			ButtonEx::SwitchButton(ICON_FA_LIGHTBULB_O, ICON_FA_LIGHTBULB_O, showLight);
@@ -749,7 +769,7 @@ namespace MOON {
 			}*/
 
 			if (allFlag != showAll) {
-				allFlag = showAll;
+				allFlag = showAll; showVolume = showAll;
 				showModel = showAll; showMat = showAll; showTex = showAll;
 				showLight = showAll; showCam = showAll; showShader = showAll;
 				showShape = showAll; showFX = showAll; showHelper = showAll;
@@ -775,6 +795,7 @@ namespace MOON {
 				SceneManager::ListMatchedItems();
 			} else {
 				if (showModel) MOON_ModelManager::ListItems_Hierarchial();
+				if (showVolume) MOON_VolumeManager::ListItems_Hierarchial();
 				if (showShape) MOON_ShapeManager::ListItems_Hierarchial();
 				if (showHelper) MOON_HelperManager::ListItems_Hierarchial();
 				if (showLight) MOON_LightManager::ListItems_Hierarchial();
@@ -924,7 +945,7 @@ namespace MOON {
 			ImGui::Columns(2, "matView");
 			if (firstLoop) {
 				firstLoop = false;
-				ImGui::SetColumnWidth(-1, 650);
+				ImGui::SetColumnWidth(-1, 620);
 			}
 			floatWidth = ImGui::GetColumnWidth(-1) - 15;
 
@@ -957,24 +978,44 @@ namespace MOON {
 			ImGui::End();
 		}
 
-		static void EnviromentWnd() {
-			ImGui::Begin(Icon_Name_To_ID(ICON_FA_CLOUD, " Enviroment"), &MainUI::show_enviroment_editor);
+		static void EnvironmentWnd() {
+			ImGui::Begin(Icon_Name_To_ID(ICON_FA_MIXCLOUD, " Enviroment"), &MainUI::show_enviroment_editor);
 
-			const char* items[] = { "HDRI", "CubeMap", "PureColor", "ProSky" };
+			ImGui::Text("Fog");
+			ImGui::Indent(10.0f);
+			ImGui::Text("Enable"); ImGui::SameLine(80.0f);
+			ButtonEx::CheckboxNoLabel("enable_fog", &Graphics::enableFog);
+
+			const char* fogType[] = { "Linear", "Exponential", "ExpoSquared" };
+			ImGui::AlignTextToFramePadding();
+			ImGui::Text("Type"); ImGui::SameLine(80.0f);
+			ButtonEx::ComboNoLabel("fogType", (int*)&Graphics::fogType, fogType, IM_ARRAYSIZE(fogType));
+
+			ImGui::Text("Color"); ImGui::SameLine(80.0f);
+			ButtonEx::ColorEdit3NoLabel("fogCol", (float*)&Graphics::fogColor);
+
+			ImGui::Text("Density"); ImGui::SameLine(80.0f);
+			ButtonEx::DragFloatNoLabel("fogDens", (float*)&Graphics::density);
+			ImGui::Unindent(10.0f);
+			ImGui::Separator();
+
+			ImGui::Text("IBL");
+			ImGui::Indent(10.0f);
+			const char* envType[] = { "HDRI", "CubeMap", "PureColor", "ProSky" };
 			ImGui::AlignTextToFramePadding();
 			ImGui::Text("Enviroment"); ImGui::SameLine();
-			ButtonEx::ComboNoLabel("envType", (int*)&MOON_Enviroment, items, IM_ARRAYSIZE(items));
+			ButtonEx::ComboNoLabel("envType", (int*)&MOON_Enviroment, envType, IM_ARRAYSIZE(envType));
 
 			if (MOON_Enviroment == EnviromentType::env_pure_color) {
 				ImGui::Text("Pure Color:");
 				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvailWidth());
-				ImGui::ColorEdit3("", (float*)&clearColor);
+				ButtonEx::ColorEdit3NoLabel("pureCol", (float*)&Graphics::clearColor);
 			} else if (MOON_Enviroment == EnviromentType::env_hdri) {
 				MOON_TextureManager::HDRI->ListProperties();
 				ImGui::Text("Rotate"); ImGui::SameLine(80.0f);
 				auto euler = MOON_ModelManager::skyDome->transform.rotation.eulerAngles;
 				float rotEuler[3] = { euler.x, euler.y, euler.z };
-				if (ImGui::DragFloat3("rot", rotEuler, 0.1f, -INFINITY, INFINITY, "%.3f", 1.0f, true)) {
+				if (ButtonEx::DragVec3NoLabel("rot", rotEuler, 0.1f, -INFINITY, INFINITY, "%.3f", 1.0f)) {
 					Quaternion deltaQ = Quaternion(
 						rotEuler[0] - euler.x,
 						rotEuler[1] - euler.y,
@@ -983,10 +1024,13 @@ namespace MOON {
 					MOON_ModelManager::skyDome->transform.Rotate(deltaQ);
 				}
 			} else if (MOON_Enviroment == EnviromentType::env_cubemap) {
-
+				ImGui::Text("Cubemap Path:");
+				ImGui::Button("[Cubemap]", ImVec2(ImGui::GetContentRegionAvailWidth(), 0));
 			} else if (MOON_Enviroment == EnviromentType::env_procedural_sky) {
-
+				ImGui::Text("Sun:");
+				ImGui::Button("[Sun]", ImVec2(ImGui::GetContentRegionAvailWidth(), 0));
 			}
+			ImGui::Unindent(10.0f);
 
 			ImGui::End();
 		}
@@ -1001,7 +1045,7 @@ namespace MOON {
 				float width = ImGui::GetWindowWidth() / 3.5;
 				if (ImGui::BeginTabItem("Basic")) {
 					ImGui::Spacing();
-					if (ImGui::Button("Cube", ImVec2(width, 20.0))) {
+					if (ImGui::Button("Box", ImVec2(width, 20.0))) {
 						MOON_ModelManager::CreateSmartMesh(box, "box", true);
 					}
 					ImGui::SameLine();
@@ -1021,6 +1065,16 @@ namespace MOON {
 
 					ImGui::EndTabItem();
 				}
+				if (ImGui::BeginTabItem("Advanced")) {
+					ImGui::Spacing();
+					if (ImGui::Button("Starry", ImVec2(width, 20.0))) {}
+					ImGui::SameLine();
+					if (ImGui::Button("Volume", ImVec2(width, 20.0))) {
+						MOON_VolumeManager::CreateVolume("cloud", true);
+					}
+
+					ImGui::EndTabItem();
+				}
 				if (ImGui::BeginTabItem("Shape")) {
 					ImGui::Spacing();
 					if (ImGui::Button("Line", ImVec2(width, 20.0))) {}
@@ -1028,12 +1082,6 @@ namespace MOON {
 					if (ImGui::Button("Rectangle", ImVec2(width, 20.0))) {}
 					ImGui::SameLine();
 					if (ImGui::Button("Circle", ImVec2(width, 20.0))) {}
-
-					ImGui::EndTabItem();
-				}
-				if (ImGui::BeginTabItem("Particle")) {
-					ImGui::Spacing();
-					if (ImGui::Button("ParticleSys")) {}
 
 					ImGui::EndTabItem();
 				}
@@ -1067,7 +1115,7 @@ namespace MOON {
 					ImGui::SameLine();
 					if (ImGui::Button("Tape", ImVec2(width, 20.0))) {}
 
-					if (ImGui::Button("Volumn", ImVec2(width, 20.0))) {}
+					if (ImGui::Button("Magnet", ImVec2(width, 20.0))) {}
 					ImGui::SameLine();
 					if (ImGui::Button("Proxy", ImVec2(width, 20.0))) {}
 

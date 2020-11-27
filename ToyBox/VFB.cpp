@@ -118,13 +118,9 @@ namespace MOON {
 		glBindTexture(GL_TEXTURE_2D, MOON_OutputTexID);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, MOON_OutputSize.x,
 			MOON_OutputSize.y, 0, GL_RGB, GL_FLOAT, Renderer::outputRAW);
-		auto shading = Graphics::shading;
-		Graphics::SetShadingMode(DEFAULT);
 		for (auto& fx : postStack) {
-			if (fx->enabled) Graphics::ApplyPostProcessing(Renderer::output, fx);
-			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			if (fx->enabled) Graphics::Blit(Renderer::output, fx);
 		}
-		Graphics::SetShadingMode(shading);
 	}
 
 	void VFB::VFB_PostFX() {

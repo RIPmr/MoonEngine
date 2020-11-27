@@ -160,6 +160,7 @@
     <ClCompile Include="ImPie.cpp" />
     <ClCompile Include="ImTextEditor.cpp" />
     <ClCompile Include="ImTimeline.cpp" />
+    <ClCompile Include="Light.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="MaterialEditor.cpp" />
@@ -181,16 +182,20 @@
     <ClCompile Include="Optimizer.cpp" />
     <ClCompile Include="Graphics.cpp" />
     <ClCompile Include="Plane.cpp" />
+    <ClCompile Include="PostEffects.cpp" />
     <ClCompile Include="PostFactory.cpp" />
+    <ClCompile Include="ProceduralMap.cpp" />
     <ClCompile Include="Ring.cpp" />
     <ClCompile Include="Sphere.cpp" />
     <ClCompile Include="Quaternion.cpp" />
     <ClCompile Include="Renderer.cpp" />
+    <ClCompile Include="Starry.cpp" />
     <ClCompile Include="Utility.cpp" />
     <ClCompile Include="Vector2.cpp" />
     <ClCompile Include="Vector3.cpp" />
     <ClCompile Include="Vector4.cpp" />
     <ClCompile Include="VFB.cpp" />
+    <ClCompile Include="Volume.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Bone.h" />
@@ -257,10 +262,11 @@
     <ClInclude Include="Plane.h" />
     <ClInclude Include="Plotter.h" />
     <ClInclude Include="PluginManager.h" />
-    <ClInclude Include="PMapGen.h" />
+    <ClInclude Include="ProceduralMap.h" />
     <ClInclude Include="PostEffects.h" />
     <ClInclude Include="PostFactory.h" />
     <ClInclude Include="Proxy.h" />
+    <ClInclude Include="RFX_Solver.h" />
     <ClInclude Include="Ring.h" />
     <ClInclude Include="SmartMeshes.h" />
     <ClInclude Include="Sphere.h" />
@@ -275,9 +281,12 @@
     <ClInclude Include="MShader.h" />
     <ClInclude Include="Shapes.h" />
     <ClInclude Include="Spline.h" />
+    <ClInclude Include="SM_Solver.h" />
     <ClInclude Include="StackWindow.h" />
+    <ClInclude Include="Starry.h" />
     <ClInclude Include="Strutil.h" />
     <ClInclude Include="Tape.h" />
+    <ClInclude Include="TextMesh.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="ThreadPool.h" />
     <ClInclude Include="Transform.h" />
@@ -293,13 +302,22 @@
     <ClInclude Include="WinDiagHandler.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="BasicRayMarching.fs" />
     <None Include="BlinnPhong.fs" />
     <None Include="Bloom.fs" />
+    <None Include="BlurEffects.fs" />
+    <None Include="Bokeh.fs" />
+    <None Include="BRDF.fs" />
+    <None Include="BRDF.vs" />
+    <None Include="Chromatic.fs" />
+    <None Include="Cloud.fs" />
     <None Include="ColorCorrection.fs" />
     <None Include="ColorSpace.fs" />
     <None Include="ConstColor.fs" />
     <None Include="ConstColor.vs" />
     <None Include="Curve.fs" />
+    <None Include="DepthOfField.fs" />
+    <None Include="DOF_MultiPass.fs" />
     <None Include="EnvSphere.fs" />
     <None Include="EnvSphere.vs" />
     <None Include="Exposure.fs" />
@@ -307,13 +325,25 @@
     <None Include="Flat.fs" />
     <None Include="Flat.vs" />
     <None Include="FXAA.fs" />
+    <None Include="GaussianBlur.fs" />
+    <None Include="GBufferRender.fs" />
+    <None Include="HeightToNormal.fs" />
+    <None Include="IRMapGen.fs" />
+    <None Include="IRMapGen.vs" />
     <None Include="Levels.fs" />
+    <None Include="mNoise.fs" />
+    <None Include="MOON.fs" />
+    <None Include="NoiseGenerator.fs" />
     <None Include="Outline.fs" />
     <None Include="Outline.vs" />
     <None Include="packages.config" />
     <None Include="PBR.fs" />
     <None Include="PBR.vs" />
+    <None Include="PBR_Diff.fs" />
+    <None Include="PBR_Ref.fs" />
+    <None Include="Prefilter.fs" />
     <None Include="Resources\msyh.ttc" />
+    <None Include="ScreenBlend.fs" />
     <None Include="ScreenBuffer.fs" />
     <None Include="ScreenBuffer.vs" />
     <None Include="SEM.fs" />
@@ -322,11 +352,13 @@
     <None Include="SEM_Phong.vs" />
     <None Include="SimplePhong.fs" />
     <None Include="SimplePhong.vs" />
+    <None Include="SphericalSampling.fs" />
     <None Include="SSAO.fs" />
     <None Include="SSR.fs" />
     <None Include="ToneMapping.fs" />
     <None Include="VertexID.fs" />
     <None Include="VertexID.vs" />
+    <None Include="Vignette.fs" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Resources\Icon.jpg" />

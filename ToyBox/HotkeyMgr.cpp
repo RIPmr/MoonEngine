@@ -72,6 +72,8 @@ namespace MOON {
 
 		// Functions : F(N) ---------------------------------------------------------------
 		auto& shading = SceneManager::splitShading[MOON_ActiveView];
+		auto& lightModel = SceneManager::lightModel[MOON_ActiveView];
+		if (MOON_KeyDown(KEY_F1)) lightModel = lightModel == PBR ? PHONG : PBR;
 		if (MOON_KeyDown(KEY_F2)) shading = shading == FACET ? DEFAULT : FACET;
 		if (MOON_KeyDown(KEY_F3)) shading = shading == WIRE ? DEFAULT : WIRE;
 		if (MOON_KeyDown(KEY_F4)) shading = shading == DEFWIRE ? DEFAULT : DEFWIRE;

@@ -41,7 +41,7 @@ namespace MOON {
 		MOON_ModelManager::DeleteItem(sp->ID);
 	}
 
-	void Plane::CreateProceduralMesh(const bool& interactive) {
+	void Plane::CreateProcedural(const bool& interactive) {
 		if (interactive) {
 			Coroutine::create_coroutine(InteractiveCreate, this);
 		} else {
@@ -55,13 +55,13 @@ namespace MOON {
 		ImGui::Indent(10.0f);
 		ImGui::Text("Size"); ImGui::SameLine(80);
 		if (ImGui::DragFloat2(UniquePropName("size"), (float*)&size, 0.1f, 0, INFINITY, "%.3f", 1.0f, true)) {
-			CreateProceduralMesh(false);
+			CreateProcedural(false);
 		}
 		ImGui::Text("Segment"); ImGui::SameLine(80);
 		int seg[2] = { segment.x, segment.y };
 		if (ImGui::DragInt2(UniquePropName("segment"), seg, 1.0f, 1, 255, "%d", true)) {
 			segment.setValue(seg[0], seg[1]);
-			CreateProceduralMesh(false);
+			CreateProcedural(false);
 		}
 		ImGui::Unindent(10.0f);
 	}

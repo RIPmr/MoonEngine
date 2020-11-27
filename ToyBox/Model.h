@@ -20,12 +20,11 @@ namespace MOON {
 		std::vector<Mesh*> meshList;
 		std::vector<unsigned int> selected_meshes;
 		std::string path;
-		bool gammaCorrection;
 		BoundingBox bbox_local;
 
 		#pragma region constructor
 		// for procedural mesh
-		Model(const std::string &name, const int id = MOON_AUTOID) : gammaCorrection(false), MObject(name, id), path(PROCEDURAL) {}
+		Model(const std::string &name, const int id = MOON_AUTOID) : MObject(name, id), path(PROCEDURAL) {}
 
 		Model(const Model& other) {
 			this->meshList.resize(other.meshList.size());
@@ -36,18 +35,28 @@ namespace MOON {
 			this->path = other.path;
 			this->bbox = other.bbox;
 			this->bbox_local = other.bbox_local;
-			this->gammaCorrection = other.gammaCorrection;
 		}
 
 		// for mesh in OBJ file
-		Model(const std::string &path, const std::string &name = UseFileName, const int id = MOON_AUTOID, const bool gamma = false) :
-			path(path), gammaCorrection(gamma), MObject(id) {
+		Model(const std::string &path, const std::string &name = UseFileName, const int id = MOON_AUTOID) :
+			path(path), MObject(id) {
 			if (!name._Equal(UseFileName)) this->name = name;
 			else this->name = Utility::GetPathOrURLShortName(path);
 
 			OBJLoader::progress = 0;
 			ThreadPool::CreateThread(&Model::LoadModel, this, path);
 			//LoadModel(path);
+		}
+
+		Model(const std::string &path, const bool asynchronous = true, const std::string &name = UseFileName, const int id = MOON_AUTOID) :
+			path(path), MObject(id) {
+			if (!name._Equal(UseFileName)) this->name = name;
+			else this->name = Utility::GetPathOrURLShortName(path);
+
+			if (asynchronous) {
+				OBJLoader::progress = 0;
+				ThreadPool::CreateThread(&Model::LoadModel, this, path);
+			} else LoadModel(path);
 		}
 
 		virtual ~Model() override {
@@ -67,6 +76,7 @@ namespace MOON {
 		void Draw(Shader* overrideShader = NULL) override;
 
 		void UpdateBBox() {
+			bbox_local.Reset();
 			for (auto &iter : meshList) {
 				bbox_local.join(iter->bbox);
 			}
@@ -118,7 +128,7 @@ namespace MOON {
 
 		// procedural mesh
 		#pragma region procedural_mesh
-		virtual void CreateProceduralMesh(const bool& interactive) {}
+		virtual void CreateProcedural(const bool& interactive) override {}
 		virtual void ListProceduralProperties() {}
 		#pragma endregion
 	};

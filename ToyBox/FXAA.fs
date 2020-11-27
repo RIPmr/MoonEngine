@@ -49,6 +49,6 @@ void main() {
 	);
     float lumaB = dot(rgbB, luma);
 
-    if (lumaB < lumaMin || lumaB > lumaMax) gl_FragColor.xyz = rgbA;
-    else gl_FragColor.xyz = rgbB;
+    if (lumaB < lumaMin || lumaB > lumaMax) FragColor = vec4(rgbA, 1.0);
+    else FragColor = vec4(rgbB, 1.0);
 }

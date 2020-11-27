@@ -44,7 +44,7 @@ namespace MOON {
 		static bool motion;
 		static float aspect;
 		static Vector2 OUTPUT_SIZE;
-		static GLubyte *matPrevImage;
+		static GLfloat *matPrevRaw;
 		static GLfloat *outputRAW;
 		static FrameBuffer* output;
 		//static GLuint outputTexID;
@@ -78,6 +78,8 @@ namespace MOON {
 		static void Clear() {
 			VFB::Clear();
 			if (output != nullptr) delete output;
+			if (outputRAW != nullptr) free(outputRAW);
+			if (matPrevRaw != nullptr) free(matPrevRaw);
 		}
 
 	private:
@@ -86,8 +88,7 @@ namespace MOON {
 		static Vector3 SamplingColor_Simple(const Ray &r, int depth, const MSphere* ball, const MSphere* ground);
 		
 		// environment sampling
-		static Vector3 SimpleSky(const Ray &r);
+		static Vector3 ProceduralSky(const Ray &r);
 		static Vector3 SampleSphericalMap(const Ray &r);
-		static Vector3 PureBackground(const Ray &r, const Vector4 &c);
 	};
 }

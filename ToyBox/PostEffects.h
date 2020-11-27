@@ -79,7 +79,7 @@ namespace MOON {
 
 		bool ListProperties() override {
 			bool changeFlag = false;
-			const static char* items[] = { "Reinhard", "Cineon", "ACES", "Filmic" };
+			const static char* items[] = { "Reinhard", "Cineon", "ACES", "Filmic", "LUT" };
 			ImGui::AlignTextToFramePadding();
 			ImGui::Text("Method"); ImGui::SameLine(80.0f);
 			if (ButtonEx::ComboNoLabel("tonemapType", (int*)&type, items, IM_ARRAYSIZE(items))) {
@@ -87,14 +87,16 @@ namespace MOON {
 			}
 
 			ImGui::Text("Gamma"); ImGui::SameLine(80.0f);
-			if (ImGui::DragFloat("gamma", &gamma, 0.1f, 0, 0, "%.1f", 1.0f, true)) {
-				changeFlag = true;
+			if (type != Tone_LUT) {
+				if (ButtonEx::DragFloatNoLabel("gamma", &gamma, 0.1f, 0, 0, "%.1f", 1.0f)) {
+					changeFlag = true;
+				}
 			}
 
 			if (type == Tone_Cineon) {
 				ImGui::Text("LUT"); ImGui::SameLine(80.0f);
 				ImVec2 size{ ImGui::GetContentRegionAvailWidth(), 22.0f };
-				if (ButtonEx::TexFileBtnWithPrev(lut, TexType::defaultType, size)) {
+				if (ButtonEx::TexFileBtnWithPrev(lut, TexType::defaultMap, size)) {
 					changeFlag = true;
 				}
 			} else if (type == Tone_LUT) {
@@ -113,6 +115,7 @@ namespace MOON {
 
 			return changeFlag;
 		}
+
 		void ConfigureProps() override {
 			shader->setInt("type", type);
 			shader->setFloat("gamma", gamma);
@@ -134,17 +137,17 @@ namespace MOON {
 		bool ListProperties() override {
 			bool changeFlag = false;
 			ImGui::Text("Exposure"); ImGui::SameLine(80.0f);
-			if (ImGui::DragFloat("exp", &exposure, 0.1f, 0, 0, "%.1f", 1.0f, true)) {
+			if (ButtonEx::DragFloatNoLabel("exp", &exposure, 0.1f, 0, 0, "%.1f", 1.0f)) {
 				changeFlag = true;
 			}
 
 			ImGui::Text("Highlight"); ImGui::SameLine(80.0f);
-			if (ImGui::DragFloat("highlight", &highlight, 0.1f, 0, 1, "%.1f", 1.0f, true)) {
+			if (ButtonEx::DragFloatNoLabel("highlight", &highlight, 0.1f, 0, 1, "%.1f", 1.0f)) {
 				changeFlag = true;
 			}
 
 			ImGui::Text("Contrast"); ImGui::SameLine(80.0f);
-			if (ImGui::DragFloat("contrast", &contrast, 0.1f, 0, 0, "%.1f", 1.0f, true)) {
+			if (ButtonEx::DragFloatNoLabel("contrast", &contrast, 0.1f, 0, 0, "%.1f", 1.0f)) {
 				changeFlag = true;
 			}
 
@@ -216,18 +219,50 @@ namespace MOON {
 
 	class Bloom : public PostEffect {
 	public:
+		bool debug;
+
+		float threshold;
+		float exposure;
+		float weight;
 
 		Bloom() : PostProcessing("Bloom", "Bloom") {
-
+			debug = false;
+			threshold = 2.00f;
+			exposure = 0.50f;
+			weight = 0.10f;
 		}
 		~Bloom() override {}
 
 		bool ListProperties() override {
+			bool changeFlag = false;
 
-			return false;
+			ImGui::Text("Debug"); ImGui::SameLine(80.0f);
+			if (ButtonEx::CheckboxNoLabel("debug", &debug)) {
+				changeFlag = true;
+			}
+
+			ImGui::Text("Threshold"); ImGui::SameLine(80.0f);
+			if (ButtonEx::DragFloatNoLabel("threshold", &threshold, 0.1f, 0, 0, "%.2f", 1.0f)) {
+				changeFlag = true;
+			}
+
+			ImGui::Text("Weight"); ImGui::SameLine(80.0f);
+			if (ButtonEx::DragFloatNoLabel("weight", &weight, 0.1f, 0.0f, 100.0f, "%.2f")) {
+				changeFlag = true;
+			}
+
+			ImGui::Text("Soft Knee"); ImGui::SameLine(80.0f);
+			if (ButtonEx::DragFloatNoLabel("exposure", &exposure, 0.1f, 0.1f, 2.0f, "%.2f")) {
+				changeFlag = true;
+			}
+			return changeFlag;
 		}
-		void ConfigureProps() override {
 
+		void ConfigureProps() override {
+			shader->setFloat("_threshold", threshold);
+			shader->setFloat("_exposure", exposure);
+			shader->setFloat("_weight", weight);
+			shader->setFloat("debug", debug);
 		}
 	};
 
@@ -299,6 +334,286 @@ namespace MOON {
 		}
 	};
 
+	class DepthOfField : public PostEffect {
+	public:
+		bool debug;
+		bool bokeh;
+		bool fastMode;
+
+		// bokeh params
+		float exposure;
+		float radius;
+		float angle;
+
+		// blur params
+		float iter;
+		float falloff;
+
+		// DOF params
+		float distance;
+		float multiply;
+		float tolerance;
+		float cutoff;
+
+		DepthOfField() : PostProcessing("Depth-Of-Field", "DepthOfField") {
+			debug = false;
+			bokeh = false;
+			fastMode = false;
+			exposure = 1.8f;
+			radius = 5.0f;
+			angle = 2.39996f;
+
+			distance = 0.9902f;
+			multiply = 5.0f;
+			tolerance = 0.004f;
+			cutoff = 0.50f;
+
+			iter = 5.0f;
+			falloff = 10.0f;
+		}
+		~DepthOfField() override {}
+
+		bool PostBehaviour(FrameBuffer* src, FrameBuffer* dst) override;
+
+		bool ListProperties() override {
+			bool changeFlag = false;
+
+			ImGui::Text("Debug"); ImGui::SameLine(100.0f);
+			if (ButtonEx::CheckboxNoLabel("debug", &debug)) {
+				changeFlag = true;
+			}
+
+			ImGui::Text("Fase Mode"); ImGui::SameLine(100.0f);
+			if (ButtonEx::CheckboxNoLabel("fast", &fastMode)) {
+				changeFlag = true;
+			}
+
+			ImGui::Text("Bokeh"); ImGui::SameLine(100.0f);
+			if (ButtonEx::CheckboxNoLabel("bokeh", &bokeh)) {
+				changeFlag = true;
+			}
+
+			ImGui::Text("Distance"); ImGui::SameLine(80.0f);
+			if (ButtonEx::DragFloatNoLabel("distance", &distance, 0.0001f, 0.0f, 0.0f, "%.4f")) {
+				changeFlag = true;
+			}
+
+			ImGui::Text("Iteration"); ImGui::SameLine(80.0f);
+			if (ButtonEx::DragFloatNoLabel("iter", &iter, 0.1f, 0.0f, 1024.0f, "%.4f")) {
+				changeFlag = true;
+			}
+
+			ImGui::Text("Multiply"); ImGui::SameLine(80.0f);
+			if (ButtonEx::DragFloatNoLabel("multiply", &multiply, 0.1f, 0.0f, 0.0f, "%.4f")) {
+				changeFlag = true;
+			}
+
+			ImGui::Text("Tolerance"); ImGui::SameLine(80.0f);
+			if (ButtonEx::DragFloatNoLabel("tolerance", &tolerance, 0.001f, 0.0f, 0.0f, "%.4f")) {
+				changeFlag = true;
+			}
+
+			ImGui::Text("Falloff"); ImGui::SameLine(80.0f);
+			if (ButtonEx::DragFloatNoLabel("falloff", &falloff, 0.01f, 0.0f, 0.0f, "%.4f")) {
+				changeFlag = true;
+			}
+
+			ImGui::Text("Cutoff"); ImGui::SameLine(80.0f);
+			if (ButtonEx::DragFloatNoLabel("cutoff", &cutoff, 0.1f, 0.0f, 0.0f, "%.4f")) {
+				changeFlag = true;
+			}
+
+			if (bokeh) {
+				ImGui::Text("Radius"); ImGui::SameLine(80.0f);
+				if (ButtonEx::DragFloatNoLabel("rad", &radius, 0.1f, 0.0f, 0.0f, "%.1f")) {
+					changeFlag = true;
+				}
+
+				ImGui::Text("Exposure"); ImGui::SameLine(80.0f);
+				if (ButtonEx::DragFloatNoLabel("expo", &exposure, 0.1f, 0.0f, 0.0f, "%.1f")) {
+					changeFlag = true;
+				}
+
+				ImGui::Text("Angle"); ImGui::SameLine(80.0f);
+				if (ButtonEx::DragFloatNoLabel("ang", &angle, 0.01f, 0.0f, 0.0f, "%.3f")) {
+					changeFlag = true;
+				}
+			}
+
+			return changeFlag;
+		}
+
+		void ConfigureProps() override {
+			shader->setBool("debug", debug);
+
+			shader->setFloat("_distance", distance);
+			shader->setFloat("_multiply", multiply);
+			shader->setFloat("_tolerance", tolerance);
+			shader->setFloat("_cutoff", cutoff);
+
+			shader->setFloat("_time", radius);
+			shader->setFloat("_expo", exposure);
+			shader->setFloat("GOLDEN_ANGLE", angle);
+
+			shader->setInt("_iter", iter);
+			shader->setFloat("_falloff", falloff);
+		}
+	};
+
+	class Chromatic : public PostEffect {
+	public:
+		float fishEye;
+		float chromatic;
+		float scale;
+
+		Chromatic() : PostProcessing("Chromatic", "Chromatic") {
+			fishEye = 0.2f;
+			chromatic = 1.0f;
+			scale = 0.97f;
+		}
+		~Chromatic() override {}
+
+		bool ListProperties() override {
+			bool changeFlag = false;
+			
+			ImGui::Text("Fish Eye"); ImGui::SameLine(80.0f);
+			if (ButtonEx::DragFloatNoLabel("fishEye", &fishEye, 0.1f, 0, 0, "%.3f", 1.0f)) {
+				changeFlag = true;
+			}
+
+			ImGui::Text("Chromatic"); ImGui::SameLine(80.0f);
+			if (ButtonEx::DragFloatNoLabel("chromatic", &chromatic, 0.1f, 0, 0, "%.3f", 1.0f)) {
+				changeFlag = true;
+			}
+
+			ImGui::Text("Scale"); ImGui::SameLine(80.0f);
+			if (ButtonEx::DragFloatNoLabel("scale", &scale, 0.1f, 0, 0, "%.3f", 1.0f)) {
+				changeFlag = true;
+			}
+
+			return changeFlag;
+		}
+
+		void ConfigureProps() override {
+			shader->setFloat("_fishEye", fishEye);
+			shader->setFloat("_chromatic", chromatic);
+			shader->setFloat("_scale", scale);
+		}
+	};
+
+	class Vignette : public PostEffect {
+	public:
+		float weight;
+		float shape;
+		float smooth;
+
+		Vignette() : PostProcessing("Vignette", "Vignette") {
+			weight = 0.2f;
+			shape = 2.0f;
+			smooth = 0.8f;
+		}
+		~Vignette() override {}
+
+		bool ListProperties() override {
+			bool changeFlag = false;
+
+			ImGui::Text("Weight"); ImGui::SameLine(80.0f);
+			if (ButtonEx::DragFloatNoLabel("weight", &weight, 0.1f, 0.0f, 100.0f, "%.3f", 1.0f)) {
+				changeFlag = true;
+			}
+
+			ImGui::Text("Shape"); ImGui::SameLine(80.0f);
+			if (ButtonEx::DragFloatNoLabel("shape", &shape, 0.1f, 0.0f, 100.0f, "%.3f", 1.0f)) {
+				changeFlag = true;
+			}
+
+			ImGui::Text("Smooth"); ImGui::SameLine(80.0f);
+			if (ButtonEx::DragFloatNoLabel("smooth", &smooth, 0.1f, 0.0f, 100.0f, "%.3f", 1.0f)) {
+				changeFlag = true;
+			}
+
+			return changeFlag;
+		}
+
+		void ConfigureProps() override {
+			shader->setFloat("_weight", weight);
+			shader->setFloat("_shape", shape);
+			shader->setFloat("_smooth", smooth);
+		}
+	};
+
+	class Blur : public PostEffect {
+	public:
+		unsigned int type;
+		unsigned int iteration;
+		float sigma;
+
+		float exposure;
+		float radius;
+		float angle;
+
+		Blur() : PostProcessing("Blur", "BlurEffects") {
+			type = 2;
+			iteration = 5;
+			sigma = 7.0f;
+			exposure = 1.8f;
+			radius = 1.0f;
+			angle = 2.39996f;
+		}
+		~Blur() override {}
+
+		bool ListProperties() override {
+			bool changeFlag = false;
+
+			const static char* items[] = { "Box", "Gaussian", "Bokeh" };
+			ImGui::AlignTextToFramePadding();
+			ImGui::Text("Method"); ImGui::SameLine(80.0f);
+			if (ButtonEx::ComboNoLabel("blurType", (int*)&type, items, IM_ARRAYSIZE(items))) {
+				changeFlag = true;
+			}
+
+			ImGui::Text("Iteration"); ImGui::SameLine(80.0f);
+			if (ButtonEx::DragIntNoLabel("iter", (int*)&iteration, 1.0f, 0, 64)) {
+				changeFlag = true;
+			}
+
+			if (type == 1) {
+				ImGui::Text("Sigma"); ImGui::SameLine(80.0f);
+				if (ButtonEx::DragFloatNoLabel("sigma", &sigma, 0.1f, 0.0f, 256.0f, "%.1f")) {
+					changeFlag = true;
+				}
+			}
+
+			if (type == 2) {
+				ImGui::Text("Radius"); ImGui::SameLine(80.0f);
+				if (ButtonEx::DragFloatNoLabel("rad", &radius, 0.1f, 0.0f, 0.0f, "%.1f")) {
+					changeFlag = true;
+				}
+
+				ImGui::Text("Exposure"); ImGui::SameLine(80.0f);
+				if (ButtonEx::DragFloatNoLabel("expo", &exposure, 0.1f, 0.0f, 0.0f, "%.1f")) {
+					changeFlag = true;
+				}
+
+				ImGui::Text("Angle"); ImGui::SameLine(80.0f);
+				if (ButtonEx::DragFloatNoLabel("ang", &angle, 0.01f, 0.0f, 0.0f, "%.3f")) {
+					changeFlag = true;
+				}
+			}
+
+			return changeFlag;
+		}
+
+		void ConfigureProps() override {
+			shader->setInt("_type", type);
+			shader->setInt("_iter", iteration);
+			shader->setFloat("_sigma", sigma);
+			shader->setFloat("_time", radius);
+			shader->setFloat("_expo", exposure);
+			shader->setFloat("GOLDEN_ANGLE", angle);
+		}
+	};
+
 	class ScreenSpaceReflection : public PostEffect {
 	public:
 
@@ -336,6 +651,41 @@ namespace MOON {
 		}
 		void ConfigureProps() override {
 			shader->setInt("FXAA_SPAN_MAX", FXAA_SPAN_MAX);
+		}
+	};
+
+	class CRT : public PostEffect {
+	public:
+
+		CRT() : PostProcessing("CRT", "CRT") {
+
+		}
+		~CRT() override {}
+
+		bool ListProperties() override {
+
+			return false;
+		}
+		void ConfigureProps() override {
+
+		}
+	};
+
+	class RaindropFX : public PostEffect {
+	public:
+
+		RaindropFX() : PostProcessing("RaindropFX", "RaindropFX") {
+			
+		}
+		~RaindropFX() override {}
+
+		bool ListProperties() override {
+			
+			return false;
+		}
+
+		void ConfigureProps() override {
+
 		}
 	};
 

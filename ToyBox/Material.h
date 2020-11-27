@@ -24,6 +24,7 @@ namespace MOON {
 	class Material : public ObjectBase {
 	public:
 		static Vector2 PREVSIZE;
+		static bool autoPrevUpdate;
 
 		Shader* shader;
 		Texture* preview;
@@ -33,7 +34,7 @@ namespace MOON {
 
 		Material() : ObjectBase(MOON_AUTOID), preview(MOON_UNSPECIFIEDID), prevNeedUpdate(true) {}
 		Material(const std::string &name) : ObjectBase(name, MOON_AUTOID), preview(MOON_UNSPECIFIEDID), prevNeedUpdate(true) {}
-		//~Material() { delete shader; }
+
 		virtual ~Material() override {
 			if (preview != NULL) delete preview;
 		}
@@ -50,7 +51,7 @@ namespace MOON {
 			ImGui::Separator();
 		}
 
-		virtual void GeneratePreview();
+		virtual void GeneratePreview(bool manualUpdate = false);
 		virtual void UpdatePreview();
 		virtual void ListPreview();
 
@@ -76,6 +77,7 @@ namespace MOON {
 
 		Vector3 reflectW;
 		Vector3 refractW;
+		float fresnel;
 		float glossiness;
 		float IOR;
 
@@ -129,32 +131,7 @@ namespace MOON {
 			}
 		}
 
-		virtual void SetShaderProps(Shader* shader) override {
-			// colors
-			shader->setVec3("ambientC",		ambientC);
-			shader->setVec3("objectColor",	diffuseC);
-			shader->setVec3("reflectW",		reflectW);
-			shader->setVec3("refractW",		refractW);
-			shader->setVec3("translucency", translucency);
-			shader->setVec3("opacity",		opacity);
-			shader->setVec3("fogC",			fogC);
-			shader->setVec3("illumination", illumination);
-			shader->setVec3("metalness",	metalness);
-
-			// floats
-			shader->setFloat("roughness",	roughness);
-			shader->setFloat("glossiness",	glossiness);
-			shader->setFloat("IOR",			IOR);
-			shader->setFloat("fogW",		fogW);
-			shader->setFloat("dispW",		dispW);
-			shader->setFloat("anisotropy",	anisotropy);
-			shader->setFloat("an_rotation", an_rotation);
-
-			// textures
-			for (int i = 0; i < textures.size(); i++) {
-				shader->setTexture(enum_to_string(textures[i]->type), textures[i], i);
-			}
-		}
+		virtual void SetShaderProps(Shader* shader) override;
 
 		virtual void ListProperties() override {
 			Material::ListProperties();
@@ -173,64 +150,56 @@ namespace MOON {
 			float interval = 90.0f; unsigned int bid = 0;
 			ImVec2 btnSize{ ImGui::GetContentRegionAvailWidth() - interval - 20, 22 };
 
-			TextureButton(ambient,		"Ambient",		(float*)&ambientC,		btnSize, interval, bid);
-			TextureButton(diffuse,		"Diffuse",		(float*)&diffuseC,		btnSize, interval, bid);
-			TextureButton(normal,	"Normal",	nullptr, ImVec2(btnSize.x + 30, btnSize.y), interval, bid);
-			TextureButton(reflect,		"Reflect",		(float*)&reflectW,		btnSize, interval, bid);
-			TextureButton(refract,		"Refract",		(float*)&refractW,		btnSize, interval, bid);
-			TextureButton(metallic,		"Metalness",	(float*)&metalness,		btnSize, interval, bid);
-			TextureButton(translucent,	"Translucent",	(float*)&translucency,	btnSize, interval, bid);
-			TextureButton(displacement, "Displace", nullptr, ImVec2(btnSize.x + 30, btnSize.y), interval, bid);
-			TextureButton(illuminant,	"Illuminant",	(float*)&illumination,	btnSize, interval, bid);
-			TextureButton(alpha,		"Opacity",		(float*)&opacity,		btnSize, interval, bid);
+			TextureButton(ambientMap,		"Ambient",		(float*)&ambientC,		btnSize, interval, bid);
+			TextureButton(diffuseMap,		"Diffuse",		(float*)&diffuseC,		btnSize, interval, bid);
+			TextureButton(normalMap,		"Normal",	nullptr, ImVec2(btnSize.x + 30, btnSize.y), interval, bid);
+			TextureButton(reflectMap,		"Reflect",		(float*)&reflectW,		btnSize, interval, bid);
+			TextureButton(refractMap,		"Refract",		(float*)&refractW,		btnSize, interval, bid);
+			TextureButton(metallicMap,		"Metalness",	(float*)&metalness,		btnSize, interval, bid);
+			TextureButton(translucentMap,	"Translucent",	(float*)&translucency,	btnSize, interval, bid);
+			TextureButton(displaceMap,		"Displace", nullptr, ImVec2(btnSize.x + 30, btnSize.y), interval, bid);
+			TextureButton(illuminaMap,		"Illuminant",	(float*)&illumination,	btnSize, interval, bid);
+			TextureButton(alphaMap,			"Opacity",		(float*)&opacity,		btnSize, interval, bid);
 
-			ImGui::PushID("fog");
 			ImGui::Text("Fog/Multi"); ImGui::SameLine(interval);
 			ImGui::ColorEdit3(UniquePropName("fog"), (float*)&fogC, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
 			ImGui::SameLine();
 			ImGui::SetNextItemWidth(btnSize.x);
-			ImGui::DragFloat("fog_drag", &fogW, 0.1f, 0.0f, 10.0f, "%.1f", 1.0f, true);
-			ImGui::PopID();
+			ButtonEx::DragFloatNoLabel("fog_drag", &fogW, 0.001f, 0.0f, 10.0f, "%.3f", 1.0f);
 
-			ImGui::PushID("rough");
 			ImGui::Text("Roughness"); ImGui::SameLine(interval);
 			ImGui::SetNextItemWidth(btnSize.x + 30);
-			ImGui::DragFloat("rough_drag", &roughness, 0.1f, 0.0f, 1.0f, "%.1f", 1.0f, true);
-			ImGui::PopID();
+			ButtonEx::DragFloatNoLabel("rough_drag", &roughness, 0.001f, 0.0f, 1.0f, "%.3f", 1.0f);
 
-			ImGui::PushID("gloss");
 			ImGui::Text("Glossiness"); ImGui::SameLine(interval);
 			ImGui::SetNextItemWidth(btnSize.x + 30);
-			if (ImGui::DragFloat("gloss_drag", &glossiness, 0.1f, 0.0f, 1.0f, "%.1f", 1.0f, true)) {
+			if (ButtonEx::DragFloatNoLabel("gloss_drag", &glossiness, 0.001f, 0.0f, 1.0f, "%.3f", 1.0f)) {
 				this->prevNeedUpdate = true;
 			}
-			ImGui::PopID();
 
-			ImGui::PushID("ior");
+			ImGui::Text("Fresnel"); ImGui::SameLine(interval);
+			ImGui::SetNextItemWidth(btnSize.x + 30);
+			if (ButtonEx::DragFloatNoLabel("fresnel_drag", &fresnel, 0.001f, 0.0f, 0.0f, "%.3f", 1.0f)) {
+				this->prevNeedUpdate = true;
+			}
+
 			ImGui::Text("IOR"); ImGui::SameLine(interval);
 			ImGui::SetNextItemWidth(btnSize.x + 30);
-			if (ImGui::DragFloat("ior_drag", &IOR, 0.1f, 1.0f, 10.0f, "%.1f", 1.0f, true)) {
+			if (ButtonEx::DragFloatNoLabel("ior_drag", &IOR, 0.001f, 1.0f, 10.0f, "%.3f", 1.0f)) {
 				this->prevNeedUpdate = true;
 			}
-			ImGui::PopID();
 
-			ImGui::PushID("dispW");
 			ImGui::Text("DispMulti"); ImGui::SameLine(interval);
 			ImGui::SetNextItemWidth(btnSize.x + 30);
-			ImGui::DragFloat("dispW_drag", &dispW, 0.1f, 0, 0, "%.1f", 1.0f, true);
-			ImGui::PopID();
+			ButtonEx::DragFloatNoLabel("dispW_drag", &dispW, 0.001f, 0, 0, "%.3f", 1.0f);
 
-			ImGui::PushID("aniso");
 			ImGui::Text("Anisotropy"); ImGui::SameLine(interval);
 			ImGui::SetNextItemWidth(btnSize.x + 30);
-			ImGui::DragFloat("aniso_drag", &anisotropy, 0.1f, 0.0f, 1.0f, "%.1f", 1.0f, true);
-			ImGui::PopID();
+			ButtonEx::DragFloatNoLabel("aniso_drag", &anisotropy, 0.001f, 0.0f, 1.0f, "%.3f", 1.0f);
 
-			ImGui::PushID("anirot");
 			ImGui::Text("AnRotation"); ImGui::SameLine(interval);
 			ImGui::SetNextItemWidth(btnSize.x + 30);
-			ImGui::DragFloat("anirot_drag", &an_rotation, 0.1f, 0.0f, 1.0f, "%.1f", 1.0f, true);
-			ImGui::PopID();
+			ButtonEx::DragFloatNoLabel("anirot_drag", &an_rotation, 0.001f, 0.0f, 1.0f, "%.3f", 1.0f);
 
 			ImGui::Unindent(10.0f);
 			ImGui::Separator();

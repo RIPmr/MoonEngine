@@ -86,10 +86,10 @@ namespace MOON {
 	}
 
 	void OBJLoader::LoadFile(Model* container) {
-		LoadFile(container->path, container->meshList, container->gammaCorrection);
+		LoadFile(container->path, container->meshList);
 	}
 
-	bool OBJLoader::LoadFile(const std::string &Path, std::vector<Mesh*> &LoadedMeshes, bool gammaCorrection) {
+	bool OBJLoader::LoadFile(const std::string &Path, std::vector<Mesh*> &LoadedMeshes) {
 		// If the file is not an .obj file return false
 		if (Path.substr(Path.size() - 4, 4) != ".obj") return false;
 		std::ifstream file(Path); if (!file.is_open()) return false;
@@ -100,7 +100,6 @@ namespace MOON {
 		// Re-init
 		OBJLoader::progress = 0;
 		OBJLoader::info = "Loading... ...";
-		OBJLoader::gammaCorrection = gammaCorrection;
 		LoadedMeshes.clear();
 		LoadedVertices.clear();
 		LoadedIndices.clear();
@@ -586,17 +585,17 @@ namespace MOON {
 
 			// Load textures
 			if (firstToken(curline) == "map_Ka") {
-				dynamic_cast<MoonMtl*>(tempMaterial)->textures.push_back(LoadTexture(TexType::ambient, tail(curline), "ambientMap"));
+				dynamic_cast<MoonMtl*>(tempMaterial)->textures.push_back(LoadTexture(TexType::ambientMap, tail(curline), "ambientMap"));
 			} else if (firstToken(curline) == "map_Kd") {
-				dynamic_cast<MoonMtl*>(tempMaterial)->textures.push_back(LoadTexture(TexType::diffuse, tail(curline), "diffuseMap"));
+				dynamic_cast<MoonMtl*>(tempMaterial)->textures.push_back(LoadTexture(TexType::diffuseMap, tail(curline), "diffuseMap"));
 			} else if (firstToken(curline) == "map_Ks") {
-				dynamic_cast<MoonMtl*>(tempMaterial)->textures.push_back(LoadTexture(TexType::reflect, tail(curline), "reflectMap"));
+				dynamic_cast<MoonMtl*>(tempMaterial)->textures.push_back(LoadTexture(TexType::reflectMap, tail(curline), "reflectMap"));
 			} else if (firstToken(curline) == "map_Ns") {
-				dynamic_cast<MoonMtl*>(tempMaterial)->textures.push_back(LoadTexture(TexType::glossiness, tail(curline), "glossinessMap"));
+				dynamic_cast<MoonMtl*>(tempMaterial)->textures.push_back(LoadTexture(TexType::glossinessMap, tail(curline), "glossinessMap"));
 			} else if (firstToken(curline) == "map_d") {
-				dynamic_cast<MoonMtl*>(tempMaterial)->textures.push_back(LoadTexture(TexType::alpha, tail(curline), "alphaMap"));
+				dynamic_cast<MoonMtl*>(tempMaterial)->textures.push_back(LoadTexture(TexType::alphaMap, tail(curline), "alphaMap"));
 			} else if (firstToken(curline) == "map_Bump" || firstToken(curline) == "map_bump" || firstToken(curline) == "bump") {
-				dynamic_cast<MoonMtl*>(tempMaterial)->textures.push_back(LoadTexture(TexType::normal, tail(curline), "normalMap"));
+				dynamic_cast<MoonMtl*>(tempMaterial)->textures.push_back(LoadTexture(TexType::normalMap, tail(curline), "normalMap"));
 			}
 		}
 

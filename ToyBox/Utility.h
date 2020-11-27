@@ -117,10 +117,11 @@ namespace MOON {
 		}
 
 		void FreeImageData(void* data);
-		bool LoadTextureFromFile(const std::string &path, std::string &name, GLuint &textureID, int &width, int &height, GLenum& format, bool gamma = false);
-		bool LoadHDRIFromFile(const std::string &path, void*& data, std::string &name, GLuint &textureID, int &width, int &height, GLenum& format, bool gamma = false);
-		bool LoadTextureFromFileEx(const std::string &path, void*& data, std::string &name, GLuint &textureID, int &width, int &height, GLenum& format, bool gamma = false);
+		bool LoadTextureFromFile(const std::string &path, std::string &name, GLuint &textureID, int &width, int &height, GLenum& format);
+		bool LoadHDRIFromFile(const std::string &path, void*& data, std::string &name, GLuint &textureID, int &width, int &height, GLenum& format, bool mipmap = false);
+		bool LoadTextureFromFileEx(const std::string &path, void*& data, std::string &name, GLuint &textureID, int &width, int &height, GLenum& format, bool mipmap = true);
 		bool LoadTextureFromArray(GLubyte* data, const int &image_width, const int &image_height, GLuint& textureID);
+		bool LoadTextureFromMemory(const Vector2 &imageSize, GLfloat* imageInMem, GLuint& textureID);
 		bool LoadTextureFromMemory(const Vector2 &imageSize, GLubyte* imageInMem, GLuint& textureID);
 
 		Vector2 NormalizedMousePos();

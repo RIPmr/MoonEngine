@@ -20,22 +20,27 @@ vec3 to_linear(vec3 col, int space) {
 
 vec3 to_srgb(vec3 linearCol) {
 	
+	return linearCol;
 }
 
 vec3 to_gamma(vec3 linearCol, float gamma) {
 	
+	return linearCol;
 }
 
 vec3 to_cineon(vec3 linearCol) {
 
+	return linearCol;
 }
 
 vec3 to_aces_cg(vec3 linearCol) {
 
+	return linearCol;
 }
 
 vec3 to_rec_709(vec3 linearCol) {
 
+	return linearCol;
 }
 
 void main() {

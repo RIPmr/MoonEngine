@@ -40,7 +40,7 @@ namespace MOON {
 				MainUI::CEditor.LoadFile(fragmentPath);
 			}
 			ImGui::Indent(-10.0f);
-			ImGui::InputTextMultiline(UniquePropName("fssource"), vsbuf,
+			ImGui::InputTextMultiline(UniquePropName("fssource"), fsbuf,
 				IM_ARRAYSIZE(fsbuf), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16));
 			ImGui::Unindent(-10.0f);
 			ImGui::TreePop();

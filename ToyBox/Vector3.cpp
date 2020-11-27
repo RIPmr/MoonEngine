@@ -1,3 +1,4 @@
+#include "Vector4.h"
 #include "Vector3.h"
 #include "Vector2.h"
 #include "Quaternion.h"
@@ -5,6 +6,10 @@
 namespace MOON {
 	Vector3::Vector3(const Vector2 &v) {
 		x = v.x; y = v.y; z = 1;
+	}
+
+	Vector3::Vector3(const Vector4 &v) {
+		x = v.x; y = v.y; z = v.z;
 	}
 
 	bool operator!=(const Vector3 &v1, const Vector3 &v2) {

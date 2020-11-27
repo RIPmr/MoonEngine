@@ -19,8 +19,8 @@ namespace MOON {
 		unsigned int localID;
 		std::string vertexPath;
 		std::string fragmentPath;
-		char vsbuf[1024 * 16];
-		char fsbuf[1024 * 16];
+		char vsbuf[1024 * 24];
+		char fsbuf[1024 * 24];
 		
 		Shader(const std::string &name, const char* vertexPath, const char* fragmentPath) : ObjectBase(name, MOON_AUTOID) {
 			this->vertexPath = vertexPath;
@@ -50,6 +50,11 @@ namespace MOON {
 		void setTexture(const std::string &name, Texture* tex, int channel) const {
 			glActiveTexture(GL_TEXTURE0 + channel);
 			glBindTexture(GL_TEXTURE_2D, tex->localID);
+			glUniform1i(glGetUniformLocation(localID, name.c_str()), channel);
+		}
+		void setTexture(const std::string &name, int texID, int channel) const {
+			glActiveTexture(GL_TEXTURE0 + channel);
+			glBindTexture(GL_TEXTURE_2D, texID);
 			glUniform1i(glGetUniformLocation(localID, name.c_str()), channel);
 		}
 		// ------------------------------------------------------------------------
@@ -108,6 +113,7 @@ namespace MOON {
 				glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 				if (!success) {
 					glGetShaderInfoLog(shader, 1024, NULL, infoLog);
+					std::cout << std::endl << "[Error]: shader: " << this->name << std::endl;
 					std::cout << "ERROR::SHADER_COMPILATION_ERROR of type: " << type << "\n" << infoLog << "\n -- --------------------------------------------------- -- " << std::endl;
 				}
 			} else {

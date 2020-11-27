@@ -188,8 +188,8 @@ namespace MOON {
 #pragma endregion
 
 #pragma region pipeline_implementation
-	void Graphics::SetShadingMode(ShadingMode shading) {
-		Graphics::shading = shading;
+	void Graphics::SetShadingMode(ShadingMode shading, LightModel model) {
+		Graphics::shading = shading; Graphics::lightModel = model;
 		if (shading == ShadingMode::WIRE) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		else glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
@@ -202,7 +202,10 @@ namespace MOON {
 		//auto* cam = MOON_ActiveCamera;
 		MOON_ActiveCamera = MOON_SceneCameras[view];
 
-		Graphics::SetShadingMode(SceneManager::splitShading[view]);
+		Graphics::SetShadingMode(
+			SceneManager::splitShading[view], 
+			SceneManager::lightModel[view]
+		);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, buffer->fbo);
 
@@ -224,7 +227,10 @@ namespace MOON {
 		MOON_ActiveCamera = MOON_SceneCameras[view];
 
 		// draw ID LUT
-		Graphics::SetShadingMode(SceneManager::splitShading[view]);
+		Graphics::SetShadingMode(
+			SceneManager::splitShading[view],
+			SceneManager::lightModel[view]
+		);
 		if (view == MOON_ActiveView) {
 			glEnable(GL_DEPTH_TEST);
 			if (MOON_TextureManager::IDLUT->width != buffer->width || MOON_TextureManager::IDLUT->height != buffer->height)
@@ -241,25 +247,28 @@ namespace MOON {
 
 		// clear background of framebuffer
 		glBindFramebuffer(GL_FRAMEBUFFER, buffer->fbo);
-		glClearColor(MainUI::clearColor.x, MainUI::clearColor.y, MainUI::clearColor.z, MainUI::clearColor.w);
+		glClearColor(Graphics::clearColor.x, Graphics::clearColor.y, Graphics::clearColor.z, Graphics::clearColor.w);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 		// rendering objects -------------------------------------------------------
 		/// enable color blend and anti-aliasing
 		glEnable(GL_BLEND);
-		//glEnable(GL_LINE_SMOOTH);
 		glEnable(GL_DEPTH_TEST);
+		//glEnable(GL_LINE_SMOOTH);
 		//glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		// draw ground
-		Gizmo::DrawLinePrototype(ground, Color::WHITE(), 1.0f, false);
 
 		// draw objects
 		Graphics::DrawSky();
 		Graphics::DrawModels();
 		Graphics::DrawShapes();
 		Graphics::DrawHelpers();
+		Graphics::DrawLights();
 		Graphics::DrawCameras();
+
+		// draw ground
+		Gizmo::DrawLinePrototype(ground, Color::WHITE(), 1.0f, false);
+
 		if (Graphics::shading == DEFWIRE) {
 			Graphics::SetShadingMode(WIRE);
 			//glDisable(GL_DEPTH_TEST);
@@ -273,19 +282,54 @@ namespace MOON {
 		}
 
 		// drawing Overlays ------------------------------------------------------------
+		if (Graphics::shading != WIRE) DrawVolumnObjects(view);
+
 		// highlight selected
 		Graphics::HighlightSelection();
 
+		// do post-processing
+		if (Graphics::shading != WIRE && enablePP) ApplyPostStack(buffer);
+
 		// draw gizmos
+		// *we do not want to apply post-processing to
+		glDisable(GL_DEPTH_TEST);
 		if (view == MOON_ActiveView) SceneManager::DrawGizmos();
 
-		MOON_ActiveCamera = cam;
-		/// disable anti-aliasing
+		// restore settings
 		//glDisable(GL_LINE_SMOOTH);
 		glDisable(GL_BLEND);
-
-		if (Graphics::shading != WIRE && enablePP) ApplyPostStack(buffer);
+		MOON_ActiveCamera = cam;
 		glViewport(0, 0, MOON_WndSize.x, MOON_WndSize.y);
+	}
+
+	void Graphics::DrawVolumnObjects(SceneView view) {
+		auto buffer = MOON_TextureManager::SCENEBUFFERS[view];
+		auto rayMarchingShader = MOON_ShaderManager::GetItem("RayMarching");
+		rayMarchingShader->use();
+
+		// matrix & buffers ----------------------------------------------
+		Matrix4x4 view_proj_inverse = (MOON_SceneCameras[view]->projection * MOON_SceneCameras[view]->view).inverse();
+		rayMarchingShader->setMat4("invPVMat", view_proj_inverse);
+		rayMarchingShader->setTexture("depthBuffer", buffer->attachment, 2);
+
+		// lights --------------------------------------------------------
+		rayMarchingShader->setInt("lightNum", MOON_LightManager::CountItem());
+		auto end = MOON_LightManager::itemMap.end(); unsigned int i = 0;
+		for (auto it = MOON_LightManager::itemMap.begin(); it != end; it++) {
+			rayMarchingShader->setVec3("lightPositions[" + std::to_string(i) + "]", it->second->transform.position);
+			rayMarchingShader->setVec3("lightColors[" + std::to_string(i++) + "]", it->second->color * it->second->power);
+		}
+
+		// drawing -------------------------------------------------------
+		for (auto& v : MOON_VolumeManager::itemMap) {
+			if (v.second->visible) {
+				rayMarchingShader->setInt("lightNum", v.second->useLight ? MOON_LightManager::CountItem() : 0);
+				v.second->Draw(rayMarchingShader);
+
+				// blit volume object to scene buffer
+				Blit(buffer, rayMarchingShader);
+			}
+		}
 	}
 
 	void Graphics::DrawIDLUT() {
@@ -295,17 +339,9 @@ namespace MOON {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// encode id to color
-		/*for (auto &obj : MOON_ModelManager::itemMap) {
-			if (obj.second->visible) {
-				MOON_ShaderManager::lineShader->use();
-				MOON_ShaderManager::lineShader->setVec4("lineColor", Color::IDEncoder(obj.second->ID));
-
-				obj.second->Draw(MOON_ShaderManager::lineShader);
-			}
-		}*/
 		for (auto &obj : MOON_ObjectList) {
-			if (obj == nullptr) continue;
-			if (SuperClassOf(obj)._Equal("MObject") && obj->visible) {
+			if (obj == nullptr || !obj->visible) continue;
+			if (SuperClassOf(obj)._Equal("MObject")) {
 				MOON_ShaderManager::lineShader->use();
 				MOON_ShaderManager::lineShader->setVec4("lineColor", Color::IDEncoder(obj->ID));
 
@@ -354,21 +390,28 @@ namespace MOON {
 
 	}
 
+	void Graphics::DrawSky() {
+		if (MOON_Enviroment != env_pure_color && shading != WIRE) {
+			MOON_ModelManager::skyDome->transform.position = MOON_ActiveCamera->transform.position;
+
+			glDepthMask(GL_FALSE);
+			auto shader = MOON_ShaderManager::GetItem("EnvSphere"); shader->use();
+			shader->setTexture("HDRI", MOON_TextureManager::HDRI, 31);
+			shader->setInt("type", Graphics::enviroment);
+			MOON_ModelManager::skyDome->Draw(shader);
+			glDepthMask(GL_TRUE);
+		}
+	}
+
 	void Graphics::DrawCameras() {
 		for (auto &obj : MOON_CameraManager::itemMap) {
 			if (obj.second->visible) obj.second->Draw();
 		}
 	}
 
-	void Graphics::DrawSky() {
-		if (MOON_Enviroment == env_hdri && shading != WIRE) {
-			MOON_ModelManager::skyDome->transform.position = MOON_ActiveCamera->transform.position;
-
-			glDepthMask(GL_FALSE);
-			auto shader = MOON_ShaderManager::GetItem("EnvSphere"); shader->use();
-			shader->setTexture("HDRI", MOON_TextureManager::HDRI, 0);
-			MOON_ModelManager::skyDome->Draw(shader);
-			glDepthMask(GL_TRUE);
+	void Graphics::DrawLights() {
+		for (auto &obj : MOON_LightManager::itemMap) {
+			if (obj.second->visible) obj.second->Draw();
 		}
 	}
 
@@ -378,8 +421,10 @@ namespace MOON {
 		glStencilMask(0xFF);*/
 
 		Shader* overrideShader = nullptr;
-		if (Graphics::shading == ShadingMode::FACET) {
-			overrideShader = MOON_ShaderManager::GetItem("FlatShader");
+		if (Graphics::lightModel == LightModel::PHONG) {
+			overrideShader = MOON_ShaderManager::GetItem(
+				Graphics::shading == ShadingMode::FACET ? "FlatShader" : "BlinnPhong"
+			);
 		} else if (Graphics::shading == ShadingMode::WIRE) {
 			overrideShader = MOON_ShaderManager::lineShader;
 		}
@@ -447,19 +492,70 @@ namespace MOON {
 			}
 		}
 		glDisable(GL_STENCIL_TEST);
+		glEnable(GL_DEPTH_TEST);
 	}
 #pragma endregion
 
 #pragma region deferred_functions
-	void Graphics::Blit(FrameBuffer*& src, FrameBuffer*& dst, const Shader* shader) {
-
-	}
-
 	void Graphics::ApplyPostStack(FrameBuffer*& buffer) {
-		for (auto& fx : postStack) if (fx->enabled) ApplyPostProcessing(buffer, fx);
+		for (auto& fx : postStack) if (fx->enabled) Blit(buffer, fx);
 	}
-	void Graphics::ApplyPostProcessing(FrameBuffer*& buffer, PostProcessing* renderer) {
+	void Graphics::Blit(FrameBuffer*& buffer, PostProcessing* renderer) {
 		if (!quadVAO) ConfigureScreenQuad();
+
+		// save states
+		GLint m_viewport[4], drawFboId = 0;
+		glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &drawFboId);
+		glGetIntegerv(GL_VIEWPORT, m_viewport);
+		auto shading = Graphics::shading;
+		Graphics::SetShadingMode(DEFAULT);
+
+		glDisable(GL_DEPTH_TEST);
+		glViewport(0, 0, buffer->width, buffer->height);
+
+		// blit frame buffer
+		if (buffer->width != ppBuffer.width || buffer->height != ppBuffer.height)
+			ppBuffer.Reallocate(buffer->width, buffer->height);
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, buffer->fbo);
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, ppBuffer.fbo);
+		glBlitFramebuffer(
+			0, 0, buffer->width, buffer->height,
+			0, 0, buffer->width, buffer->height,
+			GL_COLOR_BUFFER_BIT, GL_NEAREST
+		);
+		if (buffer->attachment) {
+			glBlitFramebuffer(
+				0, 0, buffer->width, buffer->height,
+				0, 0, buffer->width, buffer->height,
+				GL_DEPTH_BUFFER_BIT, GL_NEAREST
+			);
+		}
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+
+		if (!renderer->PostBehaviour(&ppBuffer, buffer)) {
+			renderer->shader->use();
+			renderer->ConfigureProps();
+			Blit(&ppBuffer, buffer, renderer->shader);
+		}
+
+		// restore states
+		Graphics::SetShadingMode(shading);
+		glBindFramebuffer(GL_FRAMEBUFFER, drawFboId);
+		glViewport(0, 0, m_viewport[2], m_viewport[3]);
+		glEnable(GL_DEPTH_TEST);
+	}
+
+	void Graphics::Blit(FrameBuffer*& buffer, const Shader* shader) {
+		if (!quadVAO) ConfigureScreenQuad();
+
+		// save states
+		GLint m_viewport[4], drawFboId = 0;// readFboId = 0;
+		glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &drawFboId);
+		//glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &readFboId);
+		glGetIntegerv(GL_VIEWPORT, m_viewport);
+		auto shading = Graphics::shading;
+		Graphics::SetShadingMode(DEFAULT);
 
 		glDisable(GL_DEPTH_TEST);
 		glViewport(0, 0, buffer->width, buffer->height);
@@ -476,42 +572,15 @@ namespace MOON {
 			0, 0, buffer->width, buffer->height,
 			GL_COLOR_BUFFER_BIT, GL_NEAREST
 		);
+		if (buffer->attachment) {
+			glBlitFramebuffer(
+				0, 0, buffer->width, buffer->height,
+				0, 0, buffer->width, buffer->height,
+				GL_DEPTH_BUFFER_BIT, GL_NEAREST
+			);
+		}
 		//glReadBuffer(GL_NONE);
 		//glDrawBuffer(GL_NONE);
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-		glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-
-		renderer->shader->use();
-		renderer->ConfigureProps();
-		//renderer->shader->setTexture("screenBuffer", buffer, 0);
-		renderer->shader->setTexture("screenBuffer", &ppBuffer, 0);
-		renderer->shader->setVec2("bufferSize", buffer->width, buffer->height);
-
-		glBindFramebuffer(GL_FRAMEBUFFER, buffer->fbo);
-		glBindVertexArray(quadVAO);
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-		glBindVertexArray(0);
-
-		glViewport(0, 0, MOON_WndSize.x, MOON_WndSize.y);
-		glEnable(GL_DEPTH_TEST);
-	}
-
-	void Graphics::ApplyPostProcessing(FrameBuffer*& buffer, const Shader* shader) {
-		if (!quadVAO) ConfigureScreenQuad();
-
-		glDisable(GL_DEPTH_TEST);
-		glViewport(0, 0, buffer->width, buffer->height);
-
-		// blit frame buffer
-		if (buffer->width != ppBuffer.width || buffer->height != ppBuffer.height)
-			ppBuffer.Reallocate(buffer->width, buffer->height);
-		glBindFramebuffer(GL_READ_FRAMEBUFFER, buffer->fbo);
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, ppBuffer.fbo);
-		glBlitFramebuffer(
-			0, 0, buffer->width, buffer->height,
-			0, 0, buffer->width, buffer->height,
-			GL_COLOR_BUFFER_BIT, GL_NEAREST
-		);
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 
@@ -524,52 +593,48 @@ namespace MOON {
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 		glBindVertexArray(0);
 
+		// restore states
+		Graphics::SetShadingMode(shading);
+		glBindFramebuffer(GL_FRAMEBUFFER, drawFboId);
+		glViewport(0, 0, m_viewport[2], m_viewport[3]);
 		glEnable(GL_DEPTH_TEST);
-		glViewport(0, 0, MOON_WndSize.x, MOON_WndSize.y);
 	}
 
 	void Graphics::ApplyPostStack(FrameBuffer*& src, FrameBuffer*& dst) {
-		for (auto& fx : postStack) if (fx->enabled) ApplyPostProcessing(src, dst, fx);
+		for (auto& fx : postStack) if (fx->enabled) Blit(src, dst, fx);
 	}
 
-	void Graphics::ApplyPostProcessing(FrameBuffer*& src, FrameBuffer*& dst, PostProcessing* renderer) {
+	void Graphics::Blit(FrameBuffer* src, FrameBuffer*& dst, PostProcessing* renderer) {
 		if (src == nullptr || dst == nullptr) {
 			std::cout << "[PostProcessing]: src or dst buffer is null!" << std::endl;
 			return;
 		}
-		if (src->width != dst->width || src->height != dst->height)
-			dst->Reallocate(src->width, src->height);
 		if (!quadVAO) ConfigureScreenQuad();
 
-		glDisable(GL_DEPTH_TEST);
-		glViewport(0, 0, src->width, src->height);
-
-		// blit frame buffer
-		renderer->shader->use();
-		renderer->ConfigureProps();
-		renderer->shader->setTexture("screenBuffer", src, 0);
-		renderer->shader->setVec2("bufferSize", src->width, src->height);
-
-		glBindFramebuffer(GL_FRAMEBUFFER, dst->fbo);
-		glBindVertexArray(quadVAO);
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-		glBindVertexArray(0);
-
-		glViewport(0, 0, MOON_WndSize.x, MOON_WndSize.y);
-		glEnable(GL_DEPTH_TEST);
+		// execute post behaviour
+		if (!renderer->PostBehaviour(src, dst)) {
+			renderer->shader->use();
+			renderer->ConfigureProps();
+			Blit(src, dst, renderer->shader);
+		}
 	}
 
-	void Graphics::ApplyPostProcessing(FrameBuffer*& src, FrameBuffer*& dst, const Shader* shader) {
+	void Graphics::Blit(FrameBuffer* src, FrameBuffer*& dst, const Shader* shader) {
 		if (src == nullptr || dst == nullptr) {
 			std::cout << "[PostProcessing]: src or dst buffer is null!" << std::endl;
 			return;
 		}
-		if (src->width != dst->width || src->height != dst->height)
-			dst->Reallocate(src->width, src->height);
 		if (!quadVAO) ConfigureScreenQuad();
 
+		// save states
+		GLint m_viewport[4], drawFboId = 0;
+		glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &drawFboId);
+		glGetIntegerv(GL_VIEWPORT, m_viewport);
+
 		glDisable(GL_DEPTH_TEST);
-		glViewport(0, 0, src->width, src->height);
+		glViewport(0, 0, dst->width, dst->height);
+		auto shading = Graphics::shading;
+		Graphics::SetShadingMode(DEFAULT);
 
 		// blit frame buffer
 		shader->use();
@@ -581,7 +646,10 @@ namespace MOON {
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 		glBindVertexArray(0);
 
-		glViewport(0, 0, MOON_WndSize.x, MOON_WndSize.y);
+		// restore states
+		Graphics::SetShadingMode(shading);
+		glBindFramebuffer(GL_FRAMEBUFFER, drawFboId);
+		glViewport(0, 0, m_viewport[2], m_viewport[3]);
 		glEnable(GL_DEPTH_TEST);
 	}
 

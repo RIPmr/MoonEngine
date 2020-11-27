@@ -6,7 +6,7 @@
 namespace MOON {
 
 	void Model::LoadModel(const std::string& path) {
-		OBJLoader::LoadFile(path, meshList, gammaCorrection);
+		OBJLoader::LoadFile(path, meshList);
 		std::cout << "- OBJ file loaded, copying mesh list... ..." << std::endl;
 
 		// transfer data in loader to model & building b-box
@@ -20,14 +20,19 @@ namespace MOON {
 	}
 
 	void Model::Draw(Shader* overrideShader) {
+		bool updateFlag = false;
 		for (int i = 0; i < meshList.size(); i++) {
 			meshList[i]->Draw(
 				overrideShader == NULL ? meshList[i]->material->shader : overrideShader, 
 				transform.localToWorldMat, ID == MOON_InputManager::hoverID, selected
 			);
+			if (meshList[i]->changed) {
+				meshList[i]->changed = false;
+				updateFlag = true;
+			}
 		}
-		if (transform.changeFlag) {
-			UpdateBBox();
+		if (updateFlag) UpdateBBox();
+		if (updateFlag || transform.changeFlag) {
 			UpdateWorldBBox();
 			transform.changeFlag = false;
 		}

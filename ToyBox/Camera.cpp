@@ -11,6 +11,9 @@
 #include "Renderer.h"
 
 namespace MOON {
+#pragma region parameters
+	const int Camera::A = 0; const int Camera::B = 1;
+	const int Camera::C = 2; const int Camera::D = 3;
 	std::vector<Vector3> Camera::cameraShape = std::vector<Vector3>{
 		Vector3(-0.1f,  0.1f, -0.3f), Vector3(-0.1f, -0.1f, -0.3f),
 		Vector3(-0.1f, -0.1f, -0.3f), Vector3(0.1f, -0.1f, -0.3f),
@@ -40,7 +43,9 @@ namespace MOON {
 		Vector3(0.1f, 0.1f, -0.3f), Vector3(0.1f, 0.1f, -0.1f),
 		Vector3(0.1f, 0.1f, -0.1f), Vector3(0.15f, 0.15f, 0)
 	};
+#pragma endregion
 
+#pragma region matrix_operators
 	Matrix4x4 Camera::GetProjectionMatrix() {
 		if (isortho) return Matrix4x4::Orthographic(width, height, zNear, zFar);
 		else return Matrix4x4::Perspective(fov, aspect, zNear, zFar);
@@ -59,11 +64,14 @@ namespace MOON {
 		view = GetViewMatrix();
 		projection = GetProjectionMatrix();
 	}
+#pragma endregion
 
+#pragma camera_interactions
 	void Camera::PanCamera(Vector2 mouseOffset) {
 		mouseOffset *= MouseSensitivity;
 		Vector3 offset = transform.GetLocalAxis(RIGHT) * mouseOffset.x + 
 			transform.GetLocalAxis(UP) * mouseOffset.y;
+		if (isortho) offset *= width / 10.0f;
 		transform.position -= offset;
 		tarPos -= offset;
 		UpdateMatrix();
@@ -96,20 +104,11 @@ namespace MOON {
 
 	void Camera::PushCamera(Vector2 &mouseScrollOffset) {
 		if (isortho) {
-			auto ratio = width / height;
-			auto delta = mouseScrollOffset.y * MouseSensitivity * 10.0f;
-			width -= ratio * delta; height -= delta;
+			auto delta = mouseScrollOffset.y * MouseSensitivity * width;
+			orthoDelta += delta; width -= aspect * delta; height -= delta;
 		} else transform.position += transform.GetLocalAxis(FORWARD) * mouseScrollOffset.y;
 
 		UpdateMatrix();
-	}
-
-	// screen pos to world ray fast version (used in renderer)
-	Ray Camera::GetRay(float s, float t, float aspect) {
-		s = (s - 0.5f) / 2.0f * aspect + 0.5f;  auto pos = transform.position;
-		Vector3 rd = Renderer::depth ? MoonMath::RandomInUnitDisk() * lens_radius : Vector3::ZERO();
-		Vector3 offset = transform.GetLocalAxis(RIGHT) * rd.x + transform.GetLocalAxis(UP) * rd.y;
-		return Ray(pos + offset, lower_left_corner + s * horizontal + t * vertical - pos - offset);
 	}
 
 	void Camera::InitRenderCamera() {
@@ -135,6 +134,16 @@ namespace MOON {
 		transform.position = tarPos - transform.GetLocalAxis(FORWARD) * 
 			(target ? (target->bbox.max - target->bbox.min).magnitude() * 2.0f : 20.0f);
 		UpdateMatrix();
+	}
+#pragma endregion
+
+#pragma region math_functions
+	// screen pos to world ray fast version (used in renderer)
+	Ray Camera::GetRay(float s, float t, float aspect) {
+		s = (s - 0.5f) / 2.0f * aspect + 0.5f;  auto pos = transform.position;
+		Vector3 rd = Renderer::depth ? MoonMath::RandomInUnitDisk() * lens_radius : Vector3::ZERO();
+		Vector3 offset = transform.GetLocalAxis(RIGHT) * rd.x + transform.GetLocalAxis(UP) * rd.y;
+		return Ray(pos + offset, lower_left_corner + s * horizontal + t * vertical - pos - offset);
 	}
 
 	Vector3 Camera::WorldToScreenPos(const Vector3& worldPos) const {
@@ -180,7 +189,9 @@ namespace MOON {
 
 		return worldPos;
 	}
+#pragma endregion
 
+#pragma region graphics
 	void Camera::Draw(Shader* overrideShader) {
 		//Gizmo::DrawPointDirect(transform.position, Color::RED(), 6.0f);
 		std::vector<Vector3> camShape(cameraShape);
@@ -307,4 +318,128 @@ namespace MOON {
 			}
 		}
 	}
+#pragma endregion
+
+#pragma view_frustum_culling
+	// Normalizes a plane (A side) from a given frustum.
+	void Camera::NormalizePlane(std::vector<Vector4>& _frustum, int _side) {
+		float magnitude = std::sqrtf(
+			_frustum[_side][A] * _frustum[_side][A] +
+			_frustum[_side][B] * _frustum[_side][B] +
+			_frustum[_side][C] * _frustum[_side][C]
+		);
+
+		_frustum[_side][A] /= magnitude;
+		_frustum[_side][B] /= magnitude;
+		_frustum[_side][C] /= magnitude;
+		_frustum[_side][D] /= magnitude;
+	}
+
+	// Extracts camera frustum from the projection and modelview matrix.
+	void Camera::UpdateFrustum() {
+		Matrix4x4 clip = transform.localToWorldMat * view * projection; 
+		frustum.clear(); for (int i = 0; i < 6; i++) frustum.push_back(Vector4::ZERO());
+
+		frustum[RIGHT][A] = clip[0][3] - clip[0][0];
+		frustum[RIGHT][B] = clip[1][3] - clip[1][0];
+		frustum[RIGHT][C] = clip[2][3] - clip[2][0];
+		frustum[RIGHT][D] = clip[3][3] - clip[3][0];
+		NormalizePlane(frustum, RIGHT);
+
+		frustum[LEFT][A] = clip[0][3] + clip[0][0];
+		frustum[LEFT][B] = clip[1][3] + clip[1][0];
+		frustum[LEFT][C] = clip[2][3] + clip[2][0];
+		frustum[LEFT][D] = clip[3][3] + clip[3][0];
+		NormalizePlane(frustum, LEFT);
+
+		frustum[DOWN][A] = clip[0][3] + clip[0][1];
+		frustum[DOWN][B] = clip[1][3] + clip[1][1];
+		frustum[DOWN][C] = clip[2][3] + clip[2][1];
+		frustum[DOWN][D] = clip[3][3] + clip[3][1];
+		NormalizePlane(frustum, DOWN);
+
+		frustum[UP][A] = clip[0][3] - clip[0][1];
+		frustum[UP][B] = clip[1][3] - clip[1][1];
+		frustum[UP][C] = clip[2][3] - clip[2][1];
+		frustum[UP][D] = clip[3][3] - clip[3][1];
+		NormalizePlane(frustum, UP);
+
+		frustum[BACKWARD][A] = clip[0][3] - clip[0][2];
+		frustum[BACKWARD][B] = clip[1][3] - clip[1][2];
+		frustum[BACKWARD][C] = clip[2][3] - clip[2][2];
+		frustum[BACKWARD][D] = clip[3][3] - clip[3][2];
+		NormalizePlane(frustum, BACKWARD);
+
+		frustum[FORWARD][A] = clip[0][3] + clip[0][2];
+		frustum[FORWARD][B] = clip[1][3] + clip[1][2];
+		frustum[FORWARD][C] = clip[2][3] + clip[2][2];
+		frustum[FORWARD][D] = clip[3][3] + clip[3][2];
+		NormalizePlane(frustum, FORWARD);
+	}
+
+	bool Camera::IsPointInFrustum(const Vector3& p) {
+		UpdateFrustum();
+		// If you remember the plane equation (A*x + B*y + C*z + D = 0), then the rest
+		// of this code should be quite obvious and easy to figure out yourself.
+		for (int i = 0; i < 6; i++) {
+			// Calculate the plane equation and check if the point is behind a side of the frustum
+			if (frustum[i][A] * p.x + frustum[i][B] * p.y + frustum[i][C] * p.z + frustum[i][D] <= 0) {
+				// The point was behind a side, so it ISN'T in the frustum
+				return false;
+			}
+		}
+		return true;
+	}
+
+	bool Camera::IsSphereInFrustum(const Vector3& p, const float& radius) {
+		UpdateFrustum();
+		for (int i = 0; i < 6; i++) {
+			// If the center of the sphere is farther away from the plane than the radius
+			if (frustum[i][A] * p.x + frustum[i][B] * p.y + frustum[i][C] * p.z + frustum[i][D] <= -radius) {
+				// The distance was greater than the radius so the sphere is outside of the frustum
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	// *NOTE: just detect 8 corners of the bbox, so may not correct some times.
+	bool Camera::IsBBoxInFrustum(const Vector3& center, const Vector3& extend) {
+		UpdateFrustum();
+
+		for (int i = 0; i < 6; i++) {
+			if (frustum[i][A] * (center.x - extend.x) + frustum[i][B] * (center.y - extend.y) +
+				frustum[i][C] * (center.z - extend.z) + frustum[i][D] > 0)
+				continue;
+			if (frustum[i][A] * (center.x + extend.x) + frustum[i][B] * (center.y - extend.y) +
+				frustum[i][C] * (center.z - extend.z) + frustum[i][D] > 0)
+				continue;
+			if (frustum[i][A] * (center.x - extend.x) + frustum[i][B] * (center.y + extend.y) +
+				frustum[i][C] * (center.z - extend.z) + frustum[i][D] > 0)
+				continue;
+			if (frustum[i][A] * (center.x + extend.x) + frustum[i][B] * (center.y + extend.y) +
+				frustum[i][C] * (center.z - extend.z) + frustum[i][D] > 0)
+				continue;
+			if (frustum[i][A] * (center.x - extend.x) + frustum[i][B] * (center.y - extend.y) +
+				frustum[i][C] * (center.z + extend.z) + frustum[i][D] > 0)
+				continue;
+			if (frustum[i][A] * (center.x + extend.x) + frustum[i][B] * (center.y - extend.y) +
+				frustum[i][C] * (center.z + extend.z) + frustum[i][D] > 0)
+				continue;
+			if (frustum[i][A] * (center.x - extend.x) + frustum[i][B] * (center.y + extend.y) +
+				frustum[i][C] * (center.z + extend.z) + frustum[i][D] > 0)
+				continue;
+			if (frustum[i][A] * (center.x + extend.x) + frustum[i][B] * (center.y + extend.y) +
+				frustum[i][C] * (center.z + extend.z) + frustum[i][D] > 0)
+				continue;
+
+			// If we get here, it isn't in the frustum
+			return false;
+		}
+
+		return true;
+	}
+#pragma endregion
+
 }

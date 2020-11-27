@@ -2,7 +2,7 @@
 //#define MOON_DEBUG_MODE
 
 // global settings ------------------------------------------------
-const char *title = "MoonEngine - v0.12 WIP";
+const char *title = u8"MoonEngine - v0.18 朔";
 
 Vector2 MOON_WndSize = Vector2(1600, 900);
 Vector2 MOON_ScrSize = Vector2(800, 450);
@@ -10,7 +10,7 @@ float SceneManager::aspect = MOON_ScrSize.x / MOON_ScrSize.y;
 SceneView SceneManager::activeView = top;
 Vector2 MOON_OutputSize = Vector2(200, 100);
 float Renderer::aspect = MOON_OutputSize.x / MOON_OutputSize.y;
-Vector4 MainUI::clearColor(0.45f, 0.55f, 0.60f, 1.00f);
+Vector4 Graphics::clearColor(0.45f, 0.55f, 0.60f, 1.00f);
 Vector4 grdLineColor(0.8f, 0.8f, 0.8f, 1.0f);
 
 unsigned int Renderer::samplingRate = 5;
@@ -30,15 +30,19 @@ int main() {
 	MOON_InitEngine();
 
 	// test objects ------------------------------------------------------------------------
-	//Model* teapot = MOON_ModelManager::LoadModel("Assets\\Models\\teapot.obj");
-	//teapot->transform.Scale(Vector3(0.2f, 0.2f, 0.2f));
+	Model* teapot = MOON_ModelManager::LoadModel("Assets\\Models\\teapot.obj", false);
+	teapot->transform.Scale(Vector3(0.2f, 0.2f, 0.2f));
+	MoonMtl* pbr = dynamic_cast<MoonMtl*>(teapot->meshList[0]->material);
+	pbr->glossiness = 0.4f; pbr->reflectW.x = 1.0f;
 
 	//Model* rabbit = MOON_ModelManager::LoadModel("Assets\\Models\\bunny.obj");
 	//rabbit->transform.Scale(Vector3::ONE() * 5.0f);
 	//rabbit->transform.Translate(Vector3::WORLD(LEFT) * 2.0f);
 
 	Model* sphere = MOON_ModelManager::CreateSmartMesh(SmartMesh::sphere, "sphere");
-	sphere->transform.Translate(Vector3::WORLD(UP) + Vector3::WORLD(LEFT) * 2.0f);
+	sphere->meshList[0]->material = MOON_MaterialManager::GetItem("PBRMat");
+	//sphere->transform.Translate(Vector3::WORLD(UP) + Vector3::WORLD(LEFT) * 2.0f);
+	sphere->transform.Translate(Vector3::WORLD(UP) + Vector3::WORLD(UP) * 3.25f);
 	sphere->transform.Rotate(Quaternion::Rotate(Vector3(1, 0, 0), 90 * Deg2Rad));
 
 	// test half mesh
@@ -61,11 +65,8 @@ int main() {
 	sp->transform.Translate(Vector3::WORLD(UP));
 	sp->transform.Rotate(Quaternion(Vector3(0, 90, 0)));
 
-	Graphics::enviroment = env_hdri;
-	Graphics::postStack.push_back(new ToneMapping());
-
 	// duplicate random spheres
-	/*for (int i = 0; i < 3; i++) {
+	for (int i = 0; i < 10; i++) {
 		Model* dup = MOON_ModelManager::CreateSmartMesh(SmartMesh::sphere, "sphere_" + std::to_string(i));
 		dup->transform.Translate(Vector3(
 			MoonMath::RandomRange(-10, 10),
@@ -73,13 +74,28 @@ int main() {
 			MoonMath::RandomRange(-10, 10)
 		));
 		dup->transform.Scale(Vector3::ONE() * MoonMath::RandomRange(0.5, 2.0));
-	}*/
+		dup->meshList[0]->material = MOON_MaterialManager::GetItem("PBRMat");
+	}
 
 	//sp->transform.SetParent(&boxes->transform);
 	//rabbit->transform.SetParent(&sp->transform);
 
 	Helper* dum = MOON_HelperManager::CreateHelper(dummy, "dummy");
 	dum->transform.Translate(Vector3(0, 2, -3));
+
+	MOON_LightManager::CreateLight(point_light, "pointLight_01", Vector3(-10.0f, 10.0f, 10.0f));
+	MOON_LightManager::CreateLight(point_light, "pointLight_02", Vector3(10.0f, 10.0f, 10.0f));
+	MOON_LightManager::CreateLight(point_light, "pointLight_03", Vector3(-10.0f, -10.0f, 10.0f));
+	MOON_LightManager::CreateLight(point_light, "pointLight_04", Vector3(10.0f, -10.0f, 10.0f));
+
+	Graphics::enviroment = env_hdri;
+	Graphics::postStack.push_back(new FXAA());
+	Graphics::postStack.push_back(new DepthOfField());
+	Graphics::postStack.push_back(new Bloom());
+	Graphics::postStack.push_back(new ToneMapping());
+	Graphics::postStack.push_back(new Chromatic());
+	Graphics::postStack.push_back(new Vignette());
+	Graphics::postStack[4]->enabled = false;
 	// -------------------------------------------------------------------------------------
 	std::cout << "done." << std::endl;
 
@@ -101,11 +117,9 @@ int main() {
 
 		// draw Scene View ----------------------------------------------------------
 		Graphics::process = sys_draw_scene;
+		Graphics::SetShadingMode(DEFAULT);
+		MOON_TextureManager::UpdateEnvironmentTex();
 		Graphics::DrawSceneView(persp);
-		/*Graphics::ApplyPostProcessing(
-			MOON_TextureManager::SCENEBUFFERS[persp],
-			MOON_ShaderManager::screenBufferShader
-		);*/
 		Graphics::DrawSceneView(front);
 		Graphics::DrawSceneView(top);
 		Graphics::DrawSceneView(left);
@@ -124,7 +138,6 @@ int main() {
 		MOON_DrawMainUI();
 
 		// process user input ------------------------------------------------------
-		//MOON_InputManager::isHoverUI = MainUI::io->WantCaptureMouse;
 		HotKeyManager::MOON_InputProcessor(window);
 
 		// Rendering UI ------------------------------------------------------------
@@ -434,7 +447,7 @@ void MOON_DrawMainUI() {
 	if (MainUI::show_console_window)	MainUI::ConsoleWnd();
 	if (MainUI::show_project_window)	MainUI::ProjectWnd();
 	if (MainUI::show_create_window)		MainUI::CreateWnd();
-	if (MainUI::show_enviroment_editor) MainUI::EnviromentWnd();
+	if (MainUI::show_enviroment_editor) MainUI::EnvironmentWnd();
 	if (MainUI::show_code_editor)		MainUI::CodeEditor();
 	if (MainUI::show_material_editor)	MainUI::MaterialEditorWnd();
 	if (MainUI::show_render_setting)	MainUI::RenderSettingWnd();
@@ -470,6 +483,4 @@ void MOON_InitEngine() {
 	std::cout << "- Native Operators Loaded." << std::endl;
 	Gizmo::CreateVirtualDummy();
 	std::cout << "- Virtual Dummy Created." << std::endl;
-	MOON_ModelManager::CreateSkyDome();
-	std::cout << "- Sky Dome Created." << std::endl;
 }

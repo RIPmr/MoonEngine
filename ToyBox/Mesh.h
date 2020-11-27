@@ -62,6 +62,7 @@ namespace MOON {
 		std::vector<unsigned int> triangles;
 		unsigned int VAO;
 		bool selected;
+		bool changed;
 
 		Material* material;
 		BVH* localBVH;
@@ -139,9 +140,10 @@ namespace MOON {
 			for (auto &vert : vertices) {
 				bbox.join(vert.Position);
 			}
+			changed = true;
 		}
 
-		virtual void Draw(Shader* shader, const Matrix4x4 &model, const bool &hovered, const bool &selected);
+		virtual void Draw(Shader* shader, const Matrix4x4 &model, const bool &hovered = false, const bool &selected = false);
 
 		// * ray-mesh intersect calculated in local space
 		bool Hit(const Ray &r, HitRecord &rec) const override {

@@ -9,13 +9,13 @@ namespace MOON {
 		float radius;
 		int segment;
 
-		void CreateProceduralMesh(const bool& interactive) override;
+		void CreateProcedural(const bool& interactive) override;
 		void ListProceduralProperties() override;
 
 		Sphere(const std::string &name, const bool& interactive = false, 
 			float radius = 1.0f, int segment = 24, const int id = MOON_AUTOID) : 
 			Model(name, id), radius(radius), segment(segment) {
-			CreateProceduralMesh(interactive);
+			CreateProcedural(interactive);
 		}
 
 		~Sphere() override {};

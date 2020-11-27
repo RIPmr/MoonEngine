@@ -17,7 +17,7 @@ namespace MOON {
 	Camera		 Renderer::matCamera = Camera("matCamera", Vector3(0, 0, -4));
 	Camera*		 Renderer::targetCamera = MOON_UNSPECIFIEDID;
 	GLfloat*	 Renderer::outputRAW = MOON_UNSPECIFIEDID;
-	GLubyte*	 Renderer::matPrevImage = MOON_UNSPECIFIEDID;
+	GLfloat*	 Renderer::matPrevRaw = MOON_UNSPECIFIEDID;
 	//GLuint	 Renderer::outputTexID = MOON_AUTOID;
 	FrameBuffer* Renderer::output = MOON_UNSPECIFIEDID;
 	clock_t		 Renderer::start = -1;
@@ -59,6 +59,7 @@ namespace MOON {
 		} else if (output->width != MOON_OutputSize.x || output->height != MOON_OutputSize.y) {
 			output->Reallocate(MOON_OutputSize.x, MOON_OutputSize.y);
 		}
+		free(outputRAW);
 		// malloc space for new output image
 		outputRAW = (GLfloat *)malloc(OUTPUT_SIZE.x * OUTPUT_SIZE.y * 3 * sizeof(GLfloat));
 		// TODO: initialize new output image
@@ -121,7 +122,8 @@ namespace MOON {
 						if (!MOON_ModelManager::Hit(ray, tmp, acc)) {
 							Ray sray = targetCamera->GetRay((float)j / width, (float)i / height, aspect);
 							if (MOON_Enviroment == env_hdri) col = SampleSphericalMap(sray) * samplingRate;
-							else col = SimpleSky(sray) * samplingRate;
+							else if (MOON_Enviroment == env_pure_color) col = Graphics::clearColor * samplingRate;
+							else col = ProceduralSky(sray) * samplingRate;
 							break;
 						}
 					}
@@ -196,21 +198,22 @@ namespace MOON {
 		start = end = -1;
 		matCamera.fov = 20.0f;
 		matCamera.InitRenderCamera();
-		if (target->localID != -1) {
-			free(matPrevImage);
-			glDeleteTextures(1, &target->localID);
+		if (!target->localID) {
+			matPrevRaw = (GLfloat *)malloc(Material::PREVSIZE.x * Material::PREVSIZE.y * 3 * sizeof(GLfloat));
+			// load init blank image
+			Utility::LoadTextureFromMemory(Material::PREVSIZE, matPrevRaw, target->localID);
 		}
-		matPrevImage = (GLubyte *)malloc(Material::PREVSIZE.x * Material::PREVSIZE.y * 3 * sizeof(GLubyte));
+		//free(matPrevRaw);
+		//glDeleteTextures(1, &target->localID);
 
-		// load init blank image
-		return Utility::LoadTextureFromMemory(Material::PREVSIZE, matPrevImage, target->localID);
+		return true;
 	}
 
 	void* Renderer::renderingMatPreview(void* args) {
 		int currLine = 0;
 		int width = Material::PREVSIZE.x;
 		int height = Material::PREVSIZE.y;
-		float samplingRate = 20;
+		float samplingRate = MOON_Enviroment == env_hdri ? 100 : 20;
 
 		// mat ball
 		MSphere matBall(Vector3(0, 0, 0), 0.5, (Material*)args);
@@ -235,11 +238,11 @@ namespace MOON {
 				// -------------------------------------------
 
 				col /= samplingRate;
-				MoonMath::GammaCorrection(col);
+				MoonMath::ReinhardTonemapping(col);
 
-				matPrevImage[stp] = (GLubyte)(255.99 * col.x);
-				matPrevImage[stp + 1] = (GLubyte)(255.99 * col.y);
-				matPrevImage[stp + 2] = (GLubyte)(255.99 * col.z);
+				matPrevRaw[stp] = col.x;
+				matPrevRaw[stp + 1] = col.y;
+				matPrevRaw[stp + 2] = col.z;
 			}
 			currLine++;
 			progress = currLine / OUTPUT_SIZE.y;
@@ -257,15 +260,15 @@ namespace MOON {
 	Vector3 Renderer::SamplingColor_Simple(const Ray &r, int depth, const MSphere* ball, const MSphere* ground) {
 		HitRecord recB, recG;
 		if (ball->Hit(r, recB) || ground->Hit(r, recG)) {
-			Ray scattered;
-			Vector3 attenuation;
+			Ray scattered; Vector3 attenuation;
 			HitRecord& rec = recB.t < recG.t ? recB : recG;
 			if (depth < maxReflectionDepth && rec.mat->scatter(r, rec, attenuation, scattered))
 				return attenuation * SamplingColor_Simple(scattered, depth + 1, ball, ground);
 			else return Vector3::ZERO();
 		} else {
 			if (MOON_Enviroment == env_hdri) return SampleSphericalMap(r);
-			else return SimpleSky(r);
+			else if (MOON_Enviroment == env_pure_color) return Graphics::clearColor;
+			else return ProceduralSky(r);
 		}
 	}
 
@@ -278,18 +281,17 @@ namespace MOON {
 			else return Vector3::ZERO();
 		} else {
 			if (MOON_Enviroment == env_hdri) return SampleSphericalMap(r);
-			else return SimpleSky(r);
+			else if (MOON_Enviroment == env_pure_color) return Graphics::clearColor;
+			else return ProceduralSky(r);
 		}
 	}
 
-	Vector3 Renderer::SimpleSky(const Ray &r) {
+	Vector3 Renderer::ProceduralSky(const Ray &r) {
 		Vector3 unit_direction = Vector3::Normalize(r.dir);
 		float t = 0.5 * (unit_direction.y + 1.0);
-		return (1.0 - t) * Vector3::ONE() + t * Vector3(0.5, 0.7, 1.0);
-	}
-
-	Vector3 Renderer::PureBackground(const Ray &r, const Vector4 &c) {
-		return Vector3(c.x, c.y, c.z);
+		auto skyCol = (1.0 - t) * Vector3::ONE() + t * Vector3(0.5, 0.7, 1.0);
+		MoonMath::GammaCorrection(skyCol, 1.0f / 2.2f);
+		return skyCol;
 	}
 
 	Vector3 Renderer::SampleSphericalMap(const Ray &r) {
@@ -313,6 +315,6 @@ The invAtan constant is the reciprocal(or multiplicative inverse) of 2PI and PI:
 So you go from cartesian coordinates to polar angles to uvs,
 see this great resource(headline: Direct Polar). In more practical terms,
 assuming that given direction is normalized(hence mapped to the unit-sphere)
-multiplying by invAtan transformes the values into the [-.5,.5] range,
-adding .5 results in uv lookup coordinates in the range of [0,1].
+multiplying by invAtan transformes the values into the [-0.5, 0.5] range,
+adding 0.5 results in uv lookup coordinates in the range of [0, 1].
 */

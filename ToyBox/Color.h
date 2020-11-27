@@ -9,14 +9,14 @@ namespace MOON {
 	class Color {
 	public:
 		// based on : https://www.sioe.cn/yingyong/yanse-rgb-16/
-		static Vector4 RED() { return Vector4(1.0, 0.0, 0.0, 1.0); }
-		static Vector4 BLUE() { return Vector4(0.0, 0.0, 1.0, 1.0); }
-		static Vector4 GREEN() { return Vector4(0.0, 1.0, 0.0, 1.0); }
-		static Vector4 WHITE() { return Vector4(1.0, 1.0, 1.0, 1.0); }
-		static Vector4 BLACK() { return Vector4(0.0, 0.0, 0.0, 1.0); }
-		static Vector4 YELLOW() { return Vector4(1.0, 1.0, 0.0, 1.0); }
-		static Vector4 ORANGE() { return Vector4(1.0, 0.647, 0.0, 1.0); }
-		static Vector4 Gray() { return Vector4(0.439, 0.502, 0.565, 1.0); }
+		static Vector4 RED() { return Vector4(1.0f, 0.0f, 0.0f, 1.0f); }
+		static Vector4 BLUE() { return Vector4(0.0f, 0.0f, 1.0f, 1.0f); }
+		static Vector4 GREEN() { return Vector4(0.0f, 1.0f, 0.0f, 1.0f); }
+		static Vector4 WHITE() { return Vector4(1.0f, 1.0f, 1.0f, 1.0f); }
+		static Vector4 BLACK() { return Vector4(0.0f, 0.0f, 0.0f, 1.0f); }
+		static Vector4 YELLOW() { return Vector4(1.0f, 1.0f, 0.0f, 1.0f); }
+		static Vector4 ORANGE() { return Vector4(1.0f, 0.647f, 0.0f, 1.0f); }
+		static Vector4 Gray() { return Vector4(0.439f, 0.502f, 0.565f, 1.0f); }
 
 		static Vector4 Random(bool randomAlpha = false) { return Vector4(
 			MoonMath::Random01(), 

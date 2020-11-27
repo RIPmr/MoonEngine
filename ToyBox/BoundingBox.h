@@ -13,12 +13,18 @@ namespace MOON {
 	public:
 		Vector3 min;
 		Vector3 max;
-		//Vector3 center;
-		//Vector3 extend;
 
 		PROPERTY(Vector3, center);
 		GET(center) {
 			return (min + max) / 2.0f;
+		}
+		PROPERTY(Vector3, extend);
+		GET(extend) {
+			return (max - min) / 2.0f;
+		}
+		PROPERTY(Vector3, size);
+		GET(size) {
+			return max - min;
 		}
 
 		BoundingBox() {
@@ -115,6 +121,14 @@ namespace MOON {
 			//tHit = tmin;
 
 			return true;
+		}
+
+		inline bool IsInside(const Vector3& point) {
+			if (min.x <= point.x && point.x <= max.x && 
+				min.y <= point.y && point.y <= max.y &&
+				min.z <= point.z && point.z <= max.z) {
+				return true;
+			} else return false;
 		}
 	};
 }

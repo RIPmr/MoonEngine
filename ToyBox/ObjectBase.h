@@ -149,6 +149,7 @@ namespace MOON {
 		virtual void ListName() override;
 		virtual void ListTransform();
 		virtual void ListProperties() override;
+		virtual void CreateProcedural(const bool& interactive) {};
 	};
 #pragma endregion
 

@@ -31,18 +31,17 @@ namespace MOON {
 
 	class OBJLoader {
 	public:
-		static bool gammaCorrection;
 		static float progress;
 		static std::string info;
 		static std::vector<Vertex> LoadedVertices;
 		static std::vector<unsigned int> LoadedIndices;
 
-		//OBJLoader() : info("Loading... ..."), gammaCorrection(false), progress(0) {}
+		//OBJLoader() : info("Loading... ..."), progress(0) {}
 		//~OBJLoader() = default;
 
 		static void GetInfo(std::string& info, float& progress);
 		static void LoadFile(Model* container);
-		static bool LoadFile(const std::string &Path, std::vector<Mesh*> &LoadedMeshes, bool gammaCorrection = false);
+		static bool LoadFile(const std::string &Path, std::vector<Mesh*> &LoadedMeshes);
 
 	private:
 		// Generate vertices from a list of positions, tcoords, normals and a face line
@@ -52,8 +51,7 @@ namespace MOON {
 								   const std::vector<Vector3>& iNormals,
 								   std::string icurline);
 
-		// Triangulate a list of vertices into a face by printing
-		// inducies corresponding with triangles within it
+		// Triangulate a list of vertices into a face by printing inducies corresponding with triangles within it
 		static void VertexTriangluation(std::vector<unsigned int>& oIndices,
 										const std::vector<Vertex>& iVerts);
 

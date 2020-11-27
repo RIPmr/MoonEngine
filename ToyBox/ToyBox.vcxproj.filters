@@ -70,9 +70,6 @@
     <Filter Include="HeadFiles\Component\MOONCAKE">
       <UniqueIdentifier>{29f1cb1a-1767-4ad9-8605-a3b16942c639}</UniqueIdentifier>
     </Filter>
-    <Filter Include="HeadFiles\Component\MOONCAKE\ExternalOps">
-      <UniqueIdentifier>{8cf4dd95-6433-448e-a813-077b9cada2e4}</UniqueIdentifier>
-    </Filter>
     <Filter Include="HeadFiles\Component\MOONNN">
       <UniqueIdentifier>{7f61a3c1-ee5d-4b1a-b065-3c27de453fc1}</UniqueIdentifier>
     </Filter>
@@ -109,8 +106,41 @@
     <Filter Include="HeadFiles\Component\RABBIT">
       <UniqueIdentifier>{aa432a36-0228-45d2-adfb-b30feda1dc1d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Shaders\PostProcessing\ScreenBuffer">
+    <Filter Include="Shaders\ScreenBuffer">
       <UniqueIdentifier>{be894882-86ec-436b-9374-60f1d1115ed6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\PBR">
+      <UniqueIdentifier>{1c73a298-db57-4d7f-8c0c-88740b78bffd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\PBR\FS">
+      <UniqueIdentifier>{a44f73bb-5d35-4f7c-a791-85e1e7a4b310}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\PBR\VS">
+      <UniqueIdentifier>{faf7cf82-54c2-4216-aeb8-c8e194bcefa9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\RayMarching">
+      <UniqueIdentifier>{b5e4d094-63de-4d61-bc3a-7bd3c444afd6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\Functions">
+      <UniqueIdentifier>{5b7dea3a-d01a-4d98-b6d9-6bd41ecaf059}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeadFiles\Component\Particle">
+      <UniqueIdentifier>{64519656-c9b0-4221-9712-05bb96fc353e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SourceFiles\Component\Particle">
+      <UniqueIdentifier>{f5915306-a551-4520-8b59-2341b8c26c2a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeadFiles\Plugins">
+      <UniqueIdentifier>{6b4f631c-e7b1-488e-953e-2ff6ab5fae7d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeadFiles\Plugins\SplineMesher">
+      <UniqueIdentifier>{a82f4a5a-ef6f-49ff-b027-4e0f44600b4e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeadFiles\Plugins\RaindropFX">
+      <UniqueIdentifier>{9a3d59cb-c805-44e4-b0be-2260eed14655}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HeadFiles\Plugins\ExternalOP">
+      <UniqueIdentifier>{8cf4dd95-6433-448e-a813-077b9cada2e4}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -275,6 +305,21 @@
     </ClCompile>
     <ClCompile Include="VFB.cpp">
       <Filter>SourceFiles\Component\RABBIT</Filter>
+    </ClCompile>
+    <ClCompile Include="Light.cpp">
+      <Filter>SourceFiles\Component\Object</Filter>
+    </ClCompile>
+    <ClCompile Include="ProceduralMap.cpp">
+      <Filter>SourceFiles\Component\RABBIT</Filter>
+    </ClCompile>
+    <ClCompile Include="Volume.cpp">
+      <Filter>SourceFiles\Component\Object</Filter>
+    </ClCompile>
+    <ClCompile Include="Starry.cpp">
+      <Filter>SourceFiles\Component\Particle</Filter>
+    </ClCompile>
+    <ClCompile Include="PostEffects.cpp">
+      <Filter>SourceFiles\Component</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -452,9 +497,6 @@
     <ClInclude Include="MatSphere.h">
       <Filter>HeadFiles\Component\RABBIT</Filter>
     </ClInclude>
-    <ClInclude Include="PMapGen.h">
-      <Filter>HeadFiles\Component\RABBIT</Filter>
-    </ClInclude>
     <ClInclude Include="ImTimeline.h">
       <Filter>HeadFiles\UIEnhancement</Filter>
     </ClInclude>
@@ -503,12 +545,6 @@
     <ClInclude Include="FileManager.h">
       <Filter>HeadFiles\Component</Filter>
     </ClInclude>
-    <ClInclude Include="CakeParser.h">
-      <Filter>HeadFiles\Component\MOONCAKE\ExternalOps</Filter>
-    </ClInclude>
-    <ClInclude Include="PluginManager.h">
-      <Filter>HeadFiles\Component\MOONCAKE\ExternalOps</Filter>
-    </ClInclude>
     <ClInclude Include="Strutil.h">
       <Filter>HeadFiles\Miscellaneous</Filter>
     </ClInclude>
@@ -537,9 +573,6 @@
       <Filter>HeadFiles\Component\Object\Helper</Filter>
     </ClInclude>
     <ClInclude Include="Proxy.h">
-      <Filter>HeadFiles\Component\Object\Helper</Filter>
-    </ClInclude>
-    <ClInclude Include="Volume.h">
       <Filter>HeadFiles\Component\Object\Helper</Filter>
     </ClInclude>
     <ClInclude Include="HelperBase.h">
@@ -571,6 +604,30 @@
     </ClInclude>
     <ClInclude Include="VFB.h">
       <Filter>HeadFiles\Component\RABBIT</Filter>
+    </ClInclude>
+    <ClInclude Include="ProceduralMap.h">
+      <Filter>HeadFiles\Component\RABBIT</Filter>
+    </ClInclude>
+    <ClInclude Include="Volume.h">
+      <Filter>HeadFiles\Component\Object</Filter>
+    </ClInclude>
+    <ClInclude Include="Starry.h">
+      <Filter>HeadFiles\Component\Particle</Filter>
+    </ClInclude>
+    <ClInclude Include="TextMesh.h">
+      <Filter>HeadFiles\Component\Object\SmartMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="RFX_Solver.h">
+      <Filter>HeadFiles\Plugins\RaindropFX</Filter>
+    </ClInclude>
+    <ClInclude Include="SM_Solver.h">
+      <Filter>HeadFiles\Plugins\SplineMesher</Filter>
+    </ClInclude>
+    <ClInclude Include="CakeParser.h">
+      <Filter>HeadFiles\Component\MOONCAKE</Filter>
+    </ClInclude>
+    <ClInclude Include="PluginManager.h">
+      <Filter>HeadFiles\Component\MOONCAKE</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -611,12 +668,6 @@
     <None Include="VertexID.vs">
       <Filter>Shaders\Surface\VS</Filter>
     </None>
-    <None Include="PBR.fs">
-      <Filter>Shaders\Surface\FS</Filter>
-    </None>
-    <None Include="PBR.vs">
-      <Filter>Shaders\Surface\VS</Filter>
-    </None>
     <None Include="SEM.fs">
       <Filter>Shaders\Surface\FS</Filter>
     </None>
@@ -651,13 +702,13 @@
       <Filter>Shaders\PostProcessing</Filter>
     </None>
     <None Include="ScreenBuffer.vs">
-      <Filter>Shaders\PostProcessing\ScreenBuffer</Filter>
+      <Filter>Shaders\ScreenBuffer</Filter>
     </None>
     <None Include="Curve.fs">
       <Filter>Shaders\PostProcessing</Filter>
     </None>
     <None Include="ScreenBuffer.fs">
-      <Filter>Shaders\PostProcessing\ScreenBuffer</Filter>
+      <Filter>Shaders\ScreenBuffer</Filter>
     </None>
     <None Include="FXAA.fs">
       <Filter>Shaders\PostProcessing</Filter>
@@ -673,6 +724,81 @@
     </None>
     <None Include="ColorSpace.fs">
       <Filter>Shaders\PostProcessing</Filter>
+    </None>
+    <None Include="IRMapGen.fs">
+      <Filter>Shaders\PBR\FS</Filter>
+    </None>
+    <None Include="PBR.fs">
+      <Filter>Shaders\PBR\FS</Filter>
+    </None>
+    <None Include="Prefilter.fs">
+      <Filter>Shaders\PBR\FS</Filter>
+    </None>
+    <None Include="IRMapGen.vs">
+      <Filter>Shaders\PBR\VS</Filter>
+    </None>
+    <None Include="PBR.vs">
+      <Filter>Shaders\PBR\VS</Filter>
+    </None>
+    <None Include="PBR_Diff.fs">
+      <Filter>Shaders\PBR\VS</Filter>
+    </None>
+    <None Include="BasicRayMarching.fs">
+      <Filter>Shaders\RayMarching</Filter>
+    </None>
+    <None Include="GBufferRender.fs">
+      <Filter>Shaders\ScreenBuffer</Filter>
+    </None>
+    <None Include="NoiseGenerator.fs">
+      <Filter>Shaders\Functions</Filter>
+    </None>
+    <None Include="Cloud.fs">
+      <Filter>Shaders\RayMarching</Filter>
+    </None>
+    <None Include="SphericalSampling.fs">
+      <Filter>Shaders\Functions</Filter>
+    </None>
+    <None Include="BRDF.vs">
+      <Filter>Shaders\PBR\VS</Filter>
+    </None>
+    <None Include="BRDF.fs">
+      <Filter>Shaders\PBR\FS</Filter>
+    </None>
+    <None Include="DepthOfField.fs">
+      <Filter>Shaders\PostProcessing</Filter>
+    </None>
+    <None Include="MOON.fs">
+      <Filter>Shaders\Functions</Filter>
+    </None>
+    <None Include="GaussianBlur.fs">
+      <Filter>Shaders\Functions</Filter>
+    </None>
+    <None Include="Bokeh.fs">
+      <Filter>Shaders\Functions</Filter>
+    </None>
+    <None Include="BlurEffects.fs">
+      <Filter>Shaders\PostProcessing</Filter>
+    </None>
+    <None Include="HeightToNormal.fs">
+      <Filter>Shaders\Functions</Filter>
+    </None>
+    <None Include="ScreenBlend.fs">
+      <Filter>Shaders\ScreenBuffer</Filter>
+    </None>
+    <None Include="Vignette.fs">
+      <Filter>Shaders\PostProcessing</Filter>
+    </None>
+    <None Include="Chromatic.fs">
+      <Filter>Shaders\PostProcessing</Filter>
+    </None>
+    <None Include="DOF_MultiPass.fs">
+      <Filter>Shaders\PostProcessing</Filter>
+    </None>
+    <None Include="PBR_Ref.fs">
+      <Filter>Shaders\PBR\FS</Filter>
+    </None>
+    <None Include="mNoise.fs">
+      <Filter>Shaders\Functions</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

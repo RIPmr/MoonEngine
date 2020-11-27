@@ -51,7 +51,7 @@ namespace MOON {
 			}
 		}
 		if (tex != nullptr) {
-			if (ImGui::IsItemHovered()) {
+			if (ImGui::IsItemHovered() && tex->localID) {
 				ImGui::BeginTooltip();
 				ClampedImage(tex, 100.0f);
 				ImGui::EndTooltip();
@@ -71,6 +71,10 @@ namespace MOON {
 	void ButtonEx::ClampedImage(Texture* tex, const float& clampSize, const bool& clampWidth, const ImVec2& uv0, const ImVec2& uv1, const ImVec4& tint_col, const ImVec4& border_col) {
 		if (clampWidth) ImGui::Image((void*)(intptr_t)tex->localID, ImVec2(clampSize, tex->height * clampSize / tex->width), uv0, uv1, tint_col, border_col);
 		else ImGui::Image((void*)(intptr_t)tex->localID, ImVec2(tex->width * clampSize / tex->height, clampSize), uv0, uv1, tint_col, border_col);
+	}
+	void ButtonEx::ClampedImage(unsigned int texID, const Vector2& texSize, const float& clampSize, const bool& clampWidth, const ImVec2& uv0, const ImVec2& uv1, const ImVec4& tint_col, const ImVec4& border_col) {
+		if (clampWidth) ImGui::Image((void*)(intptr_t)texID, ImVec2(clampSize, texSize.y * clampSize / texSize.x), uv0, uv1, tint_col, border_col);
+		else ImGui::Image((void*)(intptr_t)texID, ImVec2(texSize.x * clampSize / texSize.y, clampSize), uv0, uv1, tint_col, border_col);
 	}
 
 	void ButtonEx::SetButtonClicked() {
@@ -175,6 +179,20 @@ namespace MOON {
 		return ret;
 	}
 
+	bool ButtonEx::InputIntNoLabel(const char* id, int* v, int step, int step_fast, ImGuiInputTextFlags flags) {
+		ImGui::PushID(id);
+		auto ret = ImGui::InputInt("", v, step, step_fast, flags);
+		ImGui::PopID();
+		return ret;
+	}
+
+	bool ButtonEx::InputFloatNoLabel(const char* id, float* v, float step, float step_fast, const char* format, ImGuiInputTextFlags flags) {
+		ImGui::PushID(id);
+		auto ret = ImGui::InputFloat("", v, step, step_fast, format, flags);
+		ImGui::PopID();
+		return ret;
+	}
+
 	bool ButtonEx::SliderFloatNoLabel(const char* id, float* v, float v_min, float v_max, const char* format, float power) {
 		ImGui::PushID(id);
 		auto ret = ImGui::SliderFloat("", v, v_min, v_max, format, power);
@@ -188,6 +206,21 @@ namespace MOON {
 		ImGui::PopID();
 		return ret;
 	}
+
+	bool ButtonEx::ColorEdit3NoLabel(const char* id, float col[3], ImGuiColorEditFlags flags) {
+		ImGui::PushID(id);
+		auto ret = ImGui::ColorEdit3("", col, flags);
+		ImGui::PopID();
+		return ret;
+	}
+
+	bool ButtonEx::ColorEdit4NoLabel(const char* id, float col[4], ImGuiColorEditFlags flags) {
+		ImGui::PushID(id);
+		auto ret = ImGui::ColorEdit4("", col, flags);
+		ImGui::PopID();
+		return ret;
+	}
+
 #pragma endregion
 
 }

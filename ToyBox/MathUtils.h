@@ -129,11 +129,16 @@ namespace MOON {
 			return v;
 		}
 
-		inline static void GammaCorrection(Vector3 &GammaSpaceCol, const float& gamma = 2.2f) {
+		inline static void GammaCorrection(Vector3& GammaSpaceCol, const float& gamma = 2.2f) {
 			float invGamma = 1.0f / gamma;
 			GammaSpaceCol.x = std::pow(GammaSpaceCol.x, invGamma);
 			GammaSpaceCol.y = std::pow(GammaSpaceCol.y, invGamma);
 			GammaSpaceCol.z = std::pow(GammaSpaceCol.z, invGamma);
+		}
+
+		inline static void ReinhardTonemapping(Vector3& hdrColor, const float& gamma = 2.2f) {
+			hdrColor = hdrColor / (hdrColor + Vector3::ONE());
+			GammaCorrection(hdrColor, gamma);
 		}
 
 		inline static double Random01() {
@@ -216,7 +221,8 @@ namespace MOON {
 
 		// left + (right - left) * percent
 		// percent: [0,1]
-		inline static double lerp(const double &left, const double &right, const double &percent) {
+		template<class T>
+		inline static T lerp(const T &left, const T &right, const double &percent) {
 			return left + (right - left) * percent;
 		}
 
@@ -244,6 +250,10 @@ namespace MOON {
 				refracted = ni_over_nt * (uv - n * dt) - n * sqrt(discriminant);
 				return true;
 			} else return false;
+		}
+
+		inline static Vector3 FresnelSchlick(Vector3 F0, float cosTheta) {
+			return F0 + (Vector3::ONE() - F0) * pow(1.0 - cosTheta, 5.0);
 		}
 
 		inline static float Schlick(float cosine, float ref_idx) {

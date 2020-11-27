@@ -17,6 +17,7 @@ namespace MOON {
 		Vector3 lower_left_corner;
 		Vector3 horizontal;
 		Vector3 vertical;
+
 		static std::vector<Vector3> cameraShape;
 
 	public:
@@ -33,6 +34,7 @@ namespace MOON {
 		float fov, aspect; // fovx
 		float zNear, zFar;
 		float width, height;
+		float orthoDelta;
 
 		// Camera matrix
 		bool isortho;
@@ -50,6 +52,7 @@ namespace MOON {
 			zNear = 0.1f; zFar = 1000.0f;
 			width = 1.0f; height = 1.0f;
 			tarPos = Vector3::ZERO();
+			orthoDelta = 0.0f;
 			lockSize = true;
 
 			UpdateMatrix();
@@ -62,6 +65,7 @@ namespace MOON {
 			zNear = 0.1f; zFar = 1000.0f;
 			width = 1.0f; height = 1.0f;
 			tarPos = Vector3::ZERO();
+			orthoDelta = 0.0f;
 			lockSize = true;
 
 			UpdateMatrix();
@@ -93,5 +97,16 @@ namespace MOON {
 		void Draw(Shader* overrideShader = NULL) override;
 
 		void ListProperties() override;
+
+	private:
+		// view frustum culling
+		std::vector<Vector4> frustum;
+		const static int A, B, C, D;
+
+		void NormalizePlane(std::vector<Vector4>& frustum, int side);
+		void UpdateFrustum();
+		bool IsPointInFrustum(const Vector3& point);
+		bool IsSphereInFrustum(const Vector3& center, const float& radius);
+		bool IsBBoxInFrustum(const Vector3& center, const Vector3& extend);
 	};
 }

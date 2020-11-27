@@ -25,6 +25,7 @@ namespace MOON {
 	#define MOON_ShaderManager			SceneManager::ShaderManager
 	#define MOON_TextureManager			SceneManager::TextureManager
 	#define MOON_ModelManager			SceneManager::ModelManager
+	#define MOON_VolumeManager			SceneManager::VolumeManager
 	#define MOON_CameraManager			SceneManager::CameraManager
 	#define MOON_ShapeManager			SceneManager::ShapeManager
 	#define MOON_HelperManager			SceneManager::HelperManager
@@ -42,9 +43,13 @@ namespace MOON {
 	#define MOON_MouseRepeat(key)		SceneManager::InputManager::IsMouseRepeat(key)
 
 	#define CheckClass(item, type)		typeid(*item) == typeid(type)
-	#define CheckSuperClass(item, type)	SceneManager::GetSuperClass(item)._Equal(type)
-	#define CheckType(item, type)		SceneManager::GetType(item)._Equal(type)
+	#define CheckSuperClass(item, typeStr) SceneManager::GetSuperClass(item)._Equal(typeStr)
+	#define CheckType(item, typeStr)	SceneManager::GetType(item)._Equal(typeStr)
 	#define MOON_ViewportState			HotKeyManager::state
+
+	#define ViewportDistanceMatrix		\
+										Matrix4x4::ScaleMat(transform.position.distance(\
+										MOON_ActiveCamera->transform.position) / 25.0f)
 
 	// current target in edit mode
 	#define MOON_EditTarget				HotKeyManager::globalEditTarget
@@ -259,15 +264,23 @@ namespace MOON {
 		DEFERRED_SHADING
 	};
 
+	enum LightModel {
+		PHONG,
+		PBR
+	};
+
 	enum ShadingMode {
 		DEFAULT,
 		FACET,
 		WIRE,
 		DEFWIRE,
+
+		// OVERLAY
 		ALBEDO,
 		NORMAL,
-		CHECKER,
-		OVERLAY
+		ROUGHNESS,
+		METALLIC,
+		CHECKER
 	};
 
 	enum Direction {
@@ -305,5 +318,11 @@ namespace MOON {
 		MSAA,
 		TAA,
 		SRAA
+	};
+
+	enum FogType {
+		fog_linear,
+		fog_exponential,
+		fog_exponential_squared
 	};
 }

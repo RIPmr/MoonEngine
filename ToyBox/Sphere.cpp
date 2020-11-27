@@ -37,7 +37,7 @@ namespace MOON {
 		MOON_ModelManager::DeleteItem(sp->ID);
 	}
 
-	void Sphere::CreateProceduralMesh(const bool& interactive) {
+	void Sphere::CreateProcedural(const bool& interactive) {
 		if (interactive) {
 			Coroutine::ptr co = Coroutine::create_coroutine(InteractiveCreate, this);
 		} else {
@@ -51,12 +51,12 @@ namespace MOON {
 		ImGui::Indent(10.0f);
 		ImGui::Text("Radius"); ImGui::SameLine(80);
 		if (ImGui::DragFloat(UniquePropName("radius"), &radius, 0.1f, 0, INFINITY, "%.3f", 1.0f, true)) {
-			CreateProceduralMesh(false);
+			CreateProcedural(false);
 			opstack.ExecuteAll();
 		}
 		ImGui::Text("Segment"); ImGui::SameLine(80);
 		if (ImGui::DragInt(UniquePropName("segment"), &segment, 1.0f, 3, 255, "%d", true)) {
-			CreateProceduralMesh(false);
+			CreateProcedural(false);
 			opstack.ExecuteAll();
 		}
 		ImGui::Unindent(10.0f);
@@ -109,7 +109,7 @@ namespace MOON {
 		}
 
 		Mesh* mesh = new Mesh("sphere", verts, tris);
-		mesh->material = MOON_MaterialManager::GetItem("default");
+		mesh->material = MOON_MaterialManager::defaultMat;
 		mesh->UpdateBBox();
 		return mesh;
 	}

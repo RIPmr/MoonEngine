@@ -1,6 +1,5 @@
 #include "Utility.h"
 #include "SceneMgr.h"
-#include "STB/stb_image.h"
 
 namespace MOON {
 	namespace Utility {
@@ -14,22 +13,25 @@ namespace MOON {
 			data = nullptr;
 		}
 
-		bool LoadHDRIFromFile(const std::string &path, void*& data, std::string &name, GLuint &textureID, int &width, int &height, GLenum& format, bool gamma) {
+		bool LoadHDRIFromFile(const std::string &path, void*& data, std::string &name, GLuint &textureID, int &width, int &height, GLenum& format, bool mipmap) {
 			name = GetPathOrURLShortName(path);
 
 			//stbi_set_flip_vertically_on_load(true);
 			int nrComponents;
 			data = stbi_loadf(path.c_str(), &width, &height, &nrComponents, 0);
 			if (data) {
-				format = GL_RGBA16F;
+				format = GL_RGB16F;
 
 				glGenTextures(1, &textureID);
 				glBindTexture(GL_TEXTURE_2D, textureID);
-				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, data);
+				glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, GL_RGB, GL_FLOAT, data);
+				if (mipmap) glGenerateMipmap(GL_TEXTURE_2D);
 
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+				if (mipmap) glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mipmap ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 				//stbi_image_free(data);
@@ -40,29 +42,33 @@ namespace MOON {
 			}
 		}
 
-		bool LoadTextureFromFileEx(const std::string &path, void*& data, std::string &name, GLuint &textureID, int &width, int &height, GLenum& format, bool gamma) {
+		bool LoadTextureFromFileEx(const std::string &path, void*& data, std::string &name, GLuint &textureID, int &width, int &height, GLenum& format, bool mipmap) {
 			name = GetPathOrURLShortName(path);
-
-			glGenTextures(1, &textureID);
 
 			int nrComponents;
 			data = stbi_load(path.c_str(), &width, &height, &nrComponents, 0);
 			std::cout << std::endl;
 			std::cout << "Load texture from: " << path << std::endl;
-			std::cout << "- ID: " << textureID << ", width: " << width << ", height: " << height << ", format: " << nrComponents << ", gamma: " << gamma << std::endl;
+			std::cout << "- ID: " << textureID << ", width: " << width << ", height: " << height << ", format: " << nrComponents << std::endl;
 			if (data) {
 				if (nrComponents == 1)		format = GL_RED;
 				else if (nrComponents == 3) format = GL_RGB;
 				else if (nrComponents == 4) format = GL_RGBA;
 
+				glGenTextures(1, &textureID);
 				glBindTexture(GL_TEXTURE_2D, textureID);
 				glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-				glGenerateMipmap(GL_TEXTURE_2D);
+				if (mipmap) glGenerateMipmap(GL_TEXTURE_2D);
 
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+				// set warpping mode
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+				if (mipmap) glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+				// set filtering mode for zoom in and out the image
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mipmap ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
 				//stbi_image_free(data);
 				return true;
 			} else {
@@ -72,30 +78,27 @@ namespace MOON {
 			}
 		}
 
-		bool LoadTextureFromFile(const std::string &path, std::string &name, GLuint &textureID, int &width, int &height, GLenum& format, bool gamma) {
+		bool LoadTextureFromFile(const std::string &path, std::string &name, GLuint &textureID, int &width, int &height, GLenum& format) {
 			name = GetPathOrURLShortName(path);
-
-			glGenTextures(1, &textureID);
 
 			int nrComponents;
 			unsigned char *data = stbi_load(path.c_str(), &width, &height, &nrComponents, 0);
 			std::cout << std::endl;
 			std::cout << "Load texture from: " << path << std::endl;
-			std::cout << "- ID: " << textureID << ", width: " << width << ", height: " << height << ", format: " << nrComponents << ", gamma: " << gamma << std::endl;
+			std::cout << "- ID: " << textureID << ", width: " << width << ", height: " << height << ", format: " << nrComponents << std::endl;
 			if (data) {
-				if (nrComponents == 1)
-					format = GL_RED;
-				else if (nrComponents == 3)
-					format = GL_RGB;
-				else if (nrComponents == 4)
-					format = GL_RGBA;
+				if (nrComponents == 1)		format = GL_RED;
+				else if (nrComponents == 3) format = GL_RGB;
+				else if (nrComponents == 4) format = GL_RGBA;
 
+				glGenTextures(1, &textureID);
 				glBindTexture(GL_TEXTURE_2D, textureID);
 				glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
 				glGenerateMipmap(GL_TEXTURE_2D);
 
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 				stbi_image_free(data);
@@ -137,6 +140,24 @@ namespace MOON {
 			// Upload pixels into texture
 			glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (int)imageSize.x, (int)imageSize.y, 0, GL_RGB, GL_UNSIGNED_BYTE, imageInMem);
+
+			//glBindTexture(GL_TEXTURE_2D, 0);
+
+			return true;
+		}
+
+		bool LoadTextureFromMemory(const Vector2 &imageSize, GLfloat* imageInMem, GLuint& textureID) {
+			// Create a OpenGL texture identifier
+			glGenTextures(1, &textureID);
+			glBindTexture(GL_TEXTURE_2D, textureID);
+
+			// Setup filtering parameters for display
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+			// Upload pixels into texture
+			glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, (int)imageSize.x, (int)imageSize.y, 0, GL_RGB, GL_FLOAT, imageInMem);
 
 			//glBindTexture(GL_TEXTURE_2D, 0);
 

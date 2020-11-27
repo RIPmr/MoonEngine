@@ -44,9 +44,11 @@ namespace MOON {
 				return;
 			} else {
 				auto newPoint = MOON_InputManager::PickGroundPoint(MOON_MousePos);
-				float len = newPoint.distance(sp->transform.position);
+				Vector3 checkPoint = sp->transform.position + Vector3(sp->size.x, 0, sp->size.z);
+				checkPoint.x = newPoint.x;
+				float len = newPoint.distance(checkPoint);
 				float ang = Vector3::Angle(
-					sp->transform.position - newPoint, 
+					checkPoint - newPoint,
 					MOON_ActiveCamera->transform.position - newPoint
 				);
 				sp->size.y = len * std::tanf(ang);
@@ -59,7 +61,7 @@ namespace MOON {
 		MOON_ModelManager::DeleteItem(sp->ID);
 	}
 
-	void Box::CreateProceduralMesh(const bool& interactive) {
+	void Box::CreateProcedural(const bool& interactive) {
 		if (interactive) {
 			Coroutine::ptr co = Coroutine::create_coroutine(InteractiveCreate, this);
 		} else {
@@ -73,13 +75,13 @@ namespace MOON {
 		ImGui::Indent(10.0f);
 		ImGui::Text("Size"); ImGui::SameLine(80);
 		if (ImGui::DragFloat3(UniquePropName("size"), (float*)&size, 0.1f, 0, INFINITY, "%.3f", 1.0f, true)) {
-			CreateProceduralMesh(false);
+			CreateProcedural(false);
 		}
 		ImGui::Text("Segment"); ImGui::SameLine(80);
 		int seg[3] = { segment.x, segment.y, segment.z };
 		if (ImGui::DragInt2(UniquePropName("segment"), seg, 1.0f, 1, 255, "%d", true)) {
 			segment.setValue(seg[0], seg[1], seg[2]);
-			CreateProceduralMesh(false);
+			CreateProcedural(false);
 		}
 		ImGui::Unindent(10.0f);
 	}

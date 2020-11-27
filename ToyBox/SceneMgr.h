@@ -11,10 +11,12 @@
 #include "Vector2.h"
 #include "Camera.h"
 #include "Model.h"
+#include "Volume.h"
 #include "Light.h"
 #include "Shapes.h"
 #include "Helpers.h"
 #include "Texture.h"
+#include "ProceduralMap.h"
 #include "MShader.h"
 #include "Material.h"
 #include "MatSphere.h"
@@ -372,6 +374,7 @@ namespace MOON {
 		static float aspect;
 		static SceneView activeView;
 		static ShadingMode splitShading[4];
+		static LightModel lightModel[4];
 
 		static bool debug;
 		static bool exitFlag;
@@ -417,6 +420,9 @@ namespace MOON {
 			MOON_SceneCameras[view]->aspect = (float)width / height;
 			MOON_SceneCameras[view]->width = width / 25.0f;
 			MOON_SceneCameras[view]->height = height / 25.0f;
+			MOON_SceneCameras[view]->width -= aspect * MOON_SceneCameras[view]->orthoDelta;
+			MOON_SceneCameras[view]->height -= MOON_SceneCameras[view]->orthoDelta;
+
 			MOON_SceneCameras[view]->UpdateMatrix();
 
 			if (view == MOON_ActiveView) {
@@ -502,6 +508,8 @@ namespace MOON {
 				ShapeManager::DeleteItem(obj->ID);
 			} else if (type._Equal("Helper")) {
 				HelperManager::DeleteItem(obj->ID);
+			} else if (type._Equal("Volume")) {
+				VolumeManager::DeleteItem(obj->ID);
 			}
 		}
 
@@ -519,6 +527,7 @@ namespace MOON {
 					 _type._Equal("Model")		||
 					 _type._Equal("Shape")		||
 					 _type._Equal("Helper")		||
+					 _type._Equal("Volume")		||
 					 _type._Equal("Light"))		type = "MObject";
 			else if (_type._Equal("BVH"))		type = "BVH";
 			else type = "Unknown";
@@ -559,8 +568,8 @@ namespace MOON {
 					 typeid(*item) == typeid(NGone))		type = "Shape";
 			else if (typeid(*item) == typeid(Dummy)			||
 					 typeid(*item) == typeid(Tape)			||
-					 typeid(*item) == typeid(Volume)		||
 					 typeid(*item) == typeid(Proxy))		type = "Helper";
+			else if (typeid(*item) == typeid(Volume))		type = "Volume";
 			else if (typeid(*item) == typeid(BVH))			type = "BVH";
 			else type = "Unknown";
 			return type;
@@ -579,6 +588,7 @@ namespace MOON {
 			else if (type._Equal("Camera"))					typeIcon = ICON_FA_VIDEO_CAMERA;
 			else if (type._Equal("Shape"))					typeIcon = ICON_FA_LEMON_O;
 			else if (type._Equal("Helper"))					typeIcon = ICON_FA_THUMB_TACK;
+			else if (type._Equal("Volume"))					typeIcon = ICON_FA_CLOUD;
 			else typeIcon = ICON_FA_QUESTION;
 			return typeIcon;
 		}
@@ -594,6 +604,7 @@ namespace MOON {
 			else if (type._Equal("Camera"))			CameraManager::RenameItem(item, newName);
 			else if (type._Equal("Shape"))			ShapeManager::RenameItem(item, newName);
 			else if (type._Equal("Helper"))			HelperManager::RenameItem(item, newName);
+			else if (type._Equal("Volume"))			VolumeManager::RenameItem(item, newName);
 			else std::cout << "Unknown type, rename failed!" << std::endl;
 		}
 
@@ -612,6 +623,7 @@ namespace MOON {
 			count += MaterialManager::CountItem();
 			count += ShapeManager::CountItem();
 			count += HelperManager::CountItem();
+			count += VolumeManager::CountItem();
 
 			return count;
 		}
@@ -634,16 +646,25 @@ namespace MOON {
 		}
 
 		static void Init() {
-			TextureManager::LoadImagesForUI();
-			std::cout << "- Images For UI Loaded." << std::endl;
-			TextureManager::LoadHDRI("./Assets/Textures/HDRI/DS360_041_Extra_Env.hdr");
-			std::cout << "- Default HDRI Loaded." << std::endl;
-			ShaderManager::LoadDefaultShaders();
-			std::cout << "- Default Shaders Loaded." << std::endl;
-			MaterialManager::CreateDefaultMats();
-			std::cout << "- Default Materials Created." << std::endl;
 			CameraManager::LoadSceneCamera();
 			std::cout << "- Scene Camera Created." << std::endl;
+			TextureManager::LoadImagesForUI();
+			std::cout << "- Images For UI Loaded." << std::endl;
+			ShaderManager::LoadDefaultShaders();
+			std::cout << "- Default Shaders Loaded." << std::endl;
+			ModelManager::CreateSkyDome();
+			std::cout << "- Sky Dome Created." << std::endl;
+			TextureManager::LoadHDRI("./Assets/Textures/HDRI/Newport_Loft_Ref.hdr");
+			std::cout << "- Default HDRI Loaded." << std::endl;
+			/*TextureManager::brdfLUT = TextureManager::LoadTexture(
+				"./Assets/Textures/LUTs/ibl_brdf_lut.png", "brdfLUT", false
+			);*/
+			TextureManager::GenerateBRDFLUT();
+			std::cout << "- BRDF LUT Created." << std::endl;
+			TextureManager::GenerateIrradianceMap();
+			std::cout << "- Irradiance Map Created." << std::endl;
+			MaterialManager::CreateDefaultMats();
+			std::cout << "- Default Materials Created." << std::endl;
 
 			Gizmo::RecalcCircle(); Gizmo::RecalcTranslate();
 			std::cout << "- Gizmo Initialized." << std::endl;
@@ -903,7 +924,20 @@ namespace MOON {
 		};
 
 		struct LightManager : ObjectManager<Light> {
-
+			static Light* CreateLight(const LightType &type, const std::string &name, 
+				const Vector3 &pos = Vector3::ZERO(), const Vector4 &color = Color::WHITE()) {
+				Light* newLight = nullptr;
+				switch (type) {
+					case directional_light:
+						newLight = new DirLight(name, pos, Vector3::WORLD(DOWN), color);
+						break;
+					case point_light:
+						newLight = new PointLight(name, pos, color);
+						break;
+				}
+				if (newLight != nullptr) AddItem(newLight);
+				return newLight;
+			}
 		};
 
 		struct MaterialManager : ObjectManager<Material> {
@@ -912,6 +946,8 @@ namespace MOON {
 			static void CreateDefaultMats() {
 				defaultMat = MaterialManager::CreateMaterial(moonMtl, "default");
 				MaterialManager::CreateMaterial(sem, "SEM");
+				MoonMtl* pbr = dynamic_cast<MoonMtl*>(MaterialManager::CreateMaterial(moonMtl, "PBRMat"));
+				pbr->glossiness = 0.05f; pbr->metalness.x = 0.0f; pbr->reflectW.x = 1.0f;
 			}
 
 			static Material* CreateMaterial(const MatType &type, const std::string &name) {
@@ -949,18 +985,20 @@ namespace MOON {
 			static Shader* lineShader;
 			static Shader* overlayShader;
 			static Shader* outlineShader;
-			//static Shader* screenBufferShader;
 
 			static void LoadDefaultShaders() {
-				//AddItem(new Shader("SimplePhong", "SimplePhong.vs", "SimplePhong.fs"));
 				lineShader = new Shader("ConstColor", "ConstColor.vs", "ConstColor.fs");
 				outlineShader = new Shader("Outline", "Outline.vs", "Outline.fs");
-				//AddItem(new Shader("ScreenBuffer", "ScreenBuffer.vs", "ScreenBuffer.fs"));
+				AddItem(lineShader); AddItem(outlineShader); 
+
+				//AddItem(new Shader("SimplePhong", "SimplePhong.vs", "SimplePhong.fs"));
+				AddItem(new Shader("BlinnPhong", "SimplePhong.vs", "BlinnPhong.fs"));
+				AddItem(new Shader("IrMapGenerator", "IRMapGen.vs", "IRMapGen.fs"));
+				AddItem(new Shader("Prefilter", "IRMapGen.vs", "Prefilter.fs"));
 				AddItem(new Shader("FlatShader", "Flat.vs", "Flat.fs")); 
 				AddItem(new Shader("VertexID", "VertexID.vs", "VertexID.fs")); 
-				AddItem(new Shader("EnvSphere", "EnvSphere.vs", "EnvSphere.fs")); 
-				AddItem(lineShader);
-				AddItem(outlineShader);
+				AddItem(new Shader("EnvSphere", "EnvSphere.vs", "EnvSphere.fs"));
+				AddItem(new Shader("RayMarching", "ScreenBuffer.vs", "Cloud.fs"));
 			}
 
 			static Shader* CreateShader(const std::string &name, const char *vs, const char *fs) {
@@ -985,7 +1023,12 @@ namespace MOON {
 		struct TextureManager : ObjectManager<Texture> {
 			static FrameBuffer* SHADOWMAP;
 			static FrameBuffer* IDLUT;
+
 			static Texture* HDRI;
+			static FrameBuffer* brdfLUT;
+			static FrameBuffer* Irradiance;
+			static FrameBuffer* prefilterMap;
+
 			static std::vector<FrameBuffer*> SCENEBUFFERS;
 
 			// create buffers
@@ -1023,17 +1066,114 @@ namespace MOON {
 				AddItem(new Texture("./Resources/Icon_fullSize.png", "moon_logo_full"));
 			}
 
+			static void UpdateEnvironmentTex() {
+				static std::string hdriPath = HDRI->path;
+				if (!hdriPath._Equal(HDRI->path)) {
+					GenerateIrradianceMap();
+					hdriPath = HDRI->path;
+				}
+			}
+
 			static void LoadHDRI(const std::string& path) {
 				if (HDRI != nullptr) DeleteItem(HDRI);
-				HDRI = new Texture(path, "SkyHDRI", TexType::defaultType);
+				HDRI = new Texture(path, "SkyHDRI", TexType::defaultMap, Linear, true);
 				AddItem(HDRI);
+			}
+
+			static void GenerateBRDFLUT(const Vector2& mapSize = Vector2(512, 512)) {
+				if (brdfLUT == nullptr) {
+					brdfLUT = new FrameBuffer(mapSize, "brdfLUT", MOON_AUTOID, GL_RGB16F);
+					AddItem(brdfLUT);
+				}
+				auto lutShader = ShaderManager::CreateShader("brdfLUTGen", "BRDF.vs", "BRDF.fs");
+				lutShader->use();
+				
+				// rendering brdf lut
+				glDisable(GL_DEPTH_TEST);
+				glViewport(0, 0, mapSize.x, mapSize.y);
+
+				glBindFramebuffer(GL_FRAMEBUFFER, brdfLUT->fbo);
+				glBindVertexArray(Graphics::GetScreenQuad());
+				glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+				glBindVertexArray(0);
+				glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+				glViewport(0, 0, MOON_WndSize.x, MOON_WndSize.y);
+				glEnable(GL_DEPTH_TEST);
+			}
+
+			static void GenerateIrradianceMap(const Vector2& mapSize = Vector2(512, 512)) {
+				if (Irradiance == nullptr) {
+					Irradiance = new FrameBuffer(mapSize, "irMap", MOON_AUTOID, GL_RGB16F);
+					AddItem(Irradiance);
+				}
+				if (prefilterMap == nullptr) {
+					prefilterMap = new FrameBuffer(mapSize, "prefilteredEnv", MOON_AUTOID, GL_RGB16F, defaultMap, Linear, true);
+					AddItem(prefilterMap);
+				}
+
+				// PBR: solve diffuse integral by convolution to create an irradiance map ----
+				auto irradianceShader = ShaderManager::GetItem("IrMapGenerator");
+				irradianceShader->use();
+				irradianceShader->setTexture("environmentMap", HDRI, 0);
+				
+				// rendering irradiance map
+				glDisable(GL_DEPTH_TEST);
+				glViewport(0, 0, Irradiance->width, Irradiance->height);
+				
+				glBindFramebuffer(GL_FRAMEBUFFER, Irradiance->fbo);
+				glBindVertexArray(Graphics::GetScreenQuad());
+				glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+				glBindVertexArray(0);
+				glBindFramebuffer(GL_FRAMEBUFFER, 0);
+				// ---------------------------------------------------------------------------
+
+				// PBR: create prefiltered environment reflection map ------------------------
+				// run a quasi monte-carlo simulation on the environment lighting to create a prefilter (cube)map.
+				glBindFramebuffer(GL_FRAMEBUFFER, prefilterMap->fbo);
+				glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, 0);
+				//glDeleteRenderbuffers(1, &prefilterMap->rbo);
+				//glGenRenderbuffers(1, &prefilterMap->rbo);
+				glBindRenderbuffer(GL_RENDERBUFFER, prefilterMap->rbo);
+				glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, mapSize.x, mapSize.y);
+				glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, prefilterMap->rbo);
+				
+				unsigned int maxMipLevels = 5;
+				auto prefilterShader = ShaderManager::GetItem("Prefilter");
+				prefilterShader->use();
+				prefilterShader->setTexture("environmentMap", HDRI, 0);
+				for (unsigned int mip = 0; mip < maxMipLevels; ++mip) {
+					// resize framebuffer according to mip-level size.
+					unsigned int mipWidth = mapSize.x * std::pow(0.5, mip);
+					unsigned int mipHeight = mapSize.y * std::pow(0.5, mip);
+					glBindRenderbuffer(GL_RENDERBUFFER, prefilterMap->rbo);
+					glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, mipWidth, mipHeight);
+					glViewport(0, 0, mipWidth, mipHeight);
+
+					float roughness = (float)mip / (float)(maxMipLevels - 1);
+					prefilterShader->setFloat("roughness", roughness);
+
+					glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, prefilterMap->localID, mip);
+					//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+					// rendering prefiltered map
+					glBindVertexArray(Graphics::GetScreenQuad());
+					glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+					glBindVertexArray(0);
+				}
+				glBindFramebuffer(GL_FRAMEBUFFER, 0);
+				// ---------------------------------------------------------------------------
+
+				glViewport(0, 0, MOON_WndSize.x, MOON_WndSize.y);
+				glEnable(GL_DEPTH_TEST);
 			}
 
 			// TODO
 			static Texture* CreateTexture();
 
-			static Texture* LoadTexture(const std::string &path, const std::string &name = UseFileName, bool gamma = false) {
-				Texture* tex = new Texture(path, name);
+			static Texture* LoadTexture(const std::string &path, const std::string &name = UseFileName,
+				const TexType &_type = TexType::defaultMap, const ColorSpace& _colorSpace = sRGB, bool mipmap = false) {
+				Texture* tex = new Texture(path, name, _type, _colorSpace, mipmap);
 
 				AddItem(tex);
 				return tex;
@@ -1053,6 +1193,31 @@ namespace MOON {
 			}
 		};
 
+		struct VolumeManager : ObjectManager<Volume> {
+			static Volume* LoadVolume(const std::string &path, const std::string &name = UseFileName) {
+				Volume* newVolume = nullptr;
+
+				if (newVolume != nullptr) AddItem(newVolume);
+				return newVolume;
+			}
+
+			static Volume* CreateVolume(const std::string &name, const bool& interactive = false, 
+				const Vector3& position = Vector3::ZERO(), const Vector3& boundMin = Vector3(-1, -1, -1), 
+				const Vector3& boundMax = Vector3::ONE()) {
+				Volume* newVolume = nullptr;
+
+				newVolume = new Volume(name, interactive);
+				if (!interactive) {
+					newVolume->transform.position = position;
+					newVolume->bbox.min = boundMin;
+					newVolume->bbox.max = boundMax;
+				}
+
+				if (newVolume != nullptr) AddItem(newVolume);
+				return newVolume;
+			}
+		};
+
 		struct ModelManager : ObjectManager<Model> {
 			static Model* skyDome;
 
@@ -1066,9 +1231,9 @@ namespace MOON {
 			}
 
 			static void CreateSkyDome() {
-				skyDome = new Sphere("SkyDome", false, 999.0f, 24, MOON_UNSPECIFIEDID);
-				skyDome->transform.rotation = Quaternion(Vector3(0, 0, 180.0f));
-				skyDome->transform.Rotate(Quaternion::Rotate(Vector3(1, 0, 0), 90 * Deg2Rad));
+				skyDome = new Sphere("SkyDome", false, 900.0f, 24, MOON_UNSPECIFIEDID);
+				//skyDome->transform.rotation = Quaternion(Vector3(0, 0, 180.0f));
+				//skyDome->transform.Rotate(Quaternion::Rotate(Vector3(1, 0, 0), 90 * Deg2Rad));
 			}
 
 			static bool Hit(const Ray &r, HitRecord &rec, const int& acc) {
@@ -1115,10 +1280,8 @@ namespace MOON {
 				return model;
 			}
 
-			static Model* LoadModel(const std::string &path, const std::string &name = UseFileName) {
-				Model* newModel = new Model(path, name);
-				//ThreadPool::CreateThread(&Model::LoadModel, newModel, path);
-				//AddItem(newModel);
+			static Model* LoadModel(const std::string &path, const bool asynchronous = true, const std::string &name = UseFileName) {
+				Model* newModel = new Model(path, asynchronous, name);
 
 				return newModel;
 			}
@@ -1150,6 +1313,7 @@ namespace MOON {
 				sceneCameras[0]->visible = sceneCameras[1]->visible = sceneCameras[2]->visible = sceneCameras[3]->visible = false;
 				sceneCameras[1]->zFar = sceneCameras[2]->zFar = sceneCameras[3]->zFar = 100.0f;
 				Renderer::targetCamera = sceneCameras[0]; activeCamera = sceneCameras[3];
+				MOON_ActiveCamera = MOON_SceneCameras[persp];
 				return true;
 			}
 

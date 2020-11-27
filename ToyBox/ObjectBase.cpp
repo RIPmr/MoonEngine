@@ -190,13 +190,13 @@ namespace MOON {
 
 		ImGui::Indent(10.0f);
 		ImGui::Text("Position"); ImGui::SameLine(80.0f);
-		if (ImGui::DragFloat3(UniquePropName("Pos"), pos, 0.1f, -INFINITY, INFINITY, "%.3f", 1.0f, true)) {
+		if (ButtonEx::DragVec3NoLabel(UniquePropName("Pos"), pos, 0.1f, -INFINITY, INFINITY, "%.3f", 1.0f)) {
 			if (transform.parent != nullptr && isLocal) transform.localPosition = Vector3(pos);
 			else transform.position = Vector3(pos);
 			transform.changeFlag = true;
 		}
 		ImGui::Text("Rotation"); ImGui::SameLine(80.0f);
-		if (ImGui::DragFloat3(UniquePropName("Rot"), rotEuler, 0.1f, -INFINITY, INFINITY, "%.3f", 1.0f, true)) {
+		if (ButtonEx::DragVec3NoLabel(UniquePropName("Rot"), rotEuler, 0.1f, -INFINITY, INFINITY, "%.3f", 1.0f)) {
 			Quaternion deltaQ = Quaternion(
 				rotEuler[0] - euler.x,
 				rotEuler[1] - euler.y,
@@ -208,7 +208,7 @@ namespace MOON {
 			else transform.rotation = Quaternion(rotEuler[0], rotEuler[1], rotEuler[2]);*/
 		}
 		ImGui::Text("Scale"); ImGui::SameLine(80.0f);
-		if (ImGui::DragFloat3(UniquePropName("Sca"), scale, 0.1f, -INFINITY, INFINITY, "%.3f", 1.0f, true)) {
+		if (ButtonEx::DragVec3NoLabel(UniquePropName("Sca"), scale, 0.1f, -INFINITY, INFINITY, "%.3f", 1.0f)) {
 			if (transform.parent != nullptr && isLocal) transform.localScale = Vector3(scale);
 			else transform.scale = Vector3(scale);
 			transform.changeFlag = true;

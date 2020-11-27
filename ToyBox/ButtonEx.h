@@ -28,11 +28,20 @@ namespace MOON {
 
 		static bool DragVec4NoLabel(const char* id, float v[4], float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const char* format = "%.3f", float power = 1.0f);
 
+		static bool InputIntNoLabel(const char* id, int* v, int step = 1, int step_fast = 100, ImGuiInputTextFlags flags = 0);
+		
+		static bool InputFloatNoLabel(const char* label, float* v, float step = 0.0f, float step_fast = 0.0f, const char* format = "%.3f", ImGuiInputTextFlags flags = 0);
+
 		static bool CheckboxNoLabel(const char* id, bool* v);
+
+		static bool ColorEdit3NoLabel(const char* id, float col[3], ImGuiColorEditFlags flags = 0);
+		
+		static bool ColorEdit4NoLabel(const char* id, float col[4], ImGuiColorEditFlags flags = 0);
 
 		static bool SliderFloatNoLabel(const char* id, float* v, float v_min, float v_max, const char* format = "%.3f", float power = 1.0f);
 
 		static void ClampedImage(Texture* tex, const float& clampSize, const bool& clampWidth = true, const ImVec2& uv0 = ImVec2(0, 0), const ImVec2& uv1 = ImVec2(1, 1), const ImVec4& tint_col = ImVec4(1, 1, 1, 1), const ImVec4& border_col = ImVec4(0, 0, 0, 0));
+		static void ClampedImage(unsigned int texID, const Vector2& texSize, const float& clampSize, const bool& clampWidth = true, const ImVec2& uv0 = ImVec2(0, 0), const ImVec2& uv1 = ImVec2(1, 1), const ImVec4& tint_col = ImVec4(1, 1, 1, 1), const ImVec4& border_col = ImVec4(0, 0, 0, 0));
 	
 		template<class T>
 		static void MakeDragAndDropWidget(T* &payload_in, const char* type, const char* label, void(*dropable)(T*&, T*&) = nullptr) {

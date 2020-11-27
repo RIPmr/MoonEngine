@@ -6,6 +6,7 @@
 
 namespace MOON {
 	extern class Vector2;
+	extern class Vector4;
 	extern class Quaternion;
 	class Vector3 {
 	public:
@@ -14,6 +15,7 @@ namespace MOON {
 		Vector3(float *v) : x(v[0]), y(v[1]), z(v[2]) {}
 		Vector3(float x1, float y1, float z1) : x(x1), y(y1), z(z1) {}
 		Vector3(const Vector3 &v) : x(v.x), y(v.y), z(v.z) {}
+		Vector3(const Vector4 &v);
 		Vector3(const Vector2 &v);
 		~Vector3() {}
 

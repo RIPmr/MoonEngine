@@ -274,6 +274,23 @@ namespace MOON {
 
 						return nullptr;
 					}
+				); } },
+			#pragma endregion
+
+			// Volume Operators ----------------------------------------------------------------------
+			#pragma region volume_operators
+				{ "Volume", []() -> Operator* { return new Operator("Reconstruction",
+					{	/// data holder: int[], Vector3[], Matrix
+						0, 0, 0
+					}, /// content renderer
+					[](Operator* node, MObject* input) -> bool {
+
+						return false;
+					},	/// process
+					[](Operator* node, MObject* input) -> MObject* {
+
+						return nullptr;
+					}
 				); } }
 			#pragma endregion
 		};

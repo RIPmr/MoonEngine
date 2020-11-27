@@ -27,6 +27,7 @@ namespace MOON {
 			PostProcessing(const std::string& name, const std::string& shaderPath);
 			virtual ~PostProcessing() = default;
 
+			virtual bool PostBehaviour(FrameBuffer* src, FrameBuffer* dst) { return false; }
 			virtual bool ListProperties() { return false; }
 			virtual void ConfigureProps() {}
 		};
@@ -35,16 +36,27 @@ namespace MOON {
 		// system enums
 		static PipelineMode pipeline;
 		static ShadingMode shading;
+		static LightModel lightModel;
 		static SystemProcess process;
 		static SceneView currDrawTarget;
 		static int enviroment;
 
 		// global parameters
+		static Vector4 clearColor;
 		static std::vector<float> ground;
 		static int edit_mode_point_size;
 
+		// fog parameters
+		static bool enableFog;
+		static bool enableScatter; // TODO: atmospheric scattering
+		static FogType fogType;
+		static float density;
+		static Vector3 fogColor;
+
 		// shadow parameters
-		static float shadowDistance;
+		static bool enableShadow;
+		static bool cascadeShadow;
+		static Vector4 shadowDistance;
 
 		// anti-aliasing parameters
 		static bool antiAliasing;
@@ -69,22 +81,23 @@ namespace MOON {
 		static void SetDrawTarget(SceneView view, const bool& depthTest);
 		static void DrawSceneView(SceneView view);
 		
-		static void SetShadingMode(ShadingMode shading);
+		static void SetShadingMode(ShadingMode shading, LightModel model = PBR);
+		static void DrawVolumnObjects(SceneView view);
 		static void DrawModels();
 		static void DrawShapes();
 		static void DrawHelpers();
 		static void DrawCameras();
+		static void DrawLights();
 		static void HighlightSelection();
 
 		// deferred functions
-		static void Blit(FrameBuffer*& src, FrameBuffer*& dst, const Shader* shader);
+		static void Blit(FrameBuffer* src, FrameBuffer*& dst, const Shader* shader);
+		static void Blit(FrameBuffer* src, FrameBuffer*& dst, PostProcessing* renderer);
 
-		static void ApplyPostProcessing(FrameBuffer*& src, FrameBuffer*& dst, const Shader* shader);
-		static void ApplyPostProcessing(FrameBuffer*& src, FrameBuffer*& dst, PostProcessing* renderer);
+		static void Blit(FrameBuffer*& buffer, const Shader* shader);
+		static void Blit(FrameBuffer*& buffer, PostProcessing* renderer);
+
 		static void ApplyPostStack(FrameBuffer*& src, FrameBuffer*& dst);
-
-		static void ApplyPostProcessing(FrameBuffer*& buffer, const Shader* shader);
-		static void ApplyPostProcessing(FrameBuffer*& buffer, PostProcessing* renderer);
 		static void ApplyPostStack(FrameBuffer*& buffer);
 
 		// debug functions
@@ -95,6 +108,10 @@ namespace MOON {
 		static void DrawPostProcessingStack();
 		static void ListEffects();
 
+		static unsigned int GetScreenQuad() { 
+			if (!quadVAO) ConfigureScreenQuad();
+			return quadVAO;
+		}
 		static void Clear();
 
 	private:
