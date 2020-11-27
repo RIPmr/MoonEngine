@@ -2,7 +2,7 @@
 A toy DCC software implemented based on OpenGL and imgui
 
 <p align="center">
-    <img src="ToyBox/Assets/Textures/moon.jpg">
+    <img src="ToyBox/Assets/Others/v02 (2).png">
 </p>
 
 
@@ -158,11 +158,29 @@ opt->ClearGrad();
 
 ## Screen shots
 <p align="center">
-    <img src="ToyBox/Assets/Textures/sc01.jpg">
+    <img src="ToyBox/Assets/Others/v02 (1).png">
 </p>
 <p align="center">
-    <img src="ToyBox/Assets/Textures/sc02.jpg">
+    <img src="ToyBox/Assets/Others/v02 (3).png">
 </p>
 <p align="center">
-    <img src="ToyBox/Assets/Textures/sc03.jpg">
+    <img src="ToyBox/Assets/Others/v02 (4).png">
+</p>
+<p align="center">
+    <img src="ToyBox/Assets/Others/v02 (5).png">
+</p>
+<p align="center">
+    <img src="ToyBox/Assets/Others/v02 (7).png">
+</p>
+<p align="center">
+    <img src="ToyBox/Assets/Others/v02 (8).png">
+</p>
+<p align="center">
+    <img src="ToyBox/Assets/Others/v02 (9).png">
+</p>
+<p align="center">
+    <img src="ToyBox/Assets/Others/v02 (6).png">
+</p>
+<p align="center">
+    <img src="ToyBox/Assets/Others/sc03.jpg">
 </p>
