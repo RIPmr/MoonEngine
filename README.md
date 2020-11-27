@@ -20,21 +20,21 @@ A toy DCC software implemented based on OpenGL and imgui
 |Gizmo::Move                |w                  |
 |Gizmo::Rotate              |e                  |
 |Gizmo::Scale               |r                  |
-|Camera::Pan                |middle mouse (Hold)|
+|Camera::Pan                |middle mouse (hold)|
 |Camera::Zoom               |mouse wheel        |
 |Camera::Rotate             |alt + middle mouse |
 |Select Object              |left click         |
 |Delete Object              |delete             |
 |Select Multiple Object     |ctrl + left click  |
 |Centering Selected Object  |z                  |
-|Flow Menu                  |right click (Hold) |
+|Flow Menu                  |right click (hold) |
 |Open Material Editor       |m                  |
 |Open MOON NN Editor        |n                  |
 |Search Node                |s                  |
 |Change Shading Mode        |F1-F4              |
 |Switch Split/Single View   |space              |
 
-### load OBJ model
+### Load OBJ model
 ```
 auto boxes = MOON_ModelManager::LoadModel("Assets\\Models\\box_stack.obj");
 ```
@@ -61,29 +61,43 @@ boxes->transform.SetParent(&sphere->transform);
 auto light = MOON_LightManager::CreateLight(point_light, "pointLight", Vector3(-10.0f, 10.0f, 10.0f));
 ```
 
-### create a material
+### Create Volume object
+```
+auto cloud = MOON_VolumeManager::CreateVolume(
+	"cloud", false, Vector3::ZERO(), 
+	Vector3::ONE() * -5, Vector3::ONE() * 5
+);
+```
+
+### Create a material
 ```
 auto newMat = MaterialManager::CreateMaterial("MoonMtl", "new_mat");
 ```
 
-### assign material to mesh
+### Assign material to mesh
 ```
 // a model may contain multiple sub-meshes
-// each mesh corresponds to a material
+// *each mesh corresponds to a material
 boxes->meshList[0].material = newMat;
 ```
 
-### raytracing current viewport
+### Add post effect to stack
+```
+Graphics::postStack.push_back(new FXAA());
+Graphics::postStack.push_back(new DepthOfField());
+```
+
+### Raytracing current viewport
 ```
 Renderer::StartRendering();
 ```
 
-### abort rendering
+### Abort rendering
 ```
 Renderer::isAbort = true;
 ```
 
-### create an nn via script
+### Create an nn via script
 ```
 // graph: a container to hold all created neurons
 auto graph = new NGraph("newGraph");
@@ -126,7 +140,7 @@ auto loss = MSE({predict, label}, graph);
 auto opt = Adam(graph, loss);
 ```
 
-### do one step training
+### Do one step training
 ```
 // set input feature
 feature->SetVal(...);
