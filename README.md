@@ -7,9 +7,19 @@ A toy DCC software implemented based on OpenGL and imgui
 
 
 ## Feature List
-- import and view .OBJ mesh
-- basic viewport interaction
+- PBR viewport / HDRI IBL
+- Split view / Multiple display mode
+- Interactive mesh creation
+- Hierarcial transform
+- Import and view .OBJ mesh
+- Basic viewport interaction
+- SEM Shader (ZBRush style outlook)
+- Post-Processing supported
+- Operation stack (Something like the modifiers in 3ds Max)
+- Volume rendering supported
+- Procedural texture generation
 - <strong>RABBIT RENDERER: </strong> a basic raytracing renderer
+- <strong>MOON CAKE: </strong> procedural modeling tools
 - <strong>MOON NN: </strong> node based interactive neural network training platform
 
 
