@@ -173,7 +173,7 @@ opt->ClearGrad();
 
 
 ## Video links
-:full_moon: [MOON ENGINE v0.20](https://www.bilibili.com/video/BV1iK4y1C7h7)
+:full_moon: MOON ENGINE v0.20：[Youtube](https://youtu.be/y4HRC0XTYNI)/[Bilibili](https://www.bilibili.com/video/BV1Ti4y1j7Bd)
 
 :full_moon: [MOON ENGINE v0.03](https://www.bilibili.com/video/BV1iK4y1C7h7)
 
