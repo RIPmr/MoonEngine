@@ -96,7 +96,7 @@ namespace MOON {
 			if (type == Tone_Cineon) {
 				ImGui::Text("LUT"); ImGui::SameLine(80.0f);
 				ImVec2 size{ ImGui::GetContentRegionAvailWidth(), 22.0f };
-				if (ButtonEx::TexFileBtnWithPrev(lut, TexType::defaultMap, size)) {
+				if (ButtonEx::TexFileBtnWithPrev(lut, size)) {
 					changeFlag = true;
 				}
 			} else if (type == Tone_LUT) {
@@ -130,31 +130,31 @@ namespace MOON {
 		float exposure;
 
 		Exposure() : PostProcessing("Exposure", "Exposure") {
-			exposure = 1.0f; contrast = 0.0f; highlight = 1.0f;
+			exposure = 1.0f; contrast = 1.0f; highlight = 1.0f;
 		}
 		~Exposure() override {}
 
 		bool ListProperties() override {
 			bool changeFlag = false;
 			ImGui::Text("Exposure"); ImGui::SameLine(80.0f);
-			if (ButtonEx::DragFloatNoLabel("exp", &exposure, 0.1f, 0, 0, "%.1f", 1.0f)) {
+			if (ButtonEx::DragFloatNoLabel("exp", &exposure, 0.01f, 0, INFINITY, "%.3f", 1.0f)) {
 				changeFlag = true;
 			}
 
 			ImGui::Text("Highlight"); ImGui::SameLine(80.0f);
-			if (ButtonEx::DragFloatNoLabel("highlight", &highlight, 0.1f, 0, 1, "%.1f", 1.0f)) {
+			if (ButtonEx::DragFloatNoLabel("highlight", &highlight, 0.01f, 0, 1, "%.3f", 1.0f)) {
 				changeFlag = true;
 			}
 
 			ImGui::Text("Contrast"); ImGui::SameLine(80.0f);
-			if (ButtonEx::DragFloatNoLabel("contrast", &contrast, 0.1f, 0, 0, "%.1f", 1.0f)) {
+			if (ButtonEx::DragFloatNoLabel("contrast", &contrast, 0.01f, 0, 1, "%.3f", 1.0f)) {
 				changeFlag = true;
 			}
 
 			return changeFlag;
 		}
+
 		void ConfigureProps() override {
-			shader->setFloat("gamma", 1.0f);
 			shader->setFloat("exposure", exposure);
 			shader->setFloat("highlight", highlight);
 			shader->setFloat("contrast", contrast);
@@ -268,18 +268,59 @@ namespace MOON {
 
 	class Flare : public PostEffect {
 	public:
+		Vector3 tint;
+
+		float threshold;
+		float intensity;
+		float stretch;
+		float brightness;
 
 		Flare() : PostProcessing("Flare", "Flare") {
-
+			threshold = 0.5f;
+			intensity = 500.0f;
+			stretch = 0.5f;
+			brightness = 1.0f;
+			tint.setValue(0.5, 0.4, 1.0);
 		}
 		~Flare() override {}
 
 		bool ListProperties() override {
+			bool changeFlag = false;
+
+			ImGui::Text("Tint Color"); ImGui::SameLine(80.0f);
+			if (ButtonEx::ColorEdit3NoLabel("tint", (float*)&tint[0])) {
+				changeFlag = true;
+			}
+
+			ImGui::Text("Threshold"); ImGui::SameLine(80.0f);
+			if (ButtonEx::DragFloatNoLabel("threshold", &threshold, 0.001f, 0.001f, 1.0f, "%.3f", 1.0f)) {
+				changeFlag = true;
+			}
+
+			ImGui::Text("Iteration"); ImGui::SameLine(80.0f);
+			if (ButtonEx::DragFloatNoLabel("intensity", &intensity, 0.1f, 0, 0, "%.3f", 1.0f)) {
+				changeFlag = true;
+			}
+
+			ImGui::Text("Stretch"); ImGui::SameLine(80.0f);
+			if (ButtonEx::DragFloatNoLabel("stretch", &stretch, 0.01f, 0, 0, "%.3f", 1.0f)) {
+				changeFlag = true;
+			}
+
+			ImGui::Text("Brightness"); ImGui::SameLine(80.0f);
+			if (ButtonEx::DragFloatNoLabel("brightness", &brightness, 0.01f, 0, 0, "%.3f", 1.0f)) {
+				changeFlag = true;
+			}
 
 			return false;
 		}
-		void ConfigureProps() override {
 
+		void ConfigureProps() override {
+			shader->setFloat("threshold", threshold);
+			shader->setFloat("intensity", intensity);
+			shader->setFloat("stretch", stretch);
+			shader->setFloat("brightness", brightness);
+			shader->setVec3("tint", tint);
 		}
 	};
 
@@ -342,18 +383,19 @@ namespace MOON {
 
 		// bokeh params
 		float exposure;
+		float threshold;
 		float radius;
 		float angle;
 
-		// blur params
-		float iter;
-		float falloff;
-
 		// DOF params
-		float distance;
+		float iter;
 		float multiply;
+		float distance;
 		float tolerance;
+		float falloff;
 		float cutoff;
+
+		float accurate;
 
 		DepthOfField() : PostProcessing("Depth-Of-Field", "DepthOfField") {
 			debug = false;
@@ -370,6 +412,8 @@ namespace MOON {
 
 			iter = 5.0f;
 			falloff = 10.0f;
+
+			accurate = 20.0f;
 		}
 		~DepthOfField() override {}
 
@@ -383,7 +427,7 @@ namespace MOON {
 				changeFlag = true;
 			}
 
-			ImGui::Text("Fase Mode"); ImGui::SameLine(100.0f);
+			ImGui::Text("Fast Mode"); ImGui::SameLine(100.0f);
 			if (ButtonEx::CheckboxNoLabel("fast", &fastMode)) {
 				changeFlag = true;
 			}
@@ -423,7 +467,14 @@ namespace MOON {
 				changeFlag = true;
 			}
 
+			ImGui::Text("Soft Edge"); ImGui::SameLine(80.0f);
+			if (ButtonEx::DragFloatNoLabel("accurate", &accurate, 1.0f, 2.0f, 256.0f, "%.1f")) {
+				changeFlag = true;
+			}
+
 			if (bokeh) {
+				ImGui::Text("[Bokeh]");
+				ImGui::Indent(10.0f);
 				ImGui::Text("Radius"); ImGui::SameLine(80.0f);
 				if (ButtonEx::DragFloatNoLabel("rad", &radius, 0.1f, 0.0f, 0.0f, "%.1f")) {
 					changeFlag = true;
@@ -438,6 +489,7 @@ namespace MOON {
 				if (ButtonEx::DragFloatNoLabel("ang", &angle, 0.01f, 0.0f, 0.0f, "%.3f")) {
 					changeFlag = true;
 				}
+				ImGui::Unindent(10.0f);
 			}
 
 			return changeFlag;
@@ -457,6 +509,8 @@ namespace MOON {
 
 			shader->setInt("_iter", iter);
 			shader->setFloat("_falloff", falloff);
+
+			shader->setFloat("_accurate", accurate);
 		}
 	};
 
@@ -654,13 +708,30 @@ namespace MOON {
 		}
 	};
 
-	class CRT : public PostEffect {
+	class Glitch : public PostEffect {
 	public:
 
-		CRT() : PostProcessing("CRT", "CRT") {
+		Glitch() : PostProcessing("Glitch", "Glitch") {
 
 		}
-		~CRT() override {}
+		~Glitch() override {}
+
+		bool ListProperties() override {
+
+			return false;
+		}
+		void ConfigureProps() override {
+
+		}
+	};
+
+	class Halftone : public PostEffect {
+	public:
+
+		Halftone() : PostProcessing("Halftone", "Halftone") {
+
+		}
+		~Halftone() override {}
 
 		bool ListProperties() override {
 

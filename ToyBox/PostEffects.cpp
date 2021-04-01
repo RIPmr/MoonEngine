@@ -25,6 +25,8 @@ namespace MOON {
 		passShader->setFloat("_iter", iter);
 		passShader->setFloat("_falloff", falloff);
 
+		passShader->setFloat("_accurate", accurate);
+
 		passShader->setTexture("depthBuffer", src->attachment, 2);
 		passShader->setVec2("dir", 0.02, 0.02);
 		Graphics::Blit(src, dst, passShader);

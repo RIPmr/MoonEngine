@@ -2,13 +2,30 @@
 in vec2 UV;
 in vec3 Norm;
 
-uniform int type;
-uniform sampler2D HDRI;
+#define MAX_COL_LENGTH 8
 
-vec3 SimpleSky(vec3 dir) {
+struct GradColor {
+	vec3 skyColor;
+	vec3 groundColor;
+};
+
+uniform int type;
+uniform float time;
+uniform sampler2D HDRI;
+uniform GradColor colors[MAX_COL_LENGTH];
+
+// functions --------------------------------------------------------------
+vec3 LerpColor(vec3 dir, vec3 colSky, vec3 colGrd) {
 	vec3 unit_direction = normalize(dir);
 	float t = 0.5 * (unit_direction.y + 1.0);
-	return (1.0 - t) * vec3(1, 1, 1) + t * vec3(0.5, 0.7, 1.0);
+	//return (1.0 - t) * vec3(1, 1, 1) + t * vec3(0.5, 0.7, 1.0);
+	return (1.0 - t) * colGrd + t * colSky;
+}
+
+// time: [0.0, 1.0]
+vec3 ProceduralSky(vec3 dir, float time) {
+	//int ceil_id = 
+	return vec3(0);
 }
 
 vec3 SampleSphericalMap(vec3 dir) {
@@ -23,7 +40,7 @@ vec3 SampleSphericalMap(vec3 dir) {
 
 void main() {
 	if (type == 3) 
-		gl_FragColor = vec4(pow(SimpleSky(normalize(Norm)), vec3(2.2)), 1.0);
+		gl_FragColor = vec4(pow(ProceduralSky(normalize(Norm), time), vec3(2.2)), 1.0);
 	else 
 		gl_FragColor = vec4(SampleSphericalMap(normalize(Norm)), 1.0);
 }

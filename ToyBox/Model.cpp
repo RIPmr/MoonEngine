@@ -23,8 +23,8 @@ namespace MOON {
 		bool updateFlag = false;
 		for (int i = 0; i < meshList.size(); i++) {
 			meshList[i]->Draw(
-				overrideShader == NULL ? meshList[i]->material->shader : overrideShader, 
-				transform.localToWorldMat, ID == MOON_InputManager::hoverID, selected
+				overrideShader, transform.localToWorldMat, 
+				ID == MOON_InputManager::hoverID, selected
 			);
 			if (meshList[i]->changed) {
 				meshList[i]->changed = false;

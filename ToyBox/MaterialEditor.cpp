@@ -48,19 +48,12 @@ namespace MOON {
 						node->ListName();
 						ImGui::Text("Location: ");
 						if (ButtonEx::TexFileBtnWithPrev(
-							tex, defaultMap, 
-							ImVec2(ImGui::GetContentRegionAvailWidth(), 0), 
+							tex, ImVec2(ImGui::GetContentRegionAvailWidth(), 0), 
 							tex->ID
 						)) node->Backward();
-						
-						const static char* texType[] = { 
-							"default", "ambient", "albedo", "reflect", "refract",
-							"roughness", "glossiness", "normal", "height", "displace",
-							"metallic", "translucent", "alpha"
-						};
-						ImGui::AlignTextToFramePadding(); ImGui::Text("Type: ");
-						if (ButtonEx::ComboNoLabel("texType", (int*)&tex->type, texType, 
-							IM_ARRAYSIZE(texType))) node->Backward();
+
+						ImGui::Text("Mipmap:"); ImGui::SameLine(80.0f);
+						if (ButtonEx::CheckboxNoLabel("mipmap", &tex->mipmap)) node->Backward();
 
 						const static char* colorSpace[] = {
 							"linear", "sRGB", "Gamma", "Cineon", "Canon_CLog",
@@ -90,7 +83,7 @@ namespace MOON {
 						}
 
 						const static char* filter[] = {
-							"Bilinear", "Nearest"
+							"Bilinear", "Nearest", "Trilinear"
 						};
 						ImGui::AlignTextToFramePadding(); ImGui::Text("Filter: ");
 						int filt = 0; if (tex->filter == GL_LINEAR) filt = 0;
@@ -199,10 +192,10 @@ namespace MOON {
 					{ "Brightness",	InnerData,   DataSizeDef(1, 0, 0), true },
 					{ "Contrast",	InnerData,   DataSizeDef(1, 0, 0), true },
 					/// Input slots
-					{ "Input", Slot_Texture, DataSizeDef(1, 0, 0) }
+					{ "In", Slot_Texture, DataSizeDef(1, 0, 0) }
 				},  
 				{	/// Output slots
-					{ "Output",Slot_Texture, DataSizeDef(1, 0, 0) }
+					{ "Out",Slot_Texture, DataSizeDef(1, 0, 0) }
 				},	/// content renderer
 				[](MyNode* node, bool hideInNode) {
 					if (!hideInNode) {
@@ -212,6 +205,28 @@ namespace MOON {
 						for (auto &iter : node->input_slots) {
 							ImGui::SliderInt(iter.title.c_str(), &iter.data.id[0], 0, 100);
 						}
+					}
+				},	/// process data
+				[](MyNode* node) {
+
+				}
+			);}},
+
+			{ "Operator", []() -> MyNode* { return new MyNode("Pixelization", 
+				{	/// internal data
+					{ "Resolution",	InnerData,		DataSizeDef(1, 0, 0), true },
+					/// Input slots
+					{ "In",		Slot_Texture,	DataSizeDef(1, 0, 0) }
+				},  
+				{	/// Output slots
+					{ "Out",		Slot_Texture,	DataSizeDef(1, 0, 0) }
+				},	/// content renderer
+				[](MyNode* node, bool hideInNode) {
+					if (!hideInNode) {
+						node->ListName();
+
+						ImGui::Text("Resolution: ");
+						ImGui::SliderInt("reso", &inputID(0, 0), 1, 1024);
 					}
 				},	/// process data
 				[](MyNode* node) {
@@ -275,12 +290,12 @@ namespace MOON {
 					if (!outputID(0, 0)) {
 						inputVec(0, 0).setValue(256, 256, 0);
 						inputVec(1, 0).x = 2.0f;
-						FrameBuffer* buffer = new FrameBuffer(inputVec(0, 0).x, inputVec(0, 0).y, "noise");
+						FrameBuffer* buffer = new FrameBuffer(inputVec(0, 0).x, inputVec(0, 0).y, "checker");
 						MOON_TextureManager::AddItem(buffer);
 						outputID(0, 0) = buffer->ID;
 					}
 					FrameBuffer* tex = dynamic_cast<FrameBuffer*>(MOON_ObjectList[outputID(0, 0)]);
-					ProceduralMapGenerator::GPUMapMaker(
+					ProceduralMapGenerator::GPUNoiseMaker(
 						ProceduralMapGenerator::ProceduralMapType::Checker,
 						tex, tex->offset, inputVec(1, 0).x, inputVec(1, 0).y, inputVec(1, 0).z
 					);
@@ -353,14 +368,247 @@ namespace MOON {
 						inputVec(0, 0).setValue(256, 256, 0);
 						inputVec(1, 0).x = 1.0f;
 						inputVec(1, 0).y = 2.2f;
-						FrameBuffer* buffer = new FrameBuffer(inputVec(0, 0).x, inputVec(0, 0).y, "noise");
+						FrameBuffer* buffer = new FrameBuffer(inputVec(0, 0).x, inputVec(0, 0).y, "disco");
 						MOON_TextureManager::AddItem(buffer);
 						outputID(0, 0) = buffer->ID;
 					}
 					FrameBuffer* tex = dynamic_cast<FrameBuffer*>(MOON_ObjectList[outputID(0, 0)]);
-					ProceduralMapGenerator::GPUMapMaker(
+					ProceduralMapGenerator::GPUNoiseMaker(
 						ProceduralMapGenerator::ProceduralMapType::Disco,
 						tex, tex->offset, inputVec(1, 0).x, inputVec(1, 0).y, inputVec(1, 0).z
+					);
+				}
+			);}},
+
+			{ "Procedural", []() -> MyNode* { return new MyNode("Wood", 
+				{	/// internal data
+					{ "Type",			InnerData,	  DataSizeDef(1, 0, 0), true },
+					{ "Size",			InnerData,	  DataSizeDef(0, 1, 0), true },
+					{ "Sca/Dim/Time",	InnerData,	  DataSizeDef(0, 1, 0), true }
+				}, 
+				{	/// Output slots
+					{ "out",			Slot_Texture, DataSizeDef(1, 0, 0) }
+				},	/// content renderer
+				[](MyNode* node, bool hideInNode) {
+					FrameBuffer* tex = dynamic_cast<FrameBuffer*>(MOON_ObjectList[outputID(0, 0)]);
+					int width = 30;
+
+					if (!hideInNode) {
+						node->ListName();
+
+						float availWidth = ImGui::GetContentRegionAvailWidth() / 2.5f;
+						ImGui::Text("Size:"); ImGui::SetNextItemWidth(availWidth);
+						if (ButtonEx::InputFloatNoLabel("width", &inputVec(1, 0).x, 100, 1000, "%.0f")) {
+							tex->Reallocate(inputVec(1, 0).x, inputVec(1, 0).y);
+							node->Backward();
+						}
+						ImGui::SameLine(); ImGui::Text(u8"¡Á"); ImGui::SameLine();
+						ImGui::SetNextItemWidth(availWidth);
+						if (ButtonEx::InputFloatNoLabel("height", &inputVec(1, 0).y, 100, 1000, "%.0f")) {
+							tex->Reallocate(inputVec(1, 0).x, inputVec(1, 0).y);
+							node->Backward();
+						}
+						ImGui::Separator();
+
+						ImGui::Text("Scale: ");
+						if (ButtonEx::DragFloatNoLabel("Scale", &inputVec(2, 0).x, 0.1f)) {
+							node->Backward();
+						}
+						ImGui::Text("Dimension: ");
+						if (ButtonEx::DragFloatNoLabel("Dim", &inputVec(2, 0).y, 0.1f)) {
+							node->Backward();
+						}
+						ImGui::Text("Time: ");
+						if (ButtonEx::DragFloatNoLabel("Time", &inputVec(2, 0).z, 0.1f)) {
+							node->Backward();
+						}
+
+						ImGui::Text("UV: ");
+						if (ImGui::DragFloat2("Offset", (float*)&tex->offset, 0.1f)) {
+							node->Backward();
+						}
+						if (ImGui::DragFloat2("Tiling", (float*)&tex->tiling, 0.1f)) {
+							node->Backward();
+						}
+
+						ImGui::Text("Preview: ");
+						width <<= 2;
+						ImGui::SetCursorPosX((ImGui::GetContentRegionAvailWidth() - width) / 2.0f);
+					} else width *= node->zoomFactor;
+
+					ButtonEx::ClampedImage(
+						tex, width, true, ImVec2(0, 0), ImVec2(tex->tiling.x, tex->tiling.y)
+					);
+				},	/// process data
+				[](MyNode* node) {
+					if (!outputID(0, 0)) {
+						inputVec(1, 0).setValue(256, 256, 0); inputVec(2, 0).x = 1.0f;
+						FrameBuffer* buffer = new FrameBuffer(inputVec(1, 0).x, inputVec(1, 0).y, "wood");
+						MOON_TextureManager::AddItem(buffer);
+						outputID(0, 0) = buffer->ID;
+					}
+					FrameBuffer* tex = dynamic_cast<FrameBuffer*>(MOON_ObjectList[outputID(0, 0)]);
+					ProceduralMapGenerator::GPUPatternMaker(
+						ProceduralTexture::WoodPattern, tex, tex->offset, 
+						inputVec(2, 0).x, inputVec(2, 0).y, inputVec(2, 0).z
+					);
+				}
+			);}},
+
+			{ "Procedural", []() -> MyNode* { return new MyNode("Digital", 
+				{	/// internal data
+					{ "Type",			InnerData,	  DataSizeDef(1, 0, 0), true },
+					{ "Size",			InnerData,	  DataSizeDef(0, 1, 0), true },
+					{ "Sca/Dim/Time",	InnerData,	  DataSizeDef(0, 1, 0), true }
+				}, 
+				{	/// Output slots
+					{ "out",			Slot_Texture, DataSizeDef(1, 0, 0) }
+				},	/// content renderer
+				[](MyNode* node, bool hideInNode) {
+					FrameBuffer* tex = dynamic_cast<FrameBuffer*>(MOON_ObjectList[outputID(0, 0)]);
+					int width = 30;
+
+					if (!hideInNode) {
+						node->ListName();
+
+						float availWidth = ImGui::GetContentRegionAvailWidth() / 2.5f;
+						ImGui::Text("Size:"); ImGui::SetNextItemWidth(availWidth);
+						if (ButtonEx::InputFloatNoLabel("width", &inputVec(1, 0).x, 100, 1000, "%.0f")) {
+							tex->Reallocate(inputVec(1, 0).x, inputVec(1, 0).y);
+							node->Backward();
+						}
+						ImGui::SameLine(); ImGui::Text(u8"¡Á"); ImGui::SameLine();
+						ImGui::SetNextItemWidth(availWidth);
+						if (ButtonEx::InputFloatNoLabel("height", &inputVec(1, 0).y, 100, 1000, "%.0f")) {
+							tex->Reallocate(inputVec(1, 0).x, inputVec(1, 0).y);
+							node->Backward();
+						}
+						ImGui::Separator();
+
+						ImGui::Text("Scale: ");
+						if (ButtonEx::DragFloatNoLabel("Scale", &inputVec(2, 0).x, 0.1f)) {
+							node->Backward();
+						}
+						ImGui::Text("Dimension: ");
+						if (ButtonEx::DragFloatNoLabel("Dim", &inputVec(2, 0).y, 0.1f)) {
+							node->Backward();
+						}
+						ImGui::Text("Time: ");
+						if (ButtonEx::DragFloatNoLabel("Time", &inputVec(2, 0).z, 0.1f)) {
+							node->Backward();
+						}
+
+						ImGui::Text("UV: ");
+						if (ImGui::DragFloat2("Offset", (float*)&tex->offset, 0.1f)) {
+							node->Backward();
+						}
+						if (ImGui::DragFloat2("Tiling", (float*)&tex->tiling, 0.1f)) {
+							node->Backward();
+						}
+
+						ImGui::Text("Preview: ");
+						width <<= 2;
+						ImGui::SetCursorPosX((ImGui::GetContentRegionAvailWidth() - width) / 2.0f);
+					} else width *= node->zoomFactor;
+
+					ButtonEx::ClampedImage(
+						tex, width, true, ImVec2(0, 0), ImVec2(tex->tiling.x, tex->tiling.y)
+					);
+				},	/// process data
+				[](MyNode* node) {
+					if (!outputID(0, 0)) {
+						inputVec(1, 0).setValue(256, 256, 0); inputVec(2, 0).x = 1.0f;
+						FrameBuffer* buffer = new FrameBuffer(inputVec(1, 0).x, inputVec(1, 0).y, "wood");
+						MOON_TextureManager::AddItem(buffer);
+						outputID(0, 0) = buffer->ID;
+					}
+					FrameBuffer* tex = dynamic_cast<FrameBuffer*>(MOON_ObjectList[outputID(0, 0)]);
+					ProceduralMapGenerator::GPUPatternMaker(
+						ProceduralTexture::WoodPattern, tex, tex->offset, 
+						inputVec(2, 0).x, inputVec(2, 0).y, inputVec(2, 0).z
+					);
+				}
+			);}},
+
+			{ "Procedural", []() -> MyNode* { return new MyNode("Fire", 
+				{	/// internal data
+					{ "TexSize",		InnerData,	  DataSizeDef(0, 1, 0), true },
+					{ "Sca/Dim/Time",	InnerData,	  DataSizeDef(0, 1, 0), true },
+					{ "FireColor",		InnerData,	  DataSizeDef(0, 1, 0), true }
+				}, 
+				{	/// Output slots
+					{ "out",			Slot_Texture, DataSizeDef(1, 0, 0) }
+				},	/// content renderer
+				[](MyNode* node, bool hideInNode) {
+					FrameBuffer* tex = dynamic_cast<FrameBuffer*>(MOON_ObjectList[outputID(0, 0)]);
+					int width = 50;
+
+					if (!hideInNode) {
+						node->ListName();
+
+						float availWidth = ImGui::GetContentRegionAvailWidth() / 2.5f;
+						ImGui::Text("Size:"); ImGui::SetNextItemWidth(availWidth);
+						if (ButtonEx::InputFloatNoLabel("width", &inputVec(0, 0).x, 100, 1000, "%.0f")) {
+							tex->Reallocate(inputVec(0, 0).x, inputVec(0, 0).y);
+							node->Backward();
+						}
+						ImGui::SameLine(); ImGui::Text(u8"¡Á"); ImGui::SameLine();
+						ImGui::SetNextItemWidth(availWidth);
+						if (ButtonEx::InputFloatNoLabel("height", &inputVec(0, 0).y, 100, 1000, "%.0f")) {
+							tex->Reallocate(inputVec(0, 0).x, inputVec(0, 0).y);
+							node->Backward();
+						}
+						ImGui::Separator();
+
+						ImGui::Text("Scale: ");
+						if (ButtonEx::DragFloatNoLabel("Scale", &inputVec(1, 0).x, 0.1f)) {
+							node->Backward();
+						}
+						ImGui::Text("Time: ");
+						if (ButtonEx::DragFloatNoLabel("Time", &inputVec(1, 0).z, 0.01f)) {
+							node->Backward();
+						}
+
+						ImGui::Text("Tint: ");
+						if (ButtonEx::ColorEdit3NoLabel("tint", (float*)&inputVec(2, 0))) {
+							node->Backward();
+						}
+						ImGui::Text("Power: ");
+						if (ButtonEx::DragFloatNoLabel("Pow", &inputVec(1, 0).y, 0.1f)) {
+							node->Backward();
+						}
+
+						ImGui::Text("UV: ");
+						if (ImGui::DragFloat2("Offset", (float*)&tex->offset, 0.1f)) {
+							node->Backward();
+						}
+						if (ImGui::DragFloat2("Tiling", (float*)&tex->tiling, 0.1f)) {
+							node->Backward();
+						}
+
+						ImGui::Text("Preview: ");
+						width <<= 2;
+						ImGui::SetCursorPosX((ImGui::GetContentRegionAvailWidth() - width) / 2.0f);
+					} else width *= node->zoomFactor;
+
+					ButtonEx::ClampedImage(
+						tex, width, true, ImVec2(0, 0), ImVec2(tex->tiling.x, tex->tiling.y)
+					);
+				},	/// process data
+				[](MyNode* node) {
+					if (!outputID(0, 0)) {
+						inputVec(2, 0) = Vector3(214.0f, 138.0f, 1.0f) / 255.0f;
+						inputVec(0, 0).setValue(256 << 1, 256, 0); 
+						inputVec(1, 0).x = 1.0f; inputVec(1, 0).y = 1.0f;
+						FrameBuffer* buffer = new FrameBuffer(inputVec(0, 0).x, inputVec(0, 0).y, "fire");
+						MOON_TextureManager::AddItem(buffer);
+						outputID(0, 0) = buffer->ID;
+					}
+					FrameBuffer* tex = dynamic_cast<FrameBuffer*>(MOON_ObjectList[outputID(0, 0)]);
+					ProceduralMapGenerator::GPUFireTexMaker(
+						tex, tex->offset, 
+						inputVec(1, 0).x, inputVec(1, 0).y, 
+						inputVec(1, 0).z, inputVec(2, 0)
 					);
 				}
 			);}},
@@ -383,8 +631,8 @@ namespace MOON {
 						
 						const static char* noiseType[] = {
 							"WhiteNoise", "ValueNoise", "PerlinNoise",
-							"SimplexNoise", "WorleyNoise", "VoronoiNoise",
-							"TysonPolygon", "CloudNoise"
+							"OctavePerlin", "SimplexNoise", "WorleyNoise", 
+							"VoronoiNoise", "TysonPolygon", "CloudNoise"
 						};
 						ImGui::AlignTextToFramePadding(); ImGui::Text("Noise Type: ");
 						if (ButtonEx::ComboNoLabel("noiseType", &inputID(0, 0),
@@ -436,15 +684,97 @@ namespace MOON {
 				},	/// process data
 				[](MyNode* node) {
 					if (!outputID(0, 0)) {
-						inputVec(1, 0).setValue(256, 256, 0);
-						inputVec(2, 0).x = 1.0f;
+						inputVec(1, 0).setValue(256, 256, 0); inputVec(2, 0).x = 1.0f;
 						FrameBuffer* buffer = new FrameBuffer(inputVec(1, 0).x, inputVec(1, 0).y, "noise");
 						MOON_TextureManager::AddItem(buffer);
 						outputID(0, 0) = buffer->ID;
 					}
 					FrameBuffer* tex = dynamic_cast<FrameBuffer*>(MOON_ObjectList[outputID(0, 0)]);
-					ProceduralMapGenerator::GPUMapMaker(
+					ProceduralMapGenerator::GPUNoiseMaker(
 						(ProceduralMapGenerator::ProceduralMapType)inputID(0, 0),
+						tex, tex->offset, inputVec(2, 0).x, inputVec(2, 0).y, inputVec(2, 0).z
+					);
+				}
+			);}},
+
+			{ "Procedural", []() -> MyNode* { return new MyNode("Patterns", 
+				{	/// internal data
+					{ "Type",			InnerData,	  DataSizeDef(1, 0, 0), true },
+					{ "Size",			InnerData,	  DataSizeDef(0, 1, 0), true },
+					{ "Sca/Dim/Time",	InnerData,	  DataSizeDef(0, 1, 0), true }
+				}, 
+				{	/// Output slots
+					{ "out",			Slot_Texture, DataSizeDef(1, 0, 0) }
+				},	/// content renderer
+				[](MyNode* node, bool hideInNode) {
+					FrameBuffer* tex = dynamic_cast<FrameBuffer*>(MOON_ObjectList[outputID(0, 0)]);
+					int width = 30;
+
+					if (!hideInNode) {
+						node->ListName();
+						
+						const static char* patternType[] = {
+							"BubblePattern", "AnimatedCircle",
+							"DigitalStorm", "TruchetPattern", "ColorfulTruchet"
+						};
+						ImGui::AlignTextToFramePadding(); ImGui::Text("Pattern Type: ");
+						if (ButtonEx::ComboNoLabel("patternType", &inputID(0, 0),
+							patternType, IM_ARRAYSIZE(patternType))) node->Backward();
+
+						float availWidth = ImGui::GetContentRegionAvailWidth() / 2.5f;
+						ImGui::Text("Size:"); ImGui::SetNextItemWidth(availWidth);
+						if (ButtonEx::InputFloatNoLabel("width", &inputVec(1, 0).x, 100, 1000, "%.0f")) {
+							tex->Reallocate(inputVec(1, 0).x, inputVec(1, 0).y);
+							node->Backward();
+						}
+						ImGui::SameLine(); ImGui::Text(u8"¡Á"); ImGui::SameLine();
+						ImGui::SetNextItemWidth(availWidth);
+						if (ButtonEx::InputFloatNoLabel("height", &inputVec(1, 0).y, 100, 1000, "%.0f")) {
+							tex->Reallocate(inputVec(1, 0).x, inputVec(1, 0).y);
+							node->Backward();
+						}
+						ImGui::Separator();
+
+						ImGui::Text("Scale: ");
+						if (ButtonEx::DragFloatNoLabel("Scale", &inputVec(2, 0).x, 0.1f)) {
+							node->Backward();
+						}
+						ImGui::Text("Dimension: ");
+						if (ButtonEx::DragFloatNoLabel("Dim", &inputVec(2, 0).y, 0.1f)) {
+							node->Backward();
+						}
+						ImGui::Text("Time: ");
+						if (ButtonEx::DragFloatNoLabel("Time", &inputVec(2, 0).z, 0.1f)) {
+							node->Backward();
+						}
+
+						ImGui::Text("UV: ");
+						if (ImGui::DragFloat2("Offset", (float*)&tex->offset, 0.1f)) {
+							node->Backward();
+						}
+						if (ImGui::DragFloat2("Tiling", (float*)&tex->tiling, 0.1f)) {
+							node->Backward();
+						}
+
+						ImGui::Text("Preview: ");
+						width <<= 2;
+						ImGui::SetCursorPosX((ImGui::GetContentRegionAvailWidth() - width) / 2.0f);
+					} else width *= node->zoomFactor;
+
+					ButtonEx::ClampedImage(
+						tex, width, true, ImVec2(0, 0), ImVec2(tex->tiling.x, tex->tiling.y)
+					);
+				},	/// process data
+				[](MyNode* node) {
+					if (!outputID(0, 0)) {
+						inputVec(1, 0).setValue(256, 256, 0); inputVec(2, 0).x = 1.0f;
+						FrameBuffer* buffer = new FrameBuffer(inputVec(1, 0).x, inputVec(1, 0).y, "noise");
+						MOON_TextureManager::AddItem(buffer);
+						outputID(0, 0) = buffer->ID;
+					}
+					FrameBuffer* tex = dynamic_cast<FrameBuffer*>(MOON_ObjectList[outputID(0, 0)]);
+					ProceduralMapGenerator::GPUPatternMaker(
+						(ProceduralTexture)(inputID(0, 0) + ProceduralTexture::FirstPattern),
 						tex, tex->offset, inputVec(2, 0).x, inputVec(2, 0).y, inputVec(2, 0).z
 					);
 				}

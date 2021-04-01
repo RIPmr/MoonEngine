@@ -11,8 +11,8 @@
 *	  \/__/         \/__/         \/__/         \/__/
 *
 * @author	HZT
-* @date		2020-10-15
-* @version	0.1.8
+* @date		2020-11-20
+* @version	0.2.0
 */
 
 #pragma once
@@ -225,7 +225,9 @@ FrameBuffer* MOON_TextureManager::Irradiance	= MOON_UNSPECIFIEDID;
 FrameBuffer* MOON_TextureManager::prefilterMap	= MOON_UNSPECIFIEDID;
 FrameBuffer* MOON_TextureManager::brdfLUT		= MOON_UNSPECIFIEDID;
 Texture* MOON_TextureManager::HDRI				= MOON_UNSPECIFIEDID;
+Shader* ProceduralMapGenerator::FireShader		= MOON_UNSPECIFIEDID;
 Shader* ProceduralMapGenerator::NoiseShader		= MOON_UNSPECIFIEDID;
+Shader* ProceduralMapGenerator::PatternShader	= MOON_UNSPECIFIEDID;
 std::vector<FrameBuffer*>						  MOON_TextureManager::SCENEBUFFERS;
 
 Vector2 MOON_MousePos							= Vector2(-2.0f, -2.0f);
@@ -295,4 +297,5 @@ REGIST_POST_EFFECT(Flare);
 REGIST_POST_EFFECT(SSAO);
 REGIST_POST_EFFECT(FXAA);
 REGIST_POST_EFFECT(Blur);
-REGIST_POST_EFFECT(CRT);
+//REGIST_POST_EFFECT(Glitch);
+//REGIST_POST_EFFECT(Halftone);

@@ -16,6 +16,7 @@ uniform vec3 lightPositions[32];
 uniform vec3 lightColors[32];
 
 // noise params
+uniform float _time;
 uniform vec3 _offset;
 uniform float _scale;
 uniform vec2 _noiseMulti;
@@ -400,11 +401,10 @@ void main() {
     vec3 color = texture(screenBuffer, TexCoords).rgb;
 	float depth = 2 * texture(depthBuffer, TexCoords).r - 1;
 	vec4 worldPos = CalculateWorldSpacePosition(depth, TexCoords * 2.0 - vec2(1.0));
-	worldPos.xyz /= worldPos.w;
 
 	// cloud ray marching
 	CalculatePixelRay(TexCoords * 2.0 - vec2(1.0));
-	vec4 cloud = CloudRayMarching(viewPos, viewDir, worldPos.xyz);
+	vec4 cloud = CloudRayMarching(viewPos, viewDir, worldPos.xyz / worldPos.w);
 
     FragColor = vec4(mix(vec3(cloud.r, cloud.g, cloud.b), color, cloud.a), 1.0);
 }

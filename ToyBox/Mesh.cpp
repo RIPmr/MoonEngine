@@ -39,6 +39,8 @@ namespace MOON {
 
 #pragma region Mesh_implementation
 	void Mesh::Draw(Shader* shader, const Matrix4x4 & model, const bool &hovered, const bool &selected) {
+		if (shader == NULL) shader = material->shader;
+		
 		// shader configuration
 		shader->use();
 

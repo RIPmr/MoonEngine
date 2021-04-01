@@ -11,13 +11,17 @@
 #include "ButtonEx.h"
 
 namespace MOON {
+
 	enum MatType {
 		moonMtl,
 		lambertian,
 		metal,
 		dielectric,
-		light,
-		sem
+		lightMtl,
+		skinMtl,
+		hairMtl,
+		matteMtl,
+		semMtl
 	};
 
 	extern class renderer;
@@ -32,11 +36,33 @@ namespace MOON {
 		// if any param is updated, set it true
 		bool prevNeedUpdate;
 
+		std::vector<Texture*> textures;
+		std::vector<std::string> texTypeList;
+
 		Material() : ObjectBase(MOON_AUTOID), preview(MOON_UNSPECIFIEDID), prevNeedUpdate(true) {}
 		Material(const std::string &name) : ObjectBase(name, MOON_AUTOID), preview(MOON_UNSPECIFIEDID), prevNeedUpdate(true) {}
 
 		virtual ~Material() override {
 			if (preview != NULL) delete preview;
+		}
+
+		int GetTextureID(const std::string& type) {
+			for (int i = 0; i < texTypeList.size(); i++) {
+				if (texTypeList[i]._Equal(type)) return i;
+			}
+			return -1;
+		}
+
+		Texture* GetTexture(const std::string& type) {
+			for (int i = 0; i < texTypeList.size(); i++) {
+				if (texTypeList[i]._Equal(type)) return textures[i];
+			}
+			return nullptr;
+		}
+
+		void DefineTextures(const std::vector<std::string>& texTypeList) {
+			this->texTypeList = texTypeList;
+			textures.resize(texTypeList.size(), nullptr);
 		}
 
 		void ListShader();
@@ -55,30 +81,74 @@ namespace MOON {
 		virtual void UpdatePreview();
 		virtual void ListPreview();
 
-		virtual void SetShaderProps(Shader* shader) {}
-		virtual bool scatter(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered) const = 0;
+		virtual void SetShaderProps(Shader* shader);
+		virtual Vector3 Emitted(const Vector2& uv) const { return Vector3::ZERO(); }
+		virtual bool PDF(const Ray& r_in, const HitRecord& rec, const Ray& scattered) const { return false; }
+		virtual bool Scatter_IS(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered, float& pdf) const { return false; }
+		virtual bool Scatter(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered) const = 0;
 	};
 
 	class LightMtl : public Material {
 	public:
+		Texture* texture;
+
+		Vector3 color;
+		float power;
+
 		LightMtl();
 		LightMtl(const std::string &name);
+		~LightMtl() override = default;
 
-		virtual bool scatter(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered) const;
+		virtual void SetShaderProps(Shader* shader) override;
+
+		virtual void ListProperties() override {
+			Material::ListProperties();
+
+			// list parameters
+			ImGui::Text("Parameters:");
+			ImGui::Indent(10.0f);
+
+			// Ambient
+			float interval = 90.0f; unsigned int bid = 0;
+			ImVec2 btnSize{ ImGui::GetContentRegionAvailWidth() - interval - 20, 22 };
+
+			ImGui::Text("Color"); ImGui::SameLine(interval);
+			if (ImGui::ColorEdit3(UniquePropName("col"), (float*)&color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel)) {
+				this->prevNeedUpdate = true;
+			}
+			ImGui::SameLine();
+			ImGui::SetNextItemWidth(btnSize.x);
+			if (ButtonEx::DragFloatNoLabel("Power", &power, 0.01f, 0.0f, INFINITY, "%.3f", 1.0f)) {
+				this->prevNeedUpdate = true;
+			}
+
+			ImGui::Unindent(10.0f);
+			ImGui::Separator();
+
+			// list preview
+			ListPreview();
+
+			ImGui::Spacing();
+		}
+
+		virtual Vector3 Emitted(const Vector2& uv) const override;
+		virtual bool Scatter(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered) const override;
 	};
 
 	class MoonMtl : public Material {
 	public:
 		// C: color, W: weight
-		Vector3 ambientC;
+		float ambientW;
+		float normalW;
+		float dispW;
 
 		Vector3 diffuseC;
 		float roughness;
 
 		Vector3 reflectW;
 		Vector3 refractW;
+		Vector3 glossiness;
 		float fresnel;
-		float glossiness;
 		float IOR;
 
 		Vector3 translucency;
@@ -86,29 +156,20 @@ namespace MOON {
 		Vector3 fogC;
 		float fogW;
 
-		float dispW;
-
 		Vector3 illumination;
+		float illumMulti;
 
 		Vector3 metalness;
 		float anisotropy;
 		float an_rotation;
 
-		std::vector<Texture*> textures;
-
 		MoonMtl();
 		MoonMtl(const std::string &name);
-		~MoonMtl() override;
+		~MoonMtl() override = default;
 
-		int GetTextureIndex(const TexType& type) {
-			for (int i = 0; i < textures.size(); i++) {
-				if (type == textures[i]->type) return i;
-			}
-			return -1;
-		}
-
-		void TextureButton(const TexType& type, const std::string& title, float* colorRef,
+		/*void TextureButton(const TexType& type, const std::string& title, float* colorRef,
 			const ImVec2& btnSize, const float& interval, unsigned int& loopID) {
+			ImGui::PushID(title.c_str());
 			auto tid = GetTextureIndex(type);
 			ImGui::Text((title + " ").c_str()); ImGui::SameLine(interval);
 			if (colorRef != nullptr) {
@@ -129,6 +190,61 @@ namespace MOON {
 					this->prevNeedUpdate = true;
 				}
 			}
+			ImGui::PopID();
+		}*/
+
+		void TexColButton(const std::string& type, float* colorRef,
+			const ImVec2& btnSize, const float& interval, unsigned int& loopID) {
+			ImGui::PushID(type.c_str());
+			ImGui::Text((type + " ").c_str()); ImGui::SameLine(interval);
+			if (colorRef != nullptr) {
+				if (ImGui::ColorEdit3(UniquePropName(type), colorRef,
+					ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel)) {
+					this->prevNeedUpdate = true;
+				} ImGui::SameLine();
+			}
+			if (ButtonEx::TexFileBtnWithPrev(textures[GetTextureID(type)], btnSize, loopID++)) {
+				this->prevNeedUpdate = true;
+			}
+			ImGui::PopID();
+		}
+
+		void TexSpiButton(const std::string& type, const char* spinTitle, 
+			float* spinRef, const Vector2& spinRange, const ImVec2& btnSize, 
+			const float& interval, unsigned int& loopID) {
+			ImGui::PushID(type.c_str());
+			ImGui::Text((type + " ").c_str()); ImGui::SameLine(interval);
+			if (ButtonEx::TexFileBtnWithPrev(textures[GetTextureID(type)], btnSize, loopID++)) {
+				this->prevNeedUpdate = true;
+			}
+			if (spinRef != nullptr) {
+				ImGui::Text(spinTitle); ImGui::SameLine(interval);
+				ImGui::SetNextItemWidth(btnSize.x);
+				if (ButtonEx::SliderFloatNoLabel(UniquePropName(type),
+					spinRef, spinRange.x, spinRange.y, "%.3f", 1.0f)) {
+					this->prevNeedUpdate = true;
+				}
+			}
+			ImGui::PopID();
+		}
+
+		void TexDraButton(const std::string& type, const char* draTitle, 
+			float* draRef, const Vector2& draRange, const ImVec2& btnSize,
+			const float& interval, unsigned int& loopID) {
+			ImGui::PushID(type.c_str());
+			ImGui::Text((type + " ").c_str()); ImGui::SameLine(interval);
+			if (ButtonEx::TexFileBtnWithPrev(textures[GetTextureID(type)], btnSize, loopID++)) {
+				this->prevNeedUpdate = true;
+			}
+			if (draRef != nullptr) {
+				ImGui::Text(draTitle); ImGui::SameLine(interval);
+				ImGui::SetNextItemWidth(btnSize.x);
+				if (ButtonEx::DragFloatNoLabel(UniquePropName(type),
+					draRef, 0.01f, draRange.x, draRange.y)) {
+					this->prevNeedUpdate = true;
+				}
+			}
+			ImGui::PopID();
 		}
 
 		virtual void SetShaderProps(Shader* shader) override;
@@ -150,16 +266,21 @@ namespace MOON {
 			float interval = 90.0f; unsigned int bid = 0;
 			ImVec2 btnSize{ ImGui::GetContentRegionAvailWidth() - interval - 20, 22 };
 
-			TextureButton(ambientMap,		"Ambient",		(float*)&ambientC,		btnSize, interval, bid);
-			TextureButton(diffuseMap,		"Diffuse",		(float*)&diffuseC,		btnSize, interval, bid);
-			TextureButton(normalMap,		"Normal",	nullptr, ImVec2(btnSize.x + 30, btnSize.y), interval, bid);
-			TextureButton(reflectMap,		"Reflect",		(float*)&reflectW,		btnSize, interval, bid);
-			TextureButton(refractMap,		"Refract",		(float*)&refractW,		btnSize, interval, bid);
-			TextureButton(metallicMap,		"Metalness",	(float*)&metalness,		btnSize, interval, bid);
-			TextureButton(translucentMap,	"Translucent",	(float*)&translucency,	btnSize, interval, bid);
-			TextureButton(displaceMap,		"Displace", nullptr, ImVec2(btnSize.x + 30, btnSize.y), interval, bid);
-			TextureButton(illuminaMap,		"Illuminant",	(float*)&illumination,	btnSize, interval, bid);
-			TextureButton(alphaMap,			"Opacity",		(float*)&opacity,		btnSize, interval, bid);
+			TexSpiButton("ambient",		"AOWeight", &ambientW, Vector2(0, 1),	ImVec2(btnSize.x + 30, btnSize.y), interval, bid);
+			TexColButton("albedo",		(float*)&diffuseC,		btnSize, interval, bid);
+			TexDraButton("normal",		"NrmMulti", &normalW,  Vector2::ZERO(), ImVec2(btnSize.x + 30, btnSize.y), interval, bid);
+			TexColButton("reflect",		(float*)&reflectW,		btnSize, interval, bid);
+			TexColButton("refract",		(float*)&refractW,		btnSize, interval, bid);
+			TexColButton("metallic",	(float*)&metalness,		btnSize, interval, bid);
+			TexColButton("translucent",	(float*)&translucency,	btnSize, interval, bid);
+			TexDraButton("displace",	"DispMulti",&dispW,   Vector2::ZERO(), ImVec2(btnSize.x + 30, btnSize.y), interval, bid);
+			
+			TexColButton("illumina",	(float*)&illumination,	btnSize, interval, bid);
+			ImGui::Text("IllumMulti"); ImGui::SameLine(interval); 
+			ImGui::SetNextItemWidth(btnSize.x + 30);
+			ButtonEx::DragFloatNoLabel("illum_multi", &illumMulti, 0.1f, 0.0f, 0.0f, "%.3f", 1.0f);
+
+			TexColButton("alpha",		(float*)&opacity,		btnSize, interval, bid);
 
 			ImGui::Text("Fog/Multi"); ImGui::SameLine(interval);
 			ImGui::ColorEdit3(UniquePropName("fog"), (float*)&fogC, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
@@ -167,15 +288,11 @@ namespace MOON {
 			ImGui::SetNextItemWidth(btnSize.x);
 			ButtonEx::DragFloatNoLabel("fog_drag", &fogW, 0.001f, 0.0f, 10.0f, "%.3f", 1.0f);
 
+			TexColButton("roughness",	(float*)&glossiness,	btnSize, interval, bid);
+
 			ImGui::Text("Roughness"); ImGui::SameLine(interval);
 			ImGui::SetNextItemWidth(btnSize.x + 30);
 			ButtonEx::DragFloatNoLabel("rough_drag", &roughness, 0.001f, 0.0f, 1.0f, "%.3f", 1.0f);
-
-			ImGui::Text("Glossiness"); ImGui::SameLine(interval);
-			ImGui::SetNextItemWidth(btnSize.x + 30);
-			if (ButtonEx::DragFloatNoLabel("gloss_drag", &glossiness, 0.001f, 0.0f, 1.0f, "%.3f", 1.0f)) {
-				this->prevNeedUpdate = true;
-			}
 
 			ImGui::Text("Fresnel"); ImGui::SameLine(interval);
 			ImGui::SetNextItemWidth(btnSize.x + 30);
@@ -188,10 +305,6 @@ namespace MOON {
 			if (ButtonEx::DragFloatNoLabel("ior_drag", &IOR, 0.001f, 1.0f, 10.0f, "%.3f", 1.0f)) {
 				this->prevNeedUpdate = true;
 			}
-
-			ImGui::Text("DispMulti"); ImGui::SameLine(interval);
-			ImGui::SetNextItemWidth(btnSize.x + 30);
-			ButtonEx::DragFloatNoLabel("dispW_drag", &dispW, 0.001f, 0, 0, "%.3f", 1.0f);
 
 			ImGui::Text("Anisotropy"); ImGui::SameLine(interval);
 			ImGui::SetNextItemWidth(btnSize.x + 30);
@@ -210,7 +323,10 @@ namespace MOON {
 			ImGui::Spacing();
 		}
 
-		virtual bool scatter(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered) const;
+		virtual Vector3 Emitted(const Vector2& uv) const override;
+		virtual bool PDF(const Ray& r_in, const HitRecord& rec, const Ray& scattered) const override;
+		virtual bool Scatter_IS(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered, float& pdf) const override;
+		virtual bool Scatter(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered) const override;
 	};
 
 	class Lambertian : public Material {
@@ -219,8 +335,9 @@ namespace MOON {
 
 		Lambertian(const Vector3 &albedo) : albedo(albedo) {}
 		Lambertian(const std::string &name, const Vector3 &albedo) : albedo(albedo), Material(name) {}
+		~Lambertian() override = default;
 
-		virtual bool scatter(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered) const;
+		virtual bool Scatter(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered) const;
 	};
 
 	class Metal : public Material {
@@ -236,8 +353,9 @@ namespace MOON {
 			if (fuzz < 1) this->fuzz = fuzz;
 			else this->fuzz = 1;
 		}
+		~Metal() override = default;
 
-		virtual bool scatter(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered) const;
+		virtual bool Scatter(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered) const;
 	};
 
 	class Dielectric : public Material {
@@ -246,8 +364,9 @@ namespace MOON {
 
 		Dielectric(float ri) : ref_idx(ri) {}
 		Dielectric(const std::string &name, float ri) : ref_idx(ri), Material(name) {}
+		~Dielectric() override = default;
 
-		virtual bool scatter(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered) const;
+		virtual bool Scatter(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered) const;
 	};
 
 	class SEM : public Material {
@@ -257,6 +376,7 @@ namespace MOON {
 
 		SEM();
 		SEM(const std::string &name);
+		~SEM() override = default;
 
 		virtual void SetShaderProps(Shader* shader) override {
 			shader->setTexture("tMatCap", matcap, 0);
@@ -275,6 +395,89 @@ namespace MOON {
 			ImGui::Unindent(centering);
 		}
 
-		virtual bool scatter(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered) const;
+		virtual bool Scatter(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered) const;
 	};
+
+	class MatteMtl : public Material {
+	public:
+		bool writeAlpha;
+
+		MatteMtl();
+		MatteMtl(const std::string &name);
+		~MatteMtl() override = default;
+
+		virtual bool Scatter(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered) const;
+	};
+
+	class HairMtl : public Material {
+	public:
+		Vector3 color;
+
+		HairMtl();
+		HairMtl(const std::string &name);
+		~HairMtl() override = default;
+
+		virtual bool Scatter(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered) const;
+	};
+
+	class SkinMtl : public Material {
+	public:
+		int specType;
+
+		Vector3 tintColor;
+		Vector3 specColor;
+		Vector3 scatColor;
+
+		Texture* albedoMap;
+		Texture* normalMap;
+		Texture* roughnessMap;
+		Texture* scatterMap;
+		Texture* SSSLUT;
+		Texture* kelemenLUT;
+
+		float roughness;
+		float specMulti;
+		float curveFactor;
+
+		float distortion;
+		float scatMulti;
+		float scatScale;
+
+		SkinMtl();
+		SkinMtl(const std::string &name);
+		~SkinMtl() override = default;
+
+		virtual void SetShaderProps(Shader* shader) override;
+
+		virtual void ListProperties() override {
+			Material::ListProperties();
+
+			if (name._Equal("default")) {
+				ListPreview();
+				ImGui::Spacing();
+				return;
+			}
+
+			// list parameters
+			ImGui::Text("Parameters:");
+			ImGui::Indent(10.0f);
+
+			// Ambient
+			float interval = 90.0f; unsigned int bid = 0;
+			ImVec2 btnSize{ ImGui::GetContentRegionAvailWidth() - interval - 20, 22 };
+
+
+			
+			ImGui::Unindent(10.0f);
+			ImGui::Separator();
+
+			// list preview
+			ListPreview();
+
+			ImGui::Spacing();
+		}
+
+		virtual bool Scatter(const Ray &r_in, const HitRecord &rec, Vector3 &attenuation, Ray &scattered) const;
+	};
+
 }

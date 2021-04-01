@@ -9,7 +9,8 @@ namespace MOON {
 	public:
 		enum SourceType {
 			Noise,
-			Texture,
+			Galaxy,
+			Tex3D,
 			OpenVDB,
 			Alembic
 		};
@@ -20,6 +21,7 @@ namespace MOON {
 		bool useLight;
 		bool writeDepth;
 
+		float time;
 		float step;
 		float rayStep;
 		int lightStep;
@@ -49,6 +51,7 @@ namespace MOON {
 			source = Noise; drawBound = true; useLight = true; writeDepth = false;
 
 			step = 0.1f; rayStep = 0.1f; lightStep = 8; maxMarchLoop = 128;
+			time = 1.0f;
 
 			darknessThreshold = 0.0f; midtoneOffset = 0.59f; shadowOffset = 1.02f;
 			lightAbsorptionTowardSun = 0.1f;

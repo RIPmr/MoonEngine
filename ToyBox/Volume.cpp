@@ -71,7 +71,8 @@ namespace MOON {
 	}
 
 	void Volume::Draw(Shader* overrideShader) {
-		auto flag = overrideShader ? overrideShader->name._Equal("RayMarching") : false;
+		auto flag = overrideShader ? (overrideShader->name._Equal("RayMarching") || 
+			overrideShader->name._Equal("Galaxy")) : false;
 		if (flag) SetupParameters(overrideShader);
 
 		// start drawing
@@ -125,6 +126,7 @@ namespace MOON {
 		rayMarchingShader->setInt("_downSampling", downSampling);
 		rayMarchingShader->setVec3("_offset", offset);
 		rayMarchingShader->setFloat("_scale", scale);
+		rayMarchingShader->setFloat("_time", time);
 		rayMarchingShader->setVec2("_noiseMulti", multiply);
 	}
 
@@ -147,24 +149,28 @@ namespace MOON {
 		ImGui::SetNextItemWidth(widgetWidth);
 		ButtonEx::CheckboxNoLabel("writeDepth", &writeDepth);
 
-		const char* items[] = { "Noise", "Texture", "OpenVDB", "Alembic" };
+		const char* items[] = { "Noise", "Galaxy", "Tex3D", "OpenVDB", "Alembic" };
 		ImGui::AlignTextToFramePadding();
 		ImGui::Text("Source"); ImGui::SameLine(interval);
 		ImGui::SetNextItemWidth(widgetWidth);
 		ButtonEx::ComboNoLabel("sourceType", (int*)&source, items, IM_ARRAYSIZE(items));
 
-		if (source == Noise) {
+		if (source <= Galaxy) {
+			ImGui::Text("Time"); ImGui::SameLine(interval);
+			ImGui::SetNextItemWidth(widgetWidth);
+			ButtonEx::DragFloatNoLabel("time", &time, 0.01f, 0.0f, 0.0f, "%.3f");
+
 			ImGui::Text("Noise Offset"); ImGui::SameLine(interval);
 			ImGui::SetNextItemWidth(widgetWidth);
-			ButtonEx::DragVec3NoLabel("offset", &offset[0], 0.1f, 0.0f, 0.0f, "%.2f");
+			ButtonEx::DragVec3NoLabel("offset", &offset[0], 0.01f, 0.0f, 0.0f, "%.2f");
 
 			ImGui::Text("Noise Scale"); ImGui::SameLine(interval);
 			ImGui::SetNextItemWidth(widgetWidth);
-			ButtonEx::DragFloatNoLabel("scale", &scale, 0.1f, 0.0f, 0.0f, "%.2f");
+			ButtonEx::DragFloatNoLabel("scale", &scale, 0.01f, 0.0f, 0.0f, "%.3f");
 
 			ImGui::Text("Noise Multi"); ImGui::SameLine(interval);
 			ImGui::SetNextItemWidth(widgetWidth);
-			ButtonEx::DragVec2NoLabel("noiseMul", &multiply[0], 0.1f, 0.0f, 0.0f, "%.2f");
+			ButtonEx::DragVec2NoLabel("noiseMul", &multiply[0], 0.01f, 0.0f, 0.0f, "%.2f");
 		}
 
 		ImGui::Text("Max March"); ImGui::SameLine(interval);
@@ -173,11 +179,11 @@ namespace MOON {
 
 		ImGui::Text("March Step"); ImGui::SameLine(interval);
 		ImGui::SetNextItemWidth(widgetWidth);
-		ButtonEx::DragFloatNoLabel("step", &step, 0.1f, 0.01f, 1.0f, "%.2f");
+		ButtonEx::DragFloatNoLabel("step", &step, 0.001f, 0.001f, 1.0f, "%.3f");
 
 		ImGui::Text("Ray Step"); ImGui::SameLine(interval);
 		ImGui::SetNextItemWidth(widgetWidth);
-		ButtonEx::DragFloatNoLabel("rayStep", &rayStep, 0.1f, 0.01f, 1.0f, "%.2f");
+		ButtonEx::DragFloatNoLabel("rayStep", &rayStep, 0.001f, 0.001f, 1.0f, "%.3f");
 
 		ImGui::Text("Light Step"); ImGui::SameLine(interval);
 		ImGui::SetNextItemWidth(widgetWidth);
@@ -185,23 +191,23 @@ namespace MOON {
 
 		ImGui::Text("Dark Threshold"); ImGui::SameLine(interval);
 		ImGui::SetNextItemWidth(widgetWidth);
-		ButtonEx::DragFloatNoLabel("dark", &darknessThreshold, 0.1f, 0.0f, 1.0f, "%.2f");
+		ButtonEx::DragFloatNoLabel("dark", &darknessThreshold, 0.001f, 0.0f, 1.0f, "%.3f");
 
 		ImGui::Text("Midtone Offset"); ImGui::SameLine(interval);
 		ImGui::SetNextItemWidth(widgetWidth);
-		ButtonEx::DragFloatNoLabel("mid", &midtoneOffset, 0.1f, 0.0f, 0.0f, "%.2f");
+		ButtonEx::DragFloatNoLabel("mid", &midtoneOffset, 0.001f, 0.0f, 0.0f, "%.3f");
 
 		ImGui::Text("Shadow Offset"); ImGui::SameLine(interval);
 		ImGui::SetNextItemWidth(widgetWidth);
-		ButtonEx::DragFloatNoLabel("shadow", &shadowOffset, 0.1f, 0.0f, 0.0f, "%.2f");
+		ButtonEx::DragFloatNoLabel("shadow", &shadowOffset, 0.001f, 0.0f, 0.0f, "%.3f");
 
 		ImGui::Text("Sun Absorb"); ImGui::SameLine(interval);
 		ImGui::SetNextItemWidth(widgetWidth);
-		ButtonEx::DragFloatNoLabel("sunAb", &lightAbsorptionTowardSun, 0.1f, 0.0f, 0.0f, "%.2f");
+		ButtonEx::DragFloatNoLabel("sunAb", &lightAbsorptionTowardSun, 0.001f, 0.0f, 0.0f, "%.3f");
 
 		ImGui::Text("Light Absorb"); ImGui::SameLine(interval);
 		ImGui::SetNextItemWidth(widgetWidth);
-		ButtonEx::DragFloatNoLabel("liAb", &lightAbsorptionThroughCloud, 0.1f, 0.0f, 0.0f, "%.2f");
+		ButtonEx::DragFloatNoLabel("liAb", &lightAbsorptionThroughCloud, 0.001f, 0.0f, 0.0f, "%.3f");
 
 		ImGui::Text("Main Color"); ImGui::SameLine(interval);
 		ImGui::SetNextItemWidth(widgetWidth);
@@ -219,19 +225,19 @@ namespace MOON {
 
 		ImGui::Text("Scatter Phase"); ImGui::SameLine(interval);
 		ImGui::SetNextItemWidth(widgetWidth);
-		ButtonEx::DragVec4NoLabel("phase", &phaseParams[0], 0.1f, 0.0f, 0.0f, "%.2f");
+		ButtonEx::DragVec4NoLabel("phase", &phaseParams[0], 0.001f, 0.0f, 0.0f, "%.2f");
 
 		ImGui::Text("Scatter Multi"); ImGui::SameLine(interval);
 		ImGui::SetNextItemWidth(widgetWidth);
-		ButtonEx::DragFloatNoLabel("scaMul", &scatterMultiply, 0.1f, 0.0f, 0.0f, "%.2f");
+		ButtonEx::DragFloatNoLabel("scaMul", &scatterMultiply, 0.001f, 0.0f, 0.0f, "%.3f");
 
 		ImGui::Text("Density Offset"); ImGui::SameLine(interval);
 		ImGui::SetNextItemWidth(widgetWidth);
-		ButtonEx::DragFloatNoLabel("densOff", &densityOffset, 0.1f, 0.0f, 0.0f, "%.2f");
+		ButtonEx::DragFloatNoLabel("densOff", &densityOffset, 0.001f, 0.0f, 0.0f, "%.3f");
 
 		ImGui::Text("Density Multi"); ImGui::SameLine(interval);
 		ImGui::SetNextItemWidth(widgetWidth);
-		ButtonEx::DragFloatNoLabel("densMul", &densityMultiply, 0.1f, 0.0f, 0.0f, "%.2f");
+		ButtonEx::DragFloatNoLabel("densMul", &densityMultiply, 0.01f, 0.0f, 0.0f, "%.3f");
 
 		ImGui::Text("Downsampling"); ImGui::SameLine(interval);
 		ImGui::SetNextItemWidth(widgetWidth);

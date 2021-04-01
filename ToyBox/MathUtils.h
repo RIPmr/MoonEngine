@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <cmath>
 #include <ctime>
 #include <vector>
@@ -20,7 +20,7 @@ namespace MOON {
 	#define INFINITY std::numeric_limits<float>::max()
 	#define INFINITY_INT std::numeric_limits<int>::max()
 	/// actually it's pow(255, 4) = 0xfc05fc01
-	/// but range of int is ¡À2147483647, smaller than 0xfc05fc01
+	/// but range of int is Â±2147483647, smaller than 0xfc05fc01
 	#define MOON_IDBOUNDARY std::numeric_limits<int>::max()
 
 	class MoonMath {
@@ -91,11 +91,11 @@ namespace MOON {
 		}
 
 		/*
-		º¯ÊıÄ£°åÓëÍ¬ÃûµÄ·ÇÄ£°åº¯ÊıÖØÔØÊ±ºò£¬µ÷ÓÃË³Ğò:
-			1.Ñ°ÕÒÒ»¸ö²ÎÊıÍêÈ«Æ¥ÅäµÄº¯Êı£¬Èç¹ûÕÒµ½ÁË¾Íµ÷ÓÃËü
-			2.Ñ°ÕÒÒ»¸öº¯ÊıÄ£°å£¬½«ÆäÊµÀı»¯£¬²úÉúÒ»¸öÆ¥ÅäµÄÄ£°åº¯Êı£¬ÈôÕÒµ½ÁË£¬¾Íµ÷ÓÃËü
-			3.Èô1,2¶¼Ê§°Ü£¬ÔÙÊÔÒ»ÊÔµÍÒ»¼¶µÄ¶Ôº¯ÊıµÄÖØÔØ·½·¨£¬ÀıÈçÍ¨¹ıÀàĞÍ×ª»»¿É²úÉú²ÎÊıÆ¥Åä£¬¾Íµ÷ÓÃËü
-			4.Èô1,2,3¾ùÎ´ÕÒµ½Æ¥ÅäµÄº¯Êı£¬ÔòÊÇÒ»¸ö´íÎóµÄµ÷ÓÃ
+		å‡½æ•°æ¨¡æ¿ä¸åŒåçš„éæ¨¡æ¿å‡½æ•°é‡è½½æ—¶å€™ï¼Œè°ƒç”¨é¡ºåº:
+			1.å¯»æ‰¾ä¸€ä¸ªå‚æ•°å®Œå…¨åŒ¹é…çš„å‡½æ•°ï¼Œå¦‚æœæ‰¾åˆ°äº†å°±è°ƒç”¨å®ƒ
+			2.å¯»æ‰¾ä¸€ä¸ªå‡½æ•°æ¨¡æ¿ï¼Œå°†å…¶å®ä¾‹åŒ–ï¼Œäº§ç”Ÿä¸€ä¸ªåŒ¹é…çš„æ¨¡æ¿å‡½æ•°ï¼Œè‹¥æ‰¾åˆ°äº†ï¼Œå°±è°ƒç”¨å®ƒ
+			3.è‹¥1,2éƒ½å¤±è´¥ï¼Œå†è¯•ä¸€è¯•ä½ä¸€çº§çš„å¯¹å‡½æ•°çš„é‡è½½æ–¹æ³•ï¼Œä¾‹å¦‚é€šè¿‡ç±»å‹è½¬æ¢å¯äº§ç”Ÿå‚æ•°åŒ¹é…ï¼Œå°±è°ƒç”¨å®ƒ
+			4.è‹¥1,2,3å‡æœªæ‰¾åˆ°åŒ¹é…çš„å‡½æ•°ï¼Œåˆ™æ˜¯ä¸€ä¸ªé”™è¯¯çš„è°ƒç”¨
 		*/
 		template<typename T>
 		inline static bool Approximate(const T &a, const T &b, const float &epsilon = EPSILON) {
@@ -187,7 +187,7 @@ namespace MOON {
 			return X;
 		}
 
-		// ·µ»Ø·ş´Ó¾ùÔÈ·Ö²¼µÄ [0.0, 1.0) Ö®¼äµÄ double ĞÍËæ»úÊı
+		// è¿”å›æœä»å‡åŒ€åˆ†å¸ƒçš„ [0.0, 1.0) ä¹‹é—´çš„ double å‹éšæœºæ•°
 		inline static double drand48() {
 			seed = (MOON_a * seed + MOON_c) & 0xFFFFFFFFFFFFLL;
 			unsigned int x = seed >> 16;
@@ -198,12 +198,23 @@ namespace MOON {
 			seed = (((long long int)i) << 16) | rand();
 		}
 
-		inline static Vector3 RandomInUnitSphere() { // get a random vector inside unit sphere
+		// get a random vector inside unit sphere
+		inline static Vector3 RandomInUnitSphere() { 
 			Vector3 p;
 			do {
 				p = 2.0 * Vector3(drand48(), drand48(), drand48()) - Vector3::ONE();
 			} while (p.MagSquared() >= 1.0);
 			return p;
+		}
+
+		inline static Vector3 RandomCosineDirection() {
+			float r1 = drand48();
+			float r2 = drand48();
+			float z = sqrt(1 - r2);
+			float phi = 2 * PI * r1;
+			float x = cos(phi) * 2 * sqrt(r2);
+			float y = sin(phi) * 2 * sqrt(r2);
+			return Vector3(x, y, z);
 		}
 
 		inline static Vector3 RandomInUnitDisk() {
@@ -323,7 +334,7 @@ namespace MOON {
 			// Project the point onto this normal
 			Vector3 proj = Vector3::Projection(point, n);
 
-			// If the distance from the triangle to the point is 0£¬it lies on the triangle
+			// If the distance from the triangle to the point is 0ï¼Œit lies on the triangle
 			if (proj.magnitude() == 0) return true;
 			else return false;
 		}
@@ -357,10 +368,10 @@ namespace MOON {
 		static Vector3 RotateAround(const Vector3 &position, const Vector3 &center, const Vector3 &axis, const float &angle);
 
 		/// <summary>
-		/// ¼ÆËãÉäÏßÓëÆ½ÃæµÄ¿Õ¼ä×´Ì¬ÅĞ¶Ï
-		/// Æ½Ãæ·¨Ïß·½Ïò±ØĞëÊÇÉäÏßÆğµãËùÔÚµÄÆ½ÃæÒ»²à·½Ïò
-		/// ·µ»ØµÈÓÚ0Ê±,ÉäÏßÓëÆ½ÃæÆ½ĞĞ,ÎŞ½»µã
-		/// ·µ»Ø´óÓÚ0Ê±,ÉäÏßÉäÏòÓëÆ½ÃæÏà·´µÄ·½Ïò,ÎŞ½»µã
+		/// è®¡ç®—å°„çº¿ä¸å¹³é¢çš„ç©ºé—´çŠ¶æ€åˆ¤æ–­
+		/// å¹³é¢æ³•çº¿æ–¹å‘å¿…é¡»æ˜¯å°„çº¿èµ·ç‚¹æ‰€åœ¨çš„å¹³é¢ä¸€ä¾§æ–¹å‘
+		/// è¿”å›ç­‰äº0æ—¶,å°„çº¿ä¸å¹³é¢å¹³è¡Œ,æ— äº¤ç‚¹
+		/// è¿”å›å¤§äº0æ—¶,å°„çº¿å°„å‘ä¸å¹³é¢ç›¸åçš„æ–¹å‘,æ— äº¤ç‚¹
 		/// </summary>
 		inline static float IsRayPlaneIntersect(const Ray &ray, Vector3 planeNormal, const Vector3 &planePoint, const bool cullBack = true) {
 			if (!cullBack) planeNormal *= Vector3::Dot(planePoint - ray.pos, planeNormal) > 0 ? -1 : 1;
@@ -373,8 +384,8 @@ namespace MOON {
 		}
 
 		/// <summary>
-		/// ¼ÆËã¿Õ¼äÏß¶ÎÓëÆ½ÃæµÄ½»µã
-		/// accuracy£¨Èİ²î£©Ô½Ğ¡¶ÔÓÚÖ±Ïß¶Ëµã¸ÕºÃÎª½»µãµÄÇé¿öÇó½»Ô½¾«È·
+		/// è®¡ç®—ç©ºé—´çº¿æ®µä¸å¹³é¢çš„äº¤ç‚¹
+		/// accuracyï¼ˆå®¹å·®ï¼‰è¶Šå°å¯¹äºç›´çº¿ç«¯ç‚¹åˆšå¥½ä¸ºäº¤ç‚¹çš„æƒ…å†µæ±‚äº¤è¶Šç²¾ç¡®
 		/// </summary>
 		inline static bool LinePlaneIntersect(const Vector3 &pointA, const Vector3 &pointB, const Vector3 &planeNormal, const Vector3 &planePoint, Vector3 &intersect, const float &accuracy = 0.0001f) {
 			// first, treat the line as an ray
@@ -422,4 +433,37 @@ namespace MOON {
 		static float closestDistanceBetweenLines(const Vector3 &a0, const Vector3 &a1, const Vector3 &b0, const Vector3 &b1, Vector3 &Line1Closest, Vector3 &Line2Closest);
 
 	};
+
+	// An ortho-normal basis (ONB) is a collection of three mutually orthogonal unit vectors. 
+	// Once we have an ONB and we have a random â€‹(x,y,z) relative the the z - axis we can get the vector relative to â€‹nâ€‹ as:
+	// Random vector = x * sâ€‹ + y * tâ€‹ + z * n
+	class ONB {
+	public:
+		Vector3 axis[3];
+
+		ONB() = default;
+		~ONB() = default;
+
+		inline Vector3 operator[](int i) const { return axis[i]; }
+
+		Vector3 u() const { return axis[0]; }
+		Vector3 v() const { return axis[1]; }
+		Vector3 w() const { return axis[2]; }
+
+		Vector3 Local(double a, double b, double c) const {
+			return a * u() + b * v() + c * w();
+		}
+
+		Vector3 Local(const Vector3& a) const {
+			return a.x * u() + a.y * v() + a.z * w();
+		}
+
+		void BuildFromW(const Vector3& n) {
+			axis[2] = Vector3::Normalize(n);
+			Vector3 a = fabs(w().x) > 0.9f ? Vector3(0, 1, 0) : Vector3(1, 0, 0);
+			axis[1] = Vector3::Normalize(w().cross(a));
+			axis[0] = w().cross(v());
+		}
+	};
+
 }

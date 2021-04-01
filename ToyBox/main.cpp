@@ -2,19 +2,16 @@
 //#define MOON_DEBUG_MODE
 
 // global settings ------------------------------------------------
-const char *title = u8"MoonEngine - v0.18 朔";
+const char *title = u8"MoonEngine - v0.20 朔";
 
 Vector2 MOON_WndSize = Vector2(1600, 900);
 Vector2 MOON_ScrSize = Vector2(800, 450);
 float SceneManager::aspect = MOON_ScrSize.x / MOON_ScrSize.y;
 SceneView SceneManager::activeView = top;
-Vector2 MOON_OutputSize = Vector2(200, 100);
+Vector2 MOON_OutputSize = Vector2(600, 300);
 float Renderer::aspect = MOON_OutputSize.x / MOON_OutputSize.y;
 Vector4 Graphics::clearColor(0.45f, 0.55f, 0.60f, 1.00f);
 Vector4 grdLineColor(0.8f, 0.8f, 0.8f, 1.0f);
-
-unsigned int Renderer::samplingRate = 5;
-unsigned int Renderer::maxReflectionDepth = 5;
 
 float Camera::MouseSensitivity = 0.025f;
 // ----------------------------------------------------------------
@@ -33,7 +30,7 @@ int main() {
 	Model* teapot = MOON_ModelManager::LoadModel("Assets\\Models\\teapot.obj", false);
 	teapot->transform.Scale(Vector3(0.2f, 0.2f, 0.2f));
 	MoonMtl* pbr = dynamic_cast<MoonMtl*>(teapot->meshList[0]->material);
-	pbr->glossiness = 0.4f; pbr->reflectW.x = 1.0f;
+	pbr->glossiness = Vector3::ONE() * 0.4f; pbr->reflectW.x = 1.0f; pbr->illumination = Vector3::ZERO();
 
 	//Model* rabbit = MOON_ModelManager::LoadModel("Assets\\Models\\bunny.obj");
 	//rabbit->transform.Scale(Vector3::ONE() * 5.0f);
@@ -55,7 +52,7 @@ int main() {
 	boxes->transform.Translate(Vector3::WORLD(RIGHT) * 1.0f);*/
 	//boxes->transform.Rotate(Quaternion(Vector3(0, 0, 45)));
 
-	Shape* sp = MOON_ShapeManager::CreateShape(line, "spline");
+	/*Shape* sp = MOON_ShapeManager::CreateShape(line, "spline");
 	sp->splineList[0].knotNum = 5;
 	sp->splineList[0].Update();
 	sp->splineList[0].knotList[2].setValue(1, 1, 0);
@@ -63,10 +60,10 @@ int main() {
 	sp->splineList[0].knotList[4].setValue(0, 0, 0);
 	sp->transform.Translate(Vector3::WORLD(RIGHT) * 4.0f);
 	sp->transform.Translate(Vector3::WORLD(UP));
-	sp->transform.Rotate(Quaternion(Vector3(0, 90, 0)));
+	sp->transform.Rotate(Quaternion(Vector3(0, 90, 0)));*/
 
 	// duplicate random spheres
-	for (int i = 0; i < 10; i++) {
+	/*for (int i = 0; i < 10; i++) {
 		Model* dup = MOON_ModelManager::CreateSmartMesh(SmartMesh::sphere, "sphere_" + std::to_string(i));
 		dup->transform.Translate(Vector3(
 			MoonMath::RandomRange(-10, 10),
@@ -75,27 +72,37 @@ int main() {
 		));
 		dup->transform.Scale(Vector3::ONE() * MoonMath::RandomRange(0.5, 2.0));
 		dup->meshList[0]->material = MOON_MaterialManager::GetItem("PBRMat");
-	}
+	}*/
 
 	//sp->transform.SetParent(&boxes->transform);
 	//rabbit->transform.SetParent(&sp->transform);
 
-	Helper* dum = MOON_HelperManager::CreateHelper(dummy, "dummy");
-	dum->transform.Translate(Vector3(0, 2, -3));
+	/*Helper* dum = MOON_HelperManager::CreateHelper(dummy, "dummy");
+	dum->transform.Translate(Vector3(0, 2, -3));*/
+
+	/*MOON_VolumeManager::CreateVolume(
+		"cloud", false, Vector3::ZERO(), 
+		Vector3::ONE() * -5, Vector3::ONE() * 5
+	)->source = Volume::SourceType::Galaxy;*/
 
 	MOON_LightManager::CreateLight(point_light, "pointLight_01", Vector3(-10.0f, 10.0f, 10.0f));
 	MOON_LightManager::CreateLight(point_light, "pointLight_02", Vector3(10.0f, 10.0f, 10.0f));
 	MOON_LightManager::CreateLight(point_light, "pointLight_03", Vector3(-10.0f, -10.0f, 10.0f));
 	MOON_LightManager::CreateLight(point_light, "pointLight_04", Vector3(10.0f, -10.0f, 10.0f));
 
+	//Graphics::clearColor = Color::BLACK();
 	Graphics::enviroment = env_hdri;
-	Graphics::postStack.push_back(new FXAA());
-	Graphics::postStack.push_back(new DepthOfField());
+	//Graphics::enviroment = env_procedural_sky;
+	//Graphics::postStack.push_back(new FXAA());
+	//Graphics::postStack.push_back(new DepthOfField());
 	Graphics::postStack.push_back(new Bloom());
+	//Graphics::postStack.push_back(new Flare());
 	Graphics::postStack.push_back(new ToneMapping());
-	Graphics::postStack.push_back(new Chromatic());
+	//Graphics::postStack.push_back(new Chromatic());
 	Graphics::postStack.push_back(new Vignette());
-	Graphics::postStack[4]->enabled = false;
+	//Graphics::postStack[0]->enabled = false;
+	//Graphics::postStack[1]->enabled = false;
+	//Graphics::postStack[4]->enabled = false;
 	// -------------------------------------------------------------------------------------
 	std::cout << "done." << std::endl;
 

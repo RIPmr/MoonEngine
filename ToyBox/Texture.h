@@ -27,23 +27,6 @@ namespace MOON {
 		ACEScg, ColorSpaceLast = ACEScg
 	};
 
-	enum TexType {
-		defaultMap,
-		ambientMap,
-		albedoMap, diffuseMap = albedoMap,
-		reflectMap,
-		refractMap,
-		roughnessMap,
-		glossinessMap,
-		normalMap, bumpMap = normalMap,
-		heightMap,
-		displaceMap,
-		metallicMap,
-		translucentMap,
-		illuminaMap,
-		alphaMap, opaqueMap = alphaMap
-	};
-
 	enum TexFilter {
 		Nearest,
 		Bilinear,
@@ -54,10 +37,10 @@ namespace MOON {
 	class Texture : public ObjectBase {
 	public:
 		std::string path;
-		TexType type;
 		ColorSpace colorSpace;
 
 		GLenum format;
+		GLenum dataType;
 		GLenum warpMode;
 		GLenum filter;
 		bool mipmap;
@@ -70,23 +53,23 @@ namespace MOON {
 		unsigned int localID;
 		void* data;
 
-		Texture(const std::string & _path, const std::string &_name = UseFileName, const TexType &_type = TexType::defaultMap, 
+		Texture(const std::string & _path, const std::string &_name = UseFileName, 
 				const ColorSpace& _colorSpace = sRGB, const bool& _mipmap = true) :
-				type(_type), path(_path), ObjectBase(MOON_AUTOID), colorSpace(_colorSpace), mipmap(_mipmap), 
-				data(nullptr), localID(0), offset(Vector2::ZERO()), tiling(Vector2::ONE()) {
+				path(_path), ObjectBase(MOON_AUTOID), colorSpace(_colorSpace), mipmap(_mipmap), 
+				data(nullptr), localID(0), offset(Vector2::ZERO()), tiling(Vector2::ONE()), dataType(GL_UNSIGNED_BYTE) {
 			if (FileManager::GuessFormat(_path) == FILE_TYPE::HDRI) {
 				Utility::LoadHDRIFromFile(_path, data, name, localID, width, height, format, mipmap);
-				colorSpace = Linear;
+				dataType = GL_FLOAT; colorSpace = Linear;
 			} else Utility::LoadTextureFromFileEx(_path, data, name, localID, width, height, format, mipmap);
 			if (!_name._Equal(UseFileName)) name = _name;
 		}
 
 		// for procedural texture
 		Texture(const int &_width, const int &_height, const std::string &_name, const unsigned int &_ID = MOON_AUTOID, 
-			const GLenum& _format = GL_RGBA, const TexType &_type = TexType::defaultMap,
+			const GLenum& _format = GL_RGBA, const GLenum& _dataType = GL_UNSIGNED_BYTE,
 			const ColorSpace& _colorSpace = Linear, const bool& _mipmap = false) :
-			type(_type), path(PROCEDURAL), ObjectBase(_name, _ID), width(_width), height(_height), 
-			colorSpace(_colorSpace), mipmap(_mipmap), data(nullptr), format(_format), localID(0),
+			path(PROCEDURAL), ObjectBase(_name, _ID), width(_width), height(_height), 
+			colorSpace(_colorSpace), mipmap(_mipmap), data(nullptr), format(_format), dataType(_dataType), localID(0),
 			offset(Vector2::ZERO()), tiling(Vector2::ONE()){}
 		
 		~Texture() override {
@@ -94,7 +77,7 @@ namespace MOON {
 			if (data != nullptr) Utility::FreeImageData(data);
 		}
 
-		void Replace(const std::string & _path, const std::string &_name = UseFileName, const TexType &_type = TexType::defaultMap) {
+		void Replace(const std::string & _path, const std::string &_name = UseFileName) {
 			this->path = _path;
 			if (localID > 0) glDeleteTextures(1, &localID);
 			if (data != nullptr) Utility::FreeImageData(data);
@@ -108,23 +91,6 @@ namespace MOON {
 			// update texture parameter
 			// TODO
 
-		}
-
-		std::string GetTypeStr() {
-			if		(type == ambientMap)		return "ambientMap";
-			else if (type == albedoMap)			return "albedoMap";
-			else if (type == reflectMap)		return "reflectMap";
-			else if (type == refractMap)		return "refractMap";
-			else if (type == roughnessMap)		return "roughnessMap";
-			else if (type == glossinessMap)		return "glossinessMap";
-			else if (type == normalMap)			return "normalMap";
-			else if (type == heightMap)			return "heightMap";
-			else if (type == displaceMap)		return "displaceMap";
-			else if (type == metallicMap)		return "metallicMap";
-			else if (type == translucentMap)	return "translucentMap";
-			else if (type == illuminaMap)		return "illuminaMap";
-			else if (type == alphaMap)			return "alphaMap";
-			return "defaultMap";
 		}
 
 		virtual void ListProperties() override {
@@ -144,14 +110,9 @@ namespace MOON {
 			// list parameters
 			if (ImGui::CollapsingHeader("Advanced Options", 0, ID)) {
 				ImGui::Indent(10.0f);
-				const static char* texType[] = {
-				"default", "ambient", "albedo", "reflect", "refract",
-				"roughness", "glossiness", "normal", "height", "displace",
-				"metallic", "translucent", "alpha"
-				};
-				ImGui::AlignTextToFramePadding(); ImGui::Text("Type: ");
-				if (ButtonEx::ComboNoLabel("texType", (int*)&type, texType,
-					IM_ARRAYSIZE(texType))) Reimport();
+
+				ImGui::Text("Mipmap:"); ImGui::SameLine(80.0f);
+				if (ButtonEx::CheckboxNoLabel("mipmap", &mipmap)) Reimport();
 
 				const static char* colorSpace[] = {
 					"linear", "sRGB", "Gamma", "Cineon", "Canon_CLog",
@@ -181,7 +142,7 @@ namespace MOON {
 				}
 
 				const static char* filter[] = {
-					"Bilinear", "Nearest"
+					"Bilinear", "Nearest", "Trilinear" //, "Anistropic"
 				};
 				ImGui::AlignTextToFramePadding(); ImGui::Text("Filter: ");
 				int filt = 0; if (this->filter == GL_LINEAR) filt = 0;
@@ -210,10 +171,10 @@ namespace MOON {
 			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvailWidth() - 30.0f);
 			ImGui::SliderFloat("size", &maxPrevWidth, 50.0f, 200.0f);
 			float prevWidth = width > maxPrevWidth ? maxPrevWidth : width;
-			float offset = ImGui::GetContentRegionAvailWidth() / 2.0f;
+			float offset = (ImGui::GetContentRegionAvailWidth() - prevWidth) / 2.0f;
 			ImGui::SetCursorPosX(offset);
 			ButtonEx::ClampedImage(
-				this, prevWidth, true,
+				this, prevWidth + 15, true,
 				ImVec2(this->offset.x, this->offset.y),
 				ImVec2(this->offset.x + this->tiling.x, this->offset.y + this->tiling.y)
 			);
@@ -221,11 +182,18 @@ namespace MOON {
 			ImGui::Spacing();
 		}
 
+		void GetData() {
+			glReadPixels(
+				0, 0, width, height, 
+				format, dataType, data
+			);
+		}
+
 		Vector3 GetPixel(int x, int y) {
 			x = MoonMath::clamp(x, 0, width - 1);
 			y = MoonMath::clamp(y, 0, height - 1);
 
-			if (format == GL_RGB16F) return Vector3(
+			if (dataType == GL_FLOAT) return Vector3(
 				((float*)data)[3 * x + 3 * width * y],
 				((float*)data)[3 * x + 3 * width * y + 1],
 				((float*)data)[3 * x + 3 * width * y + 2]
@@ -268,18 +236,18 @@ namespace MOON {
 		unsigned int attachment;
 
 		FrameBuffer(const int &_width, const int &_height, const std::string &_name, const unsigned int &_ID = MOON_AUTOID, 
-			const GLenum& _format = GL_RGBA, const TexType &_type = TexType::defaultMap,
+			const GLenum& _format = GL_RGBA, const GLenum& _dataType = GL_UNSIGNED_BYTE,
 			const ColorSpace& _colorSpace = Linear, const bool& _mipmap = false) :
-			Texture(_width, _height, _name, _ID, _format, _type, _colorSpace, _mipmap),
+			Texture(_width, _height, _name, _ID, _format, _dataType, _colorSpace, _mipmap),
 			rbo(0), fbo(0), attachment(0) {
 			path = FRAMEBUFFER;
 			CreateFrameBuffer();
 		}
 
 		FrameBuffer(const Vector2 &size, const std::string &_name, const unsigned int &_ID = MOON_AUTOID,
-			const GLenum& _format = GL_RGBA, const TexType &_type = TexType::defaultMap,
+			const GLenum& _format = GL_RGBA, const GLenum& _dataType = GL_UNSIGNED_BYTE,
 			const ColorSpace& _colorSpace = Linear, const bool& _mipmap = false) :
-			Texture(size.x, size.y, _name, _ID, _format, _type, _colorSpace, _mipmap),
+			Texture(size.x, size.y, _name, _ID, _format, _dataType, _colorSpace, _mipmap),
 			rbo(0), fbo(0), attachment(0) {
 			path = FRAMEBUFFER;
 			CreateFrameBuffer();
@@ -316,14 +284,9 @@ namespace MOON {
 			// list parameters
 			if (ImGui::CollapsingHeader("Advanced Options", 0, ID)) {
 				ImGui::Indent(10.0f);
-				const static char* texType[] = {
-				"default", "ambient", "albedo", "reflect", "refract",
-				"roughness", "glossiness", "normal", "height", "displace",
-				"metallic", "translucent", "alpha"
-				};
-				ImGui::AlignTextToFramePadding(); ImGui::Text("Type: ");
-				if (ButtonEx::ComboNoLabel("texType", (int*)&type, texType,
-					IM_ARRAYSIZE(texType))) Reimport();
+
+				ImGui::Text("Mipmap:"); ImGui::SameLine(80.0f);
+				if (ButtonEx::CheckboxNoLabel("mipmap", &mipmap)) Reimport();
 
 				const static char* colorSpace[] = {
 					"linear", "sRGB", "Gamma", "Cineon", "Canon_CLog",
@@ -353,7 +316,7 @@ namespace MOON {
 				}
 
 				const static char* filter[] = {
-					"Bilinear", "Nearest"
+					"Bilinear", "Nearest", "Trilinear" //, "Anistropic"
 				};
 				ImGui::AlignTextToFramePadding(); ImGui::Text("Filter: ");
 				int filt = 0; if (this->filter == GL_LINEAR) filt = 0;
@@ -422,9 +385,8 @@ namespace MOON {
 			glGenTextures(1, &localID);
 			glBindTexture(GL_TEXTURE_2D, localID);
 			glTexImage2D(
-				GL_TEXTURE_2D, 0, format, width, height, 0, 
-				format == GL_RGBA ? GL_RGBA : GL_RGB,
-				format == GL_RGBA ? GL_UNSIGNED_BYTE : GL_FLOAT, NULL
+				GL_TEXTURE_2D, 0, format, width, height, 
+				0, format == GL_RGBA ? GL_RGBA : GL_RGB, dataType, NULL
 			);
 
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -503,6 +465,7 @@ namespace MOON {
 		}
 	};
 
+	// TODO
 	class GBuffer : public FrameBuffer {
 	public:
 		unsigned int gPosition;

@@ -18,6 +18,17 @@
 
 namespace MOON {
 	namespace Utility {
+		template <class T>
+		void ShuffleVector(std::vector<T>& set) {
+			int size = set.size();
+			for (int i = 0; i < size; i++) {
+				int rand = MoonMath::RandomRange(0, size - 1);
+				auto tmp = set[i];
+				set[i] = set[rand];
+				set[rand] = tmp;
+			}
+		}
+
 		template <typename T>
 		void Constraint(T& num, const T& min, const T& max) {
 			if (num < min) num = min;

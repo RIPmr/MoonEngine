@@ -276,6 +276,7 @@ namespace MOON {
 			glCullFace(GL_BACK);
 			glLineWidth(2.0f);
 			Graphics::DrawModels();
+			glLineWidth(1.0f);
 			glDisable(GL_CULL_FACE);
 			//glEnable(GL_DEPTH_TEST);
 			Graphics::SetShadingMode(DEFWIRE);
@@ -304,26 +305,36 @@ namespace MOON {
 
 	void Graphics::DrawVolumnObjects(SceneView view) {
 		auto buffer = MOON_TextureManager::SCENEBUFFERS[view];
-		auto rayMarchingShader = MOON_ShaderManager::GetItem("RayMarching");
-		rayMarchingShader->use();
-
-		// matrix & buffers ----------------------------------------------
-		Matrix4x4 view_proj_inverse = (MOON_SceneCameras[view]->projection * MOON_SceneCameras[view]->view).inverse();
-		rayMarchingShader->setMat4("invPVMat", view_proj_inverse);
-		rayMarchingShader->setTexture("depthBuffer", buffer->attachment, 2);
-
-		// lights --------------------------------------------------------
-		rayMarchingShader->setInt("lightNum", MOON_LightManager::CountItem());
-		auto end = MOON_LightManager::itemMap.end(); unsigned int i = 0;
-		for (auto it = MOON_LightManager::itemMap.begin(); it != end; it++) {
-			rayMarchingShader->setVec3("lightPositions[" + std::to_string(i) + "]", it->second->transform.position);
-			rayMarchingShader->setVec3("lightColors[" + std::to_string(i++) + "]", it->second->color * it->second->power);
-		}
+		Shader* rayMarchingShader = nullptr;
 
 		// drawing -------------------------------------------------------
 		for (auto& v : MOON_VolumeManager::itemMap) {
 			if (v.second->visible) {
+				if (v.second->source == Volume::SourceType::Galaxy)
+					rayMarchingShader = MOON_ShaderManager::CreateShader("Galaxy", "ScreenBuffer.vs", "Galaxy.fs");
+				else // noise
+					rayMarchingShader = MOON_ShaderManager::CreateShader("RayMarching", "ScreenBuffer.vs", "Cloud.fs");
+				
+				// setup shader parameters ---------------------------------------
+				rayMarchingShader->use();
+
+				// matrix & buffers ----------------------------------------------
+				Matrix4x4 view_proj_inverse = (MOON_SceneCameras[view]->projection * MOON_SceneCameras[view]->view).inverse();
+				rayMarchingShader->setMat4("invPVMat", view_proj_inverse);
+				rayMarchingShader->setTexture("depthBuffer", buffer->attachment, 2);
+
+				// lights --------------------------------------------------------
+				rayMarchingShader->setInt("lightNum", MOON_LightManager::CountItem());
+				auto end = MOON_LightManager::itemMap.end(); unsigned int i = 0;
+				for (auto it = MOON_LightManager::itemMap.begin(); it != end; it++) {
+					rayMarchingShader->setVec3("lightPositions[" + std::to_string(i) + "]", it->second->transform.position);
+					rayMarchingShader->setVec3("lightColors[" + std::to_string(i++) + "]", it->second->color * it->second->power);
+				}
+
+				// disable lights (if required)
 				rayMarchingShader->setInt("lightNum", v.second->useLight ? MOON_LightManager::CountItem() : 0);
+
+				// now drawing volume object
 				v.second->Draw(rayMarchingShader);
 
 				// blit volume object to scene buffer
@@ -416,10 +427,6 @@ namespace MOON {
 	}
 
 	void Graphics::DrawModels() {
-		/*glEnable(GL_STENCIL_TEST);
-		glStencilFunc(GL_ALWAYS, 1, 0xFF);
-		glStencilMask(0xFF);*/
-
 		Shader* overrideShader = nullptr;
 		if (Graphics::lightModel == LightModel::PHONG) {
 			overrideShader = MOON_ShaderManager::GetItem(
@@ -430,31 +437,14 @@ namespace MOON {
 		}
 		for (auto &obj : MOON_ModelManager::itemMap) {
 			if (obj.second->visible) {
-				if (Graphics::shading == ShadingMode::WIRE)
+				if (Graphics::shading == ShadingMode::WIRE) {
+					MOON_ShaderManager::lineShader->use();
 					MOON_ShaderManager::lineShader->setVec4("lineColor", obj.second->wireColor);
+				}
 				obj.second->DrawDeliver(overrideShader);
 				if (SceneManager::debug) DEBUG::DrawBBox(obj.second->bbox);
 			}
 		}
-		if (Graphics::shading == ShadingMode::DEFWIRE) {
-			for (auto &obj : MOON_ModelManager::itemMap) {
-				if (obj.second->visible) {
-					MOON_ShaderManager::lineShader->setVec4("lineColor", obj.second->wireColor);
-					obj.second->DrawDeliver(overrideShader);
-				}
-			}
-		}
-
-		//glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-		//glStencilMask(0x00);
-		////glDisable(GL_DEPTH_TEST);
-		//for (auto &obj : itemMap) {
-		//	if (obj.second->visible)
-		//		obj.second->Draw(ShaderManager::lineShader);
-		//}
-		//glStencilMask(0xFF);
-		////glEnable(GL_DEPTH_TEST);
-		//glDisable(GL_STENCIL_TEST);
 	}
 
 	void Graphics::DrawShapes() {

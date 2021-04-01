@@ -554,9 +554,9 @@ namespace MOON {
 
 				if (temp.size() != 3) continue;
 
-				dynamic_cast<MoonMtl*>(tempMaterial)->ambientC.setValue(
+				/*dynamic_cast<MoonMtl*>(tempMaterial)->ambientC.setValue(
 					std::stof(temp[0]), std::stof(temp[1]), std::stof(temp[2])
-				);
+				);*/
 			} else if (firstToken(curline) == "Kd") { // Diffuse Color
 				std::vector<std::string> temp;
 				split(tail(curline), temp, " ");
@@ -585,17 +585,17 @@ namespace MOON {
 
 			// Load textures
 			if (firstToken(curline) == "map_Ka") {
-				dynamic_cast<MoonMtl*>(tempMaterial)->textures.push_back(LoadTexture(TexType::ambientMap, tail(curline), "ambientMap"));
+				dynamic_cast<MoonMtl*>(tempMaterial)->textures.push_back(LoadTexture(tail(curline), "ambientMap"));
 			} else if (firstToken(curline) == "map_Kd") {
-				dynamic_cast<MoonMtl*>(tempMaterial)->textures.push_back(LoadTexture(TexType::diffuseMap, tail(curline), "diffuseMap"));
+				dynamic_cast<MoonMtl*>(tempMaterial)->textures.push_back(LoadTexture(tail(curline), "diffuseMap"));
 			} else if (firstToken(curline) == "map_Ks") {
-				dynamic_cast<MoonMtl*>(tempMaterial)->textures.push_back(LoadTexture(TexType::reflectMap, tail(curline), "reflectMap"));
+				dynamic_cast<MoonMtl*>(tempMaterial)->textures.push_back(LoadTexture(tail(curline), "reflectMap"));
 			} else if (firstToken(curline) == "map_Ns") {
-				dynamic_cast<MoonMtl*>(tempMaterial)->textures.push_back(LoadTexture(TexType::glossinessMap, tail(curline), "glossinessMap"));
+				dynamic_cast<MoonMtl*>(tempMaterial)->textures.push_back(LoadTexture(tail(curline), "glossinessMap"));
 			} else if (firstToken(curline) == "map_d") {
-				dynamic_cast<MoonMtl*>(tempMaterial)->textures.push_back(LoadTexture(TexType::alphaMap, tail(curline), "alphaMap"));
+				dynamic_cast<MoonMtl*>(tempMaterial)->textures.push_back(LoadTexture(tail(curline), "alphaMap"));
 			} else if (firstToken(curline) == "map_Bump" || firstToken(curline) == "map_bump" || firstToken(curline) == "bump") {
-				dynamic_cast<MoonMtl*>(tempMaterial)->textures.push_back(LoadTexture(TexType::normalMap, tail(curline), "normalMap"));
+				dynamic_cast<MoonMtl*>(tempMaterial)->textures.push_back(LoadTexture(tail(curline), "normalMap"));
 			}
 		}
 
@@ -604,7 +604,7 @@ namespace MOON {
 		//else return true;
 	}
 
-	Texture* OBJLoader::LoadTexture(const TexType &type, const std::string &path, const std::string &name) {
+	Texture* OBJLoader::LoadTexture(const std::string &path, const std::string &name) {
 		// if find corresponding texture in loaded textures
 		Texture* searchTex = MOON_TextureManager::GetItem(Utility::GetPathOrURLShortName(path));
 		if (searchTex != NULL) return searchTex;
@@ -612,7 +612,6 @@ namespace MOON {
 		// else load that new texture
 		GLuint texID = (GLuint)MOON_UNSPECIFIEDID;
 		Texture* newTex = MOON_TextureManager::LoadTexture(path, name);
-		newTex->type = type;
 
 		return newTex;
 	}

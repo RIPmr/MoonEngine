@@ -11,11 +11,35 @@ namespace MOON {
 			NoiseShader = new Shader("NoiseShader", "ScreenBuffer.vs", "NoiseGenerator.fs");
 			MOON_ShaderManager::AddItem(NoiseShader);
 		}
+		if (PatternShader == nullptr) {
+			PatternShader = new Shader("PatternShader", "ScreenBuffer.vs", "PatternGenerator.fs");
+			MOON_ShaderManager::AddItem(PatternShader);
+		}
+		if (FireShader == nullptr) {
+			FireShader = new Shader("FireShader", "ScreenBuffer.vs", "FireGenerator.fs");
+			MOON_ShaderManager::AddItem(FireShader);
+		}
 	}
 #pragma endregion
 
 #pragma region GPU_Texture_Generator
-	bool ProceduralMapGenerator::GPUMapMaker(const ProceduralMapType& type,
+	bool ProceduralMapGenerator::GPUFireTexMaker(FrameBuffer* texHolder, 
+		const Vector2& offset, const float& scale, const float& power,
+		const float& time, const Vector3& tint) {
+		LoadShaders();
+
+		FireShader->use();
+		FireShader->setVec3("tint", tint);
+		FireShader->setFloat("scale", scale);
+		FireShader->setVec2("offset", offset);
+		FireShader->setFloat("power", power);
+		FireShader->setFloat("time", time);
+
+		Graphics::Blit(texHolder, texHolder, FireShader);
+		return true;
+	}
+
+	bool ProceduralMapGenerator::GPUNoiseMaker(const ProceduralMapType& type,
 		FrameBuffer* texHolder, const Vector2& offset, const float& scale, 
 		const float& dim, const float& time, const unsigned int channelSelection) {
 		LoadShaders();
@@ -23,6 +47,23 @@ namespace MOON {
 		NoiseShader->use();
 		NoiseShader->setInt("noiseType", type);
 		NoiseShader->setFloat("noiseScale", scale);
+		NoiseShader->setVec2("offset", offset);
+		NoiseShader->setFloat("dim", dim);
+		NoiseShader->setFloat("time", time);
+		NoiseShader->setInt("channelSelection", channelSelection);
+
+		Graphics::Blit(texHolder, texHolder, NoiseShader);
+		return true;
+	}
+
+	bool ProceduralMapGenerator::GPUPatternMaker(const ProceduralMapType& type,
+		FrameBuffer* texHolder, const Vector2& offset, const float& scale,
+		const float& dim, const float& time, const unsigned int channelSelection) {
+		LoadShaders();
+
+		NoiseShader->use();
+		NoiseShader->setInt("patternType", type);
+		NoiseShader->setFloat("patternScale", scale);
 		NoiseShader->setVec2("offset", offset);
 		NoiseShader->setFloat("dim", dim);
 		NoiseShader->setFloat("time", time);

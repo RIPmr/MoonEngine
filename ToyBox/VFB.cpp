@@ -7,7 +7,7 @@ namespace MOON {
 
 	bool VFB::show					= false;
 	bool VFB::show_history			= false;
-	bool VFB::show_postfx			= false;
+	bool VFB::show_postfx			= true;
 
 	std::vector<PostEffect*>		  VFB::postStack;
 

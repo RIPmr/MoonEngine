@@ -156,6 +156,32 @@ float PerlinNoise3(vec3 p) {
 			);
 }
 
+float PerlinOctave(vec2 uv, float time) {
+    vec3 coords = vec3(vec2(uv.x, uv.y + time * 0.5), time * 0.5);
+    
+    int octaves = 3;
+    
+    float frequency = 0.5;
+    float amplitude = 1.0;
+    float persistence = 0.9;
+    float roughness = 2.0;
+    
+    float warpAmplitude = 10.0;
+   	float warpFrequency = 0.4;
+    
+    float col;
+    for (int i = 0; i < octaves; i++) {
+        float warp = PerlinNoise3(coords * warpFrequency);
+        coords += warp * warpAmplitude;
+        
+        col += PerlinNoise3(coords * frequency) * amplitude;
+       	frequency *= roughness;
+        amplitude *= persistence;
+    }
+    
+	return col;
+}
+
 // Simplex Noise -----------------------------------------------------------------------------------
 // 2D Simplex noise
 float Simplex2(vec2 v){
@@ -592,19 +618,21 @@ void main() {
 		color = ValueNoise(vec3(suv, dim));
 	} else if (noiseType == 2) { // perlin noise
 		color = PerlinNoise3(vec3(suv, dim));
-	} else if (noiseType == 3) { // simplex noise
+	} else if (noiseType == 3) { // octave perlin
+		color = PerlinOctave(suv, time);
+	} else if (noiseType == 4) { // simplex noise
 		color = Simplex4(vec4(suv.x, suv.y, dim, time));
-	} else if (noiseType == 4) { // worley noise
+	} else if (noiseType == 5) { // worley noise
 		color = WorleyNoise(suv, dim, time);
-	} else if (noiseType == 5) { // voronoi noise
+	} else if (noiseType == 6) { // voronoi noise
 		color = VoronoiNoise(suv);
-	} else if (noiseType == 6) { // Tyson polygon
+	} else if (noiseType == 7) { // Tyson polygon
 		color = TysonPolygon(suv);
-	} else if (noiseType == 7) { // cloud noise
+	} else if (noiseType == 8) { // cloud noise
 		color = CloudNoise(suv, dim);
-	} else if (noiseType == 8) { // checker
+	} else if (noiseType == 9) { // checker
 		color = Checker(suv);
-	} else if (noiseType == 9) { // Disco
+	} else if (noiseType == 10) { // Disco
 		FragColor = vec4(Disco(suv, time), 1.0);
 		return;
 	}

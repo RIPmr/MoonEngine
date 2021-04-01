@@ -23,6 +23,7 @@
 #include "Utility.h"
 #include "Plotter.h"
 #include "ImTimeline.h"
+#include "ImGradient.h"
 #include "FlowMenu.h"
 #include "NGraph.h"
 #include "NNManager.h"
@@ -356,6 +357,28 @@ namespace MOON {
 				}
 			}
 
+			// gradient editor
+			static ImGradient gradient;
+
+			static ImGradientMark* draggingMark = nullptr;
+			static ImGradientMark* selectedMark = nullptr;
+
+			bool updated = ImGui::GradientEditor(&gradient, draggingMark, selectedMark);
+
+			if (ImGui::IsMouseClicked(0) && !ImGui::IsAnyItemHovered() && !draggingMark) {
+				selectedMark = nullptr;
+			}
+
+			//float color[3];
+			//gradient.getColorAt(0.3f, color); //position from 0 to 1
+
+			//gradient.getMarks().clear();
+			//gradient.addMark(0.0f, ImColor(0xA0, 0x79, 0x3D));
+			//gradient.addMark(0.4f, ImColor(0xBE, 0x97, 0x5B));
+			//gradient.addMark(0.8f, ImColor(0xDC, 0xB5, 0x79));
+			//gradient.addMark(1.0f, ImColor(0xE6, 0xBF, 0x83));
+			// end gradient editor
+
 			ImGui::End();
 		}
 
@@ -364,8 +387,6 @@ namespace MOON {
 
 			float availWidth = ImGui::GetContentRegionAvailWidth() / 2.4f;
 			static int width = MOON_OutputSize.x, height = MOON_OutputSize.y;
-			static int sr = Renderer::samplingRate;
-			static int rd = Renderer::maxReflectionDepth;
 
 			ImGui::Text("Output Size:");
 			ImGui::SetNextItemWidth(availWidth);
@@ -382,12 +403,15 @@ namespace MOON {
 			}
 
 			ImGui::Text("Sampling Rate:");
-			if (ButtonEx::InputIntNoLabel("samplint_rate", &sr, 1, 10, 0))
-				Renderer::samplingRate = sr;
+			ButtonEx::InputIntNoLabel("samplint_rate", (int*)&Renderer::samplingRate, 1, 10, 0);
 
 			ImGui::Text("Max Reflection Depth:");
-			if (ButtonEx::InputIntNoLabel("ref_depth", &rd, 1, 5, 0))
-				Renderer::maxReflectionDepth = rd;
+			ButtonEx::InputIntNoLabel("ref_depth", (int*)&Renderer::maxReflectionDepth, 1, 5, 0);
+
+			if (Renderer::renderMode == Renderer::RenderMode::bucket) {
+				ImGui::Text("Bucket Size:");
+				ButtonEx::InputIntNoLabel("bucketSize", &Renderer::bucketSize, 50, 100, 0);
+			}
 
 			const static char* accitems[] = { "NONE", "AABB", "BVH", "BSP", "KDTree" };
 			ImGui::AlignTextToFramePadding();
@@ -399,8 +423,19 @@ namespace MOON {
 			ImGui::Text("Texture Filter:");
 			ButtonEx::ComboNoLabel("filterType", (int*)&Renderer::filter, filteritems, IM_ARRAYSIZE(filteritems));
 
+			const static char* renderModeList[] = { "Scanline", "Bucket", "Progressive" };
+			ImGui::AlignTextToFramePadding();
+			ImGui::Text("Rendering Mode:");
+			ButtonEx::ComboNoLabel("renderMode", (int*)&Renderer::renderMode, renderModeList, IM_ARRAYSIZE(renderModeList));
+
+			const static char* sampleModeList[] = { "BruteForce", "PhotonMapping", "LightCache", "IrradianceMap" };
+			ImGui::AlignTextToFramePadding();
+			ImGui::Text("Sampling Mode:");
+			ButtonEx::ComboNoLabel("sampleMode", (int*)&Renderer::sampleMode, sampleModeList, IM_ARRAYSIZE(sampleModeList));
+
 			ImGui::Checkbox("Depth of field ", &Renderer::depth);
 			ImGui::Checkbox("Motion blur ", &Renderer::motion);
+			ImGui::Checkbox("Importance sampling ", &Renderer::useIS);
 			ImGui::Checkbox("Auto update preview ", &Material::autoPrevUpdate);
 
 			ImGui::Spacing();

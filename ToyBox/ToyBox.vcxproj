@@ -148,6 +148,7 @@
     <ClCompile Include="Gizmo.cpp" />
     <ClCompile Include="HalfMesh.cpp" />
     <ClCompile Include="HotkeyMgr.cpp" />
+    <ClCompile Include="ImGradient.cpp" />
     <ClCompile Include="imgui\imgui.cpp" />
     <ClCompile Include="imgui\imgui_demo.cpp" />
     <ClCompile Include="imgui\imgui_draw.cpp" />
@@ -181,6 +182,9 @@
     <ClCompile Include="OperatorMgr.cpp" />
     <ClCompile Include="Optimizer.cpp" />
     <ClCompile Include="Graphics.cpp" />
+    <None Include="PatternGenerator.fs">
+      <FileType>Document</FileType>
+    </None>
     <ClCompile Include="Plane.cpp" />
     <ClCompile Include="PostEffects.cpp" />
     <ClCompile Include="PostFactory.cpp" />
@@ -224,6 +228,7 @@
     <ClInclude Include="HalfMesh.h" />
     <ClInclude Include="HelperBase.h" />
     <ClInclude Include="Icons.h" />
+    <ClInclude Include="ImGradient.h" />
     <ClInclude Include="imgui\ImPlot.h" />
     <ClInclude Include="ImPie.h" />
     <ClInclude Include="ImTextEditor.h" />
@@ -321,16 +326,20 @@
     <None Include="EnvSphere.fs" />
     <None Include="EnvSphere.vs" />
     <None Include="Exposure.fs" />
+    <None Include="FBM.fs" />
+    <None Include="FireGenerator.fs" />
     <None Include="Flare.fs" />
     <None Include="Flat.fs" />
     <None Include="Flat.vs" />
     <None Include="FXAA.fs" />
+    <None Include="Galaxy.fs" />
     <None Include="GaussianBlur.fs" />
-    <None Include="GBufferRender.fs" />
+    <None Include="GBufferRenderer.fs" />
     <None Include="HeightToNormal.fs" />
     <None Include="IRMapGen.fs" />
     <None Include="IRMapGen.vs" />
     <None Include="Levels.fs" />
+    <None Include="Margins.fs" />
     <None Include="mNoise.fs" />
     <None Include="MOON.fs" />
     <None Include="NoiseGenerator.fs" />
@@ -341,7 +350,9 @@
     <None Include="PBR.vs" />
     <None Include="PBR_Diff.fs" />
     <None Include="PBR_Ref.fs" />
+    <None Include="Pixelization.fs" />
     <None Include="Prefilter.fs" />
+    <None Include="PreIntegerSSS.fs" />
     <None Include="Resources\msyh.ttc" />
     <None Include="ScreenBlend.fs" />
     <None Include="ScreenBuffer.fs" />

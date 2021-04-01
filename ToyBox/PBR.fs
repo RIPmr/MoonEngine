@@ -5,11 +5,28 @@ in vec3 WorldPos;
 in vec3 Normal;
 
 // textures
-//uniform sampler2D albedoMap;
+uniform sampler2D albedoMap;
 uniform sampler2D normalMap;
-//uniform sampler2D metallicMap;
-//uniform sampler2D roughnessMap;
-//uniform sampler2D ambientMap;
+uniform sampler2D metallicMap;
+uniform sampler2D roughnessMap;
+uniform sampler2D reflectMap;
+uniform sampler2D refractMap;
+uniform sampler2D displaceMap;
+uniform sampler2D illuminantMap;
+uniform sampler2D alphaMap;
+uniform sampler2D translucentMap;
+
+// switchers
+uniform bool albedoSwitch;
+uniform bool normalSwitch;
+uniform bool metallicSwitch;
+uniform bool roughnessSwitch;
+uniform bool reflectSwitch;
+uniform bool refractSwitch;
+uniform bool displaceSwitch;
+uniform bool illuminantSwitch;
+uniform bool alphaSwitch;
+uniform bool translucentSwitch;
 
 // temp
 uniform vec3 albedo;

@@ -547,6 +547,9 @@ namespace MOON {
 					 typeid(*item) == typeid(Lambertian)	||
 					 typeid(*item) == typeid(Metal)			||
 					 typeid(*item) == typeid(SEM)			||
+					 typeid(*item) == typeid(SkinMtl)		||
+					 typeid(*item) == typeid(HairMtl)		||
+					 typeid(*item) == typeid(MatteMtl)		||
 					 typeid(*item) == typeid(Dielectric))	type = "Material";
 			else if (typeid(*item) == typeid(DirLight)		||
 					 typeid(*item) == typeid(PointLight)	||
@@ -945,9 +948,11 @@ namespace MOON {
 
 			static void CreateDefaultMats() {
 				defaultMat = MaterialManager::CreateMaterial(moonMtl, "default");
-				MaterialManager::CreateMaterial(sem, "SEM");
+				MaterialManager::CreateMaterial(semMtl, "SEM");
+				MaterialManager::CreateMaterial(skinMtl, "PreIntegerSSS");
+				MaterialManager::CreateMaterial(lightMtl, "LightMat");
 				MoonMtl* pbr = dynamic_cast<MoonMtl*>(MaterialManager::CreateMaterial(moonMtl, "PBRMat"));
-				pbr->glossiness = 0.05f; pbr->metalness.x = 0.0f; pbr->reflectW.x = 1.0f;
+				pbr->glossiness = Vector3::ONE() * 0.08f; pbr->metalness.x = 0.0f; pbr->reflectW.x = 1.0f;
 			}
 
 			static Material* CreateMaterial(const MatType &type, const std::string &name) {
@@ -956,10 +961,13 @@ namespace MOON {
 					case moonMtl:
 						newMat = new MoonMtl(name);
 						break;
-					case light:
+					case skinMtl:
+						newMat = new SkinMtl(name);
+						break;
+					case lightMtl:
 						newMat = new LightMtl(name);
 						break;
-					case sem:
+					case semMtl:
 						newMat = new SEM(name);
 						break;
 				}
@@ -998,7 +1006,8 @@ namespace MOON {
 				AddItem(new Shader("FlatShader", "Flat.vs", "Flat.fs")); 
 				AddItem(new Shader("VertexID", "VertexID.vs", "VertexID.fs")); 
 				AddItem(new Shader("EnvSphere", "EnvSphere.vs", "EnvSphere.fs"));
-				AddItem(new Shader("RayMarching", "ScreenBuffer.vs", "Cloud.fs"));
+				//AddItem(new Shader("RayMarching", "ScreenBuffer.vs", "Cloud.fs"));
+				//AddItem(new Shader("Galaxy", "ScreenBuffer.vs", "Galaxy.fs"));
 			}
 
 			static Shader* CreateShader(const std::string &name, const char *vs, const char *fs) {
@@ -1050,10 +1059,10 @@ namespace MOON {
 			}
 
 			static void CreateSceneBuffer() {
-				SCENEBUFFERS.push_back(new FrameBuffer(-1, -1, "PerspView", MOON_AUTOID, GL_RGB16F));
-				SCENEBUFFERS.push_back(new FrameBuffer(-1, -1, "FrontView", MOON_AUTOID, GL_RGB16F));
-				SCENEBUFFERS.push_back(new FrameBuffer(-1, -1, "LeftView", MOON_AUTOID, GL_RGB16F));
-				SCENEBUFFERS.push_back(new FrameBuffer(-1, -1, "TopView", MOON_AUTOID, GL_RGB16F));
+				SCENEBUFFERS.push_back(new FrameBuffer(-1, -1, "PerspView", MOON_AUTOID, GL_RGB16F, GL_FLOAT));
+				SCENEBUFFERS.push_back(new FrameBuffer(-1, -1, "FrontView", MOON_AUTOID, GL_RGB16F, GL_FLOAT));
+				SCENEBUFFERS.push_back(new FrameBuffer(-1, -1, "LeftView", MOON_AUTOID, GL_RGB16F, GL_FLOAT));
+				SCENEBUFFERS.push_back(new FrameBuffer(-1, -1, "TopView", MOON_AUTOID, GL_RGB16F, GL_FLOAT));
 				for (auto it = SCENEBUFFERS.begin(); it != SCENEBUFFERS.end(); it++) {
 					AddItem(*it);
 				}
@@ -1076,13 +1085,13 @@ namespace MOON {
 
 			static void LoadHDRI(const std::string& path) {
 				if (HDRI != nullptr) DeleteItem(HDRI);
-				HDRI = new Texture(path, "SkyHDRI", TexType::defaultMap, Linear, true);
+				HDRI = new Texture(path, "SkyHDRI", Linear, true);
 				AddItem(HDRI);
 			}
 
 			static void GenerateBRDFLUT(const Vector2& mapSize = Vector2(512, 512)) {
 				if (brdfLUT == nullptr) {
-					brdfLUT = new FrameBuffer(mapSize, "brdfLUT", MOON_AUTOID, GL_RGB16F);
+					brdfLUT = new FrameBuffer(mapSize, "brdfLUT", MOON_AUTOID, GL_RGB16F, GL_FLOAT);
 					AddItem(brdfLUT);
 				}
 				auto lutShader = ShaderManager::CreateShader("brdfLUTGen", "BRDF.vs", "BRDF.fs");
@@ -1104,11 +1113,11 @@ namespace MOON {
 
 			static void GenerateIrradianceMap(const Vector2& mapSize = Vector2(512, 512)) {
 				if (Irradiance == nullptr) {
-					Irradiance = new FrameBuffer(mapSize, "irMap", MOON_AUTOID, GL_RGB16F);
+					Irradiance = new FrameBuffer(mapSize, "irMap", MOON_AUTOID, GL_RGB16F, GL_FLOAT);
 					AddItem(Irradiance);
 				}
 				if (prefilterMap == nullptr) {
-					prefilterMap = new FrameBuffer(mapSize, "prefilteredEnv", MOON_AUTOID, GL_RGB16F, defaultMap, Linear, true);
+					prefilterMap = new FrameBuffer(mapSize, "prefilteredEnv", MOON_AUTOID, GL_RGB16F, GL_FLOAT, Linear, true);
 					AddItem(prefilterMap);
 				}
 
@@ -1172,8 +1181,8 @@ namespace MOON {
 			static Texture* CreateTexture();
 
 			static Texture* LoadTexture(const std::string &path, const std::string &name = UseFileName,
-				const TexType &_type = TexType::defaultMap, const ColorSpace& _colorSpace = sRGB, bool mipmap = false) {
-				Texture* tex = new Texture(path, name, _type, _colorSpace, mipmap);
+				const ColorSpace& _colorSpace = sRGB, bool mipmap = false) {
+				Texture* tex = new Texture(path, name, _colorSpace, mipmap);
 
 				AddItem(tex);
 				return tex;

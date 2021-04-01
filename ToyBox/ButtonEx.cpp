@@ -39,17 +39,21 @@ namespace MOON {
 		return nullptr;
 	}
 
-	bool ButtonEx::TexFileBtnWithPrev(Texture*& tex, const int& type, const ImVec2& size_arg, const int ID) {
+	bool ButtonEx::TexFileBtnWithPrev(Texture*& tex, const ImVec2& size_arg, const int ID) {
 		if (ImGui::Button((tex == nullptr ? "[Texture]" : tex->name).c_str(), 
 			ImVec2(size_arg.x - (tex == nullptr ? 0 : 32), size_arg.y), ID)) {
 			std::string path = WinDiagMgr::FileDialog();
 			if (!path._Equal("")) {
 				if (tex != nullptr) MOON_TextureManager::DeleteItem(tex);
 				tex = MOON_TextureManager::LoadTexture(path);
-				tex->type = (TexType)type;
 				return true;
 			}
 		}
+
+		// drag & drop
+		MakeDragAndDropWidget<Texture>(tex, "Texture", tex ? tex->name.c_str() : "[Texture]");
+
+		// preview
 		if (tex != nullptr) {
 			if (ImGui::IsItemHovered() && tex->localID) {
 				ImGui::BeginTooltip();
@@ -58,7 +62,7 @@ namespace MOON {
 			}
 			ImGui::SameLine();
 			if (ImGui::Button(ICON_FA_TIMES, ImVec2(22, 22))) {
-				MOON_TextureManager::DeleteItem(tex);
+				//MOON_TextureManager::DeleteItem(tex);
 				tex = nullptr;
 				return true;
 			}
@@ -144,6 +148,34 @@ namespace MOON {
 		return ret;
 	}
 	
+	bool ButtonEx::SliderFloatNoLabel(const char* id, float* v, float v_min, float v_max, const char* format, float power) {
+		ImGui::PushID(id);
+		auto ret = ImGui::SliderFloat("", v, v_min, v_max, format, power);
+		ImGui::PopID();
+		return ret;
+	}
+
+	bool ButtonEx::SliderFloat2NoLabel(const char* id, float v[2], float v_min, float v_max, const char* format, float power) {
+		ImGui::PushID(id);
+		auto ret = ImGui::SliderFloat2("", v, v_min, v_max, format, power);
+		ImGui::PopID();
+		return ret;
+	}
+
+	bool ButtonEx::SliderFloat3NoLabel(const char* id, float v[3], float v_min, float v_max, const char* format, float power) {
+		ImGui::PushID(id);
+		auto ret = ImGui::SliderFloat3("", v, v_min, v_max, format, power);
+		ImGui::PopID();
+		return ret;
+	}
+
+	bool ButtonEx::SliderFloat4NoLabel(const char* id, float v[4], float v_min, float v_max, const char* format, float power) {
+		ImGui::PushID(id);
+		auto ret = ImGui::SliderFloat4("", v, v_min, v_max, format, power);
+		ImGui::PopID();
+		return ret;
+	}
+
 	bool ButtonEx::DragFloatNoLabel(const char* id, float* v, float v_speed, float v_min, float v_max, const char* format, float power) {
 		ImGui::PushID(id);
 		auto ret = ImGui::DragFloat("", v, v_speed, v_min, v_max, format, power);
@@ -189,13 +221,6 @@ namespace MOON {
 	bool ButtonEx::InputFloatNoLabel(const char* id, float* v, float step, float step_fast, const char* format, ImGuiInputTextFlags flags) {
 		ImGui::PushID(id);
 		auto ret = ImGui::InputFloat("", v, step, step_fast, format, flags);
-		ImGui::PopID();
-		return ret;
-	}
-
-	bool ButtonEx::SliderFloatNoLabel(const char* id, float* v, float v_min, float v_max, const char* format, float power) {
-		ImGui::PushID(id);
-		auto ret = ImGui::SliderFloat("", v, v_min, v_max, format, power);
 		ImGui::PopID();
 		return ret;
 	}

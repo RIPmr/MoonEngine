@@ -321,6 +321,9 @@
     <ClCompile Include="PostEffects.cpp">
       <Filter>SourceFiles\Component</Filter>
     </ClCompile>
+    <ClCompile Include="ImGradient.cpp">
+      <Filter>SourceFiles\UIEnhancement</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Vector3.h">
@@ -629,6 +632,9 @@
     <ClInclude Include="PluginManager.h">
       <Filter>HeadFiles\Component\MOONCAKE</Filter>
     </ClInclude>
+    <ClInclude Include="ImGradient.h">
+      <Filter>HeadFiles\UIEnhancement</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -740,14 +746,8 @@
     <None Include="PBR.vs">
       <Filter>Shaders\PBR\VS</Filter>
     </None>
-    <None Include="PBR_Diff.fs">
-      <Filter>Shaders\PBR\VS</Filter>
-    </None>
     <None Include="BasicRayMarching.fs">
       <Filter>Shaders\RayMarching</Filter>
-    </None>
-    <None Include="GBufferRender.fs">
-      <Filter>Shaders\ScreenBuffer</Filter>
     </None>
     <None Include="NoiseGenerator.fs">
       <Filter>Shaders\Functions</Filter>
@@ -799,6 +799,33 @@
     </None>
     <None Include="mNoise.fs">
       <Filter>Shaders\Functions</Filter>
+    </None>
+    <None Include="GBufferRenderer.fs">
+      <Filter>Shaders\ScreenBuffer</Filter>
+    </None>
+    <None Include="Galaxy.fs">
+      <Filter>Shaders\RayMarching</Filter>
+    </None>
+    <None Include="Margins.fs">
+      <Filter>Shaders\PostProcessing</Filter>
+    </None>
+    <None Include="FireGenerator.fs">
+      <Filter>Shaders\Functions</Filter>
+    </None>
+    <None Include="FBM.fs">
+      <Filter>Shaders\Functions</Filter>
+    </None>
+    <None Include="Pixelization.fs">
+      <Filter>Shaders\Functions</Filter>
+    </None>
+    <None Include="PatternGenerator.fs">
+      <Filter>Shaders\Functions</Filter>
+    </None>
+    <None Include="PBR_Diff.fs">
+      <Filter>Shaders\PBR\FS</Filter>
+    </None>
+    <None Include="PreIntegerSSS.fs">
+      <Filter>Shaders\Surface\FS</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

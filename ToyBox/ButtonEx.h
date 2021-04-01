@@ -14,9 +14,17 @@ namespace MOON {
 
 		static void* FileButtonEx(void** container, const char* label, const ImVec2& size_arg, const int ID = -1);
 	
-		static bool TexFileBtnWithPrev(Texture*& ref, const int& type, const ImVec2& size_arg, const int ID = -1);
+		static bool TexFileBtnWithPrev(Texture*& ref, const ImVec2& size_arg, const int ID = -1);
 
 		static bool ComboNoLabel(const char* id, int* current_item, const char* const items[], int items_count, int popup_max_height_in_items = -1);
+
+		static bool SliderFloatNoLabel(const char* id, float* v, float v_min, float v_max, const char* format = "%.3f", float power = 1.0f);
+
+		static bool SliderFloat2NoLabel(const char* id, float v[2], float v_min, float v_max, const char* format = "%.3f", float power = 1.0f);
+
+		static bool SliderFloat3NoLabel(const char* id, float v[3], float v_min, float v_max, const char* format = "%.3f", float power = 1.0f);
+
+		static bool SliderFloat4NoLabel(const char* id, float v[4], float v_min, float v_max, const char* format = "%.3f", float power = 1.0f);
 
 		static bool DragFloatNoLabel(const char* id, float* v, float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const char* format = "%.3f", float power = 1.0f);
 
@@ -38,8 +46,6 @@ namespace MOON {
 		
 		static bool ColorEdit4NoLabel(const char* id, float col[4], ImGuiColorEditFlags flags = 0);
 
-		static bool SliderFloatNoLabel(const char* id, float* v, float v_min, float v_max, const char* format = "%.3f", float power = 1.0f);
-
 		static void ClampedImage(Texture* tex, const float& clampSize, const bool& clampWidth = true, const ImVec2& uv0 = ImVec2(0, 0), const ImVec2& uv1 = ImVec2(1, 1), const ImVec4& tint_col = ImVec4(1, 1, 1, 1), const ImVec4& border_col = ImVec4(0, 0, 0, 0));
 		static void ClampedImage(unsigned int texID, const Vector2& texSize, const float& clampSize, const bool& clampWidth = true, const ImVec2& uv0 = ImVec2(0, 0), const ImVec2& uv1 = ImVec2(1, 1), const ImVec4& tint_col = ImVec4(1, 1, 1, 1), const ImVec4& border_col = ImVec4(0, 0, 0, 0));
 	
@@ -50,11 +56,12 @@ namespace MOON {
 				ImGui::SetTooltip(label);
 				ImGui::EndDragDropSource();
 			}
-			if (dropable != nullptr && ImGui::BeginDragDropTarget()) {
+			if (ImGui::BeginDragDropTarget()) {
 				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(type)) {
 					IM_ASSERT(payload->DataSize == sizeof(T*));
 					T* payload_m = *(T**)payload->Data;
-					dropable(payload_in, payload_m);
+					if (dropable != nullptr) dropable(payload_in, payload_m);
+					else payload_in = payload_m;
 				}
 				ImGui::EndDragDropTarget();
 			}

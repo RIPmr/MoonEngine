@@ -19,6 +19,7 @@ uniform float _distance;
 uniform float _multiply;
 uniform float _tolerance;
 uniform float _cutoff;
+uniform float _accurate;
 
 float weight(float x) {
 	return 1.0 - x * x * x * x;
@@ -37,13 +38,14 @@ void main() {
     float totalw = 0.0;
     
     vec3 color = vec3(0.0);
-    for (int i = 0; i <= 20; i++) {
+	float halfAcc = _accurate / 2.0;
+    for (int i = 0; i <= _accurate; i++) {
+        float fi = float(i - halfAcc) / halfAcc;
+
         vec2 p = TexCoords;
-        float fi = float(i - 10) / 10.0;
         p.xy += dir * fi * dist;
         
         float w = weight(fi);
-        
     	vec4 c = vec4(texture(screenBuffer, p).rgb, SampleDepth(p));
         if (dist >= c.a) w *= max(1.0 - (dist - c.a) / _cutoff, 0.0);
         color += c.rgb * w;

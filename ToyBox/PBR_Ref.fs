@@ -4,17 +4,50 @@ in vec2 TexCoords;
 in vec3 WorldPos;
 in vec3 Normal;
 
-// textures
-//uniform sampler2D albedoMap;
-uniform sampler2D normalMap;
-//uniform sampler2D metallicMap;
-//uniform sampler2D roughnessMap;
-//uniform sampler2D ambientMap;
+uniform float inputGamma;
 
-// temp
-uniform vec3 albedo;
-uniform float metalness;
-uniform float roughness;
+// textures
+uniform sampler2D albedoMap;
+uniform sampler2D ambientMap;
+uniform sampler2D normalMap;
+uniform sampler2D metallicMap;
+uniform sampler2D roughnessMap;
+uniform sampler2D reflectMap;
+uniform sampler2D refractMap;
+uniform sampler2D displaceMap;
+uniform sampler2D illuminaMap;
+uniform sampler2D translucentMap;
+uniform sampler2D alphaMap;
+
+// switchers
+uniform bool albedoSwitch;
+uniform bool normalSwitch;
+uniform bool metallicSwitch;
+uniform bool roughnessSwitch;
+uniform bool reflectSwitch;
+uniform bool refractSwitch;
+uniform bool displaceSwitch;
+uniform bool illuminaSwitch;
+uniform bool translucentSwitch;
+uniform bool alphaSwitch;
+
+// colors
+uniform vec3  _fogC;
+uniform float _fogW;
+uniform float _aoW;
+uniform float _nrmW;
+uniform vec3  _albedo;
+uniform vec3  _illumination;
+uniform float _illumMulti;
+uniform float _metalness;
+uniform float _roughness;
+uniform float _reflectance;
+uniform float _translucency;
+uniform float _refraction;
+uniform float _fresnel;
+uniform float _alpha;
+uniform float _IOR;
+uniform float _dispW;
 
 // IBL
 uniform sampler2D irradianceMap;
@@ -28,15 +61,11 @@ uniform vec3 lightColors[32];
 
 uniform vec3 viewPos;
 
-uniform float _Reflectance;
-uniform float _IOR;
-uniform float _Refraction;
-uniform float _Fresnel;
-
 const float PI = 3.14159265359;
 const float Epsilon = 0.00001;
 const float MAX_REFLECTION_LOD = 4.0;
 const vec2 invAtan = vec2(0.1591, 0.3183);
+
 // Constant normal incidence Fresnel factor for all dielectrics.
 const vec3 Fdielectric = vec3(0.04);
 
@@ -61,7 +90,9 @@ vec3 SampleSphericalMap(vec3 dir) {
 // mapping the usual way for performance anways; I do plan make a note of this 
 // technique somewhere later in the normal mapping tutorial.
 vec3 GetNormalFromMap() {
-    vec3 tangentNormal = texture(normalMap, TexCoords).xyz * 2.0 - 1.0;
+    vec3 tangentNormal = texture(normalMap, TexCoords).rgb * 2.0 - 1.0;
+	vec3 normalFactor = vec3(_nrmW, _nrmW, 1.0);
+	tangentNormal = normalize(tangentNormal * normalFactor);
 
     vec3 Q1  = dFdx(WorldPos);
     vec3 Q2  = dFdy(WorldPos);
@@ -93,16 +124,16 @@ float GeometrySmith(float cosLi, float cosLo, float roughness) {
 }
 
 vec3 fresnelSchlick(vec3 F0, float cosTheta) {
-    return F0 + (1.0 - F0) * pow(1.0 - cosTheta, _Fresnel);
+    return F0 + (1.0 - F0) * pow(1.0 - cosTheta, _fresnel);
 }
 
 vec3 fresnelSchlickRoughness(vec3 F0, float cosTheta, float roughness) {
-    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(1.0 - cosTheta, _Fresnel);
+    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(1.0 - cosTheta, _fresnel);
 } 
 
 // Refraction --------------------------------------------------------------
-vec3 RefractColor(vec2 uv, vec3 n, vec3 v) {
-    float fr = pow(1.0 - dot(v, n), _Fresnel) * _Reflectance;
+vec3 RefractColor(vec2 uv, vec3 n, vec3 v, float roughness) {
+    float fr = pow(1.0 - dot(v, n), _fresnel) * _reflectance;
             
     vec3 reflectDir = reflect(-v, n);
     vec3 refractDir = refract(-v, n, _IOR - 1.0);
@@ -113,17 +144,39 @@ vec3 RefractColor(vec2 uv, vec3 n, vec3 v) {
     return reflectColor * fr + refractColor;
 }
 
-void main() {		
+vec3 GammaCorrection(vec3 input) {
+	return pow(input, vec3(inputGamma));
+}
+
+// in texel units
+float mip_map_level(vec2 texture_coordinate)  {
+    vec2  dx_vtc        = dFdx(texture_coordinate);
+    vec2  dy_vtc        = dFdy(texture_coordinate);
+    float delta_max_sqr = max(dot(dx_vtc, dx_vtc), dot(dy_vtc, dy_vtc));
+    float mml = 0.5 * log2(delta_max_sqr);
+    return max(0, mml);
+}
+
+// convert normalized texture coordinates to texel units before calling mip_map_level
+// float mipmapLevel = mip_map_level(textureCoord * textureSize(myTexture, 0));
+// fragColor = textureLod(myTexture, textureCoord, mipmapLevel);
+
+void main() {
     // material properties
-    //vec3 albedo = pow(texture(albedoMap, TexCoords).rgb, vec3(2.2));
-    //float metallic = texture(metallicMap, TexCoords).r;
-    //float roughness = texture(roughnessMap, TexCoords).r;
-    //float ao = texture(ambientMap, TexCoords).r;
-       
+    vec3 albedo = albedoSwitch ? GammaCorrection(texture(albedoMap, TexCoords).rgb) : _albedo;
+    float metallic = metallicSwitch ? texture(metallicMap, TexCoords).r : _metalness;
+    float roughness = roughnessSwitch ? texture(roughnessMap, TexCoords).r : _roughness;
+	float alpha = alphaSwitch ? texture(alphaMap, TexCoords).r : _alpha;
+	float translucent = translucentSwitch ? texture(translucentMap, TexCoords).r : _translucency;
+	float reflect = reflectSwitch ? texture(reflectMap, TexCoords).r : _reflectance;
+	float refract = refractSwitch ? texture(refractMap, TexCoords).r : _refraction;
+	vec3 illumina = illuminaSwitch ? texture(illuminaMap, TexCoords).rgb : _illumination;
+	vec3 displace = texture(displaceMap, TexCoords).rgb;
+    vec3 ao = texture(ambientMap, TexCoords).rrr;
+    
     // input lighting data
     vec3 Lo = normalize(viewPos - WorldPos);
-    //vec3 N = GetNormalFromMap();
-    vec3 N = normalize(Normal);
+    vec3 N = normalSwitch ? GetNormalFromMap() : normalize(Normal);
 	// Angle between surface normal and outgoing light direction
 	float cosLo = max(dot(N, Lo), 0.0);
 	// Specular reflection vector
@@ -132,7 +185,7 @@ void main() {
     // calculate reflectance at normal incidence; 
 	// if dia-electric (like plastic) use F0 of 0.04 and 
 	// if it's a metal, use the albedo color as F0 (metallic workflow) 
-    vec3 F0 = mix(Fdielectric, albedo, metalness);
+    vec3 F0 = mix(Fdielectric, albedo, metallic);
 
     // reflectance equation
     vec3 directLighting = vec3(0.0);
@@ -161,7 +214,7 @@ void main() {
 		// Diffuse scattering happens due to light being refracted multiple times by a dielectric medium.
 		// Metals on the other hand either reflect or absorb energy, so diffuse contribution is always zero.
 		// To be energy conserving we must scale diffuse BRDF contribution based on Fresnel factor & metalness.
-		vec3 kd = mix(vec3(1.0) - F, vec3(0.0), metalness);
+		vec3 kd = mix(vec3(1.0) - F, vec3(0.0), metallic);
 		
 		// Lambert diffuse BRDF.
 		// We don't scale by 1/PI for lighting & material units to be more convenient.
@@ -184,7 +237,7 @@ void main() {
     //vec3 F = fresnelSchlickRoughness(F0, cosLo, roughness);
     
 	// Get diffuse contribution factor (as with direct lighting)
-	vec3 kd = mix(vec3(1.0) - F, vec3(0.0), metalness);
+	vec3 kd = mix(vec3(1.0) - F, vec3(0.0), metallic);
 	
 	// Irradiance map contains exitant radiance assuming Lambertian BRDF, no need to scale by 1/PI here either.
 	vec3 diffuseIBL = kd * albedo * irradiance;
@@ -199,11 +252,14 @@ void main() {
 	vec3 specularIBL = (F0 * specularBRDF.x + specularBRDF.y) * specularIrradiance;
 
 	// Total ambient lighting contribution.
-	ambientLighting = diffuseIBL + specularIBL * _Reflectance;
+	ambientLighting = diffuseIBL + specularIBL * reflect;
 	
 	// Calculate refraction
-	vec3 RefractionColor = RefractColor(TexCoords, N, Lo);
+	vec3 RefractionColor = RefractColor(TexCoords, N, Lo, roughness) * mix(vec3(1.0), _fogC, _fogW);
 
 	// Mix output
-    FragColor = vec4(mix(directLighting + ambientLighting, RefractionColor, _Refraction), 1.0);
+	vec3 mixRefract = mix(directLighting + ambientLighting, RefractionColor, refract) * mix(vec3(1.0), ao, _aoW);
+	float illumGray = clamp((illumina.x + illumina.y + illumina.z) / 3.0 * _illumMulti, 0.0, 1.0);
+	vec3 illumCol = mix(illumina, vec3(1.0), clamp(_illumMulti / 10000.0, 0.0, 1.0));
+    FragColor = vec4(mix(mixRefract, illumCol * _illumMulti, illumGray), 1.0);
 }

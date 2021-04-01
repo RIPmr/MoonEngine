@@ -9,29 +9,41 @@
 #include "Color.h"
 
 namespace MOON {
+	#define ProceduralTexture ProceduralMapGenerator::ProceduralMapType
+
 	/* CPU & GPU based procedural map generator */
 	class ProceduralMapGenerator {
 	public:
 		enum ProceduralMapType {
-			WhiteNoise,
+			// noise
+			WhiteNoise, FirstNoise = WhiteNoise,
 			ValueNoise,
 			PerlinNoise,
+			OctavePerlin,
 			SimplexNoise,
 			WorleyNoise,
 			VoronoiNoise,
 			TysonPolygon,
 			CloudNoise,
+
+			// pattern
 			Checker,
-			Disco
+			Disco,
+			WoodPattern,
+			BubblePattern, FirstPattern = BubblePattern,
+			DigitalStorm,
+			TruchetPattern,
+			ColorfulTruchet
 		};
 
 	#pragma region GPU_based
+		static Shader* FireShader;
 		static Shader* NoiseShader;
-		static Shader* OtherShader;
+		static Shader* PatternShader;
 
 		static void LoadShaders();
 
-		/*static bool GPUMapMaker(FrameBuffer* texHolder, const ProceduralMapType& type,
+		/*static bool GPUNoiseMaker(FrameBuffer* texHolder, const ProceduralMapType& type,
 			const unsigned int channelSelection, ...) {
 			va_list arg_ptr;
 			va_start(arg_ptr, type);
@@ -47,7 +59,15 @@ namespace MOON {
 			return true;
 		}*/
 
-		static bool GPUMapMaker(const ProceduralMapType& type, 
+		static bool GPUFireTexMaker(FrameBuffer* texHolder, const Vector2& offset, 
+			const float& scale, const float& power, const float& time, const Vector3& tint);
+
+		static bool GPUNoiseMaker(const ProceduralMapType& type, 
+			FrameBuffer* texHolder, const Vector2& offset = Vector2::ZERO(),
+			const float& scale = 1.0f, const float& dim = 0.0f, const float& time = 0.0f,
+			const unsigned int channelSelection = 0);
+
+		static bool GPUPatternMaker(const ProceduralMapType& type,
 			FrameBuffer* texHolder, const Vector2& offset = Vector2::ZERO(),
 			const float& scale = 1.0f, const float& dim = 0.0f, const float& time = 0.0f,
 			const unsigned int channelSelection = 0);
@@ -83,7 +103,7 @@ namespace MOON {
 	#pragma endregion
 
 	#pragma region CPU_based
-		static bool CPUMapMaker(GLubyte *targetImage, const Vector2 &mapSize, const ProceduralMapType& type) {
+		static bool CPUNoiseMaker(GLubyte *targetImage, const Vector2 &mapSize, const ProceduralMapType& type) {
 			if (type == Checker) {
 				return CPUCheckImage(targetImage, mapSize);
 			} else if (type == WhiteNoise) {

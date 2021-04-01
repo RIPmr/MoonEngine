@@ -4,8 +4,8 @@
 * | \| ||_)|_)_|_ |    | \|__| ||_/|__| \|__| \
 *
 * @author	HZT
-* @date		2020-10-05
-* @version	0.1.5
+* @date		2020-11-16
+* @version	0.1.8
 */
 
 #pragma once
@@ -35,13 +35,31 @@ namespace MOON {
 			acc_KDTree
 		};
 
+		enum RenderMode {
+			scanline,
+			bucket,
+			progressive
+		};
+
+		enum SamplingMode {
+			BruteForce,
+			PhotonMapping,
+			LightCache,
+			IrradianceMap
+		};
+
 		// global settings
 		static AccStruct acc;
 		static TexFilter filter;
+		static RenderMode renderMode;
+		static SamplingMode sampleMode;
 		static ToneMappingMethod tone;
+
+		static int bucketSize;
 
 		static bool depth;
 		static bool motion;
+		static bool useIS; // enable importance sampling
 		static float aspect;
 		static Vector2 OUTPUT_SIZE;
 		static GLfloat *matPrevRaw;
@@ -55,6 +73,7 @@ namespace MOON {
 		static std::string timeStamp;
 
 		static unsigned int samplingRate;
+		static unsigned int prevSampleRate;
 		static unsigned int maxReflectionDepth;
 
 		// local params
@@ -85,7 +104,8 @@ namespace MOON {
 	private:
 		static void UpdateTimeStamp();
 		static Vector3 SamplingColor(const Ray &r, int depth);
-		static Vector3 SamplingColor_Simple(const Ray &r, int depth, const MSphere* ball, const MSphere* ground);
+		static Vector3 SamplingColor_IS(const Ray &r, int depth);
+		static Vector3 SamplingColor_MatPrev(const Ray &r, int depth, const MSphere* ball, const MSphere* ground);
 		
 		// environment sampling
 		static Vector3 ProceduralSky(const Ray &r);
